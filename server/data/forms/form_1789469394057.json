@@ -1,0 +1,129 @@
+{
+  "version": "1.0.0",
+  "id": "form_1789469394057",
+  "title": "Untitled Form",
+  "description": "",
+  "settings": {
+    "submitButtonText": "Submit Form",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Clear Form",
+    "theme": {
+      "primaryColor": "#3b82f6",
+      "borderRadius": "md",
+      "fontFamily": "Inter, system-ui, sans-serif"
+    },
+    "primaryKeyColumn": "PATIENT_ID"
+  },
+  "fields": {
+    "fld_1789469401620_xtyk2": {
+      "id": "fld_1789469401620_xtyk2",
+      "name": "text_bipx",
+      "type": "text",
+      "label": "name",
+      "placeholder": "Enter text...",
+      "defaultValue": "",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1789469415882_1kym7": {
+      "id": "fld_1789469415882_1kym7",
+      "name": "date_gx2r",
+      "type": "date",
+      "label": "Date Picker",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1789469438797_sdnb4": {
+      "id": "fld_1789469438797_sdnb4",
+      "name": "table_38ex",
+      "type": "table",
+      "label": "Data Table",
+      "helpText": "Editable multi-row table grid",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "col_1",
+            "label": "Item / Description",
+            "type": "text"
+          },
+          {
+            "id": "col_2",
+            "label": "Category",
+            "type": "text"
+          },
+          {
+            "id": "col_3",
+            "label": "Quantity / Value",
+            "type": "text"
+          }
+        ],
+        "allowAddRows": true,
+        "minRows": 1,
+        "defaultRows": [
+          {
+            "col_1": "Sample Entry 1",
+            "col_2": "Standard",
+            "col_3": "1"
+          },
+          {
+            "col_1": "Sample Entry 2",
+            "col_2": "Priority",
+            "col_3": "2"
+          }
+        ]
+      }
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_1789469397318",
+      "title": "General Information",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789469397318",
+          "columns": [
+            {
+              "id": "col_1789469411127_0",
+              "width": 6,
+              "fieldIds": [
+                "fld_1789469401620_xtyk2"
+              ]
+            },
+            {
+              "id": "col_1789469411127_1",
+              "width": 6,
+              "fieldIds": [
+                "fld_1789469415882_1kym7"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_1789469437456",
+      "title": "Section 2",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789469437456",
+          "columns": [
+            {
+              "id": "col_1789469437456",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789469438797_sdnb4"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

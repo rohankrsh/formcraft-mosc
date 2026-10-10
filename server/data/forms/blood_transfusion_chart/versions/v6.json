@@ -1,0 +1,354 @@
+{
+  "version": "1.0.0",
+  "id": "blood_transfusion_chart",
+  "title": "Blood Transfusion Chart",
+  "description": "Clinical chart for monitoring blood transfusion procedures.",
+  "settings": {
+    "submitButtonText": "Submit",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "theme": {
+      "primaryColor": "#000000",
+      "borderRadius": "none",
+      "fontFamily": "sans-serif"
+    },
+    "patientFormMode": "CONTINUE_EXISTING"
+  },
+  "fields": {
+    "fld_date": {
+      "id": "fld_date",
+      "name": "date",
+      "type": "date",
+      "label": "Date"
+    },
+    "fld_ip_no": {
+      "id": "fld_ip_no",
+      "name": "ip_no",
+      "type": "text",
+      "label": "IP No."
+    },
+    "fld_blood_grouping": {
+      "id": "fld_blood_grouping",
+      "name": "blood_grouping",
+      "type": "text",
+      "label": "Blood Grouping"
+    },
+    "fld_sex": {
+      "id": "fld_sex",
+      "name": "sex",
+      "type": "select",
+      "label": "Sex",
+      "options": [
+        {
+          "label": "Male",
+          "value": "male"
+        },
+        {
+          "label": "Female",
+          "value": "female"
+        },
+        {
+          "label": "Other",
+          "value": "other"
+        }
+      ]
+    },
+    "fld_blood_component": {
+      "id": "fld_blood_component",
+      "name": "blood_component",
+      "type": "text",
+      "label": "Blood Component to be Transfused"
+    },
+    "fld_age": {
+      "id": "fld_age",
+      "name": "age",
+      "type": "number",
+      "label": "Age"
+    },
+    "fld_blood_bag_no": {
+      "id": "fld_blood_bag_no",
+      "name": "blood_bag_no",
+      "type": "text",
+      "label": "Blood Bag No."
+    },
+    "fld_date_collection": {
+      "id": "fld_date_collection",
+      "name": "date_collection",
+      "type": "date",
+      "label": "Date of Collection & Time"
+    },
+    "fld_date_expiry": {
+      "id": "fld_date_expiry",
+      "name": "date_expiry",
+      "type": "date",
+      "label": "Date of Expiry"
+    },
+    "fld_cross_matching": {
+      "id": "fld_cross_matching",
+      "name": "cross_matching",
+      "type": "text",
+      "label": "Cross Matching Done By"
+    },
+    "fld_blood_transfusion_started": {
+      "id": "fld_blood_transfusion_started",
+      "name": "blood_transfusion_started",
+      "type": "text",
+      "label": "Blood Transfusion Checked and Started By"
+    },
+    "fld_premedications": {
+      "id": "fld_premedications",
+      "name": "premedications",
+      "type": "textarea",
+      "label": "Premedications"
+    },
+    "fld_transfusion_started_at": {
+      "id": "fld_transfusion_started_at",
+      "name": "transfusion_started_at",
+      "type": "text",
+      "label": "Transfusion Started At"
+    },
+    "fld_cross_checked_by": {
+      "id": "fld_cross_checked_by",
+      "name": "cross_checked_by",
+      "type": "text",
+      "label": "Cross Checked By"
+    },
+    "fld_transfusion_finished_at": {
+      "id": "fld_transfusion_finished_at",
+      "name": "transfusion_finished_at",
+      "type": "text",
+      "label": "Blood Transfusion Finished At"
+    },
+    "fld_monitoring_table": {
+      "id": "fld_monitoring_table",
+      "name": "monitoring_table",
+      "type": "table",
+      "label": "Transfusion Monitoring",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "col_param",
+            "label": "Parameter",
+            "type": "text"
+          },
+          {
+            "id": "col_before",
+            "label": "Before Transfusion",
+            "type": "text"
+          },
+          {
+            "id": "col_15min",
+            "label": "After 15 Minutes",
+            "type": "text"
+          },
+          {
+            "id": "col_1hr",
+            "label": "After 1 Hour",
+            "type": "text"
+          },
+          {
+            "id": "col_2hr",
+            "label": "After 2 Hours",
+            "type": "text"
+          },
+          {
+            "id": "col_3hr",
+            "label": "After 3 Hours",
+            "type": "text"
+          },
+          {
+            "id": "col_4hr",
+            "label": "After 4 Hours",
+            "type": "text"
+          }
+        ],
+        "defaultRows": [
+          {
+            "col_param": "General Condition"
+          },
+          {
+            "col_param": "Temperature"
+          },
+          {
+            "col_param": "Pulse Rate"
+          },
+          {
+            "col_param": "Respiration Rate"
+          },
+          {
+            "col_param": "Blood Pressure"
+          },
+          {
+            "col_param": "Saturation"
+          },
+          {
+            "col_param": "Urine Output"
+          }
+        ],
+        "allowAddRows": true
+      }
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_patient_info",
+      "title": "Patient Information",
+      "rows": [
+        {
+          "id": "row_2",
+          "columns": [
+            {
+              "id": "col_3",
+              "width": 3,
+              "fieldIds": [
+                "fld_date"
+              ]
+            },
+            {
+              "id": "col_4",
+              "width": 3,
+              "fieldIds": [
+                "fld_ip_no"
+              ]
+            },
+            {
+              "id": "col_5",
+              "width": 3,
+              "fieldIds": [
+                "fld_blood_grouping"
+              ]
+            },
+            {
+              "id": "col_6",
+              "width": 3,
+              "fieldIds": [
+                "fld_sex"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_3",
+          "columns": [
+            {
+              "id": "col_7",
+              "width": 6,
+              "fieldIds": [
+                "fld_blood_component"
+              ]
+            },
+            {
+              "id": "col_8",
+              "width": 3,
+              "fieldIds": [
+                "fld_age"
+              ]
+            },
+            {
+              "id": "col_9",
+              "width": 3,
+              "fieldIds": [
+                "fld_blood_bag_no"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_4",
+          "columns": [
+            {
+              "id": "col_10",
+              "width": 4,
+              "fieldIds": [
+                "fld_date_collection"
+              ]
+            },
+            {
+              "id": "col_11",
+              "width": 4,
+              "fieldIds": [
+                "fld_date_expiry"
+              ]
+            },
+            {
+              "id": "col_12",
+              "width": 4,
+              "fieldIds": [
+                "fld_cross_matching"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_transfusion_details",
+      "title": "Transfusion Details",
+      "rows": [
+        {
+          "id": "row_5",
+          "columns": [
+            {
+              "id": "col_13",
+              "width": 6,
+              "fieldIds": [
+                "fld_blood_transfusion_started"
+              ]
+            },
+            {
+              "id": "col_14",
+              "width": 6,
+              "fieldIds": [
+                "fld_premedications"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_6",
+          "columns": [
+            {
+              "id": "col_15",
+              "width": 4,
+              "fieldIds": [
+                "fld_transfusion_started_at"
+              ]
+            },
+            {
+              "id": "col_16",
+              "width": 4,
+              "fieldIds": [
+                "fld_cross_checked_by"
+              ]
+            },
+            {
+              "id": "col_17",
+              "width": 4,
+              "fieldIds": [
+                "fld_transfusion_finished_at"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_monitoring",
+      "title": "Monitoring Chart",
+      "rows": [
+        {
+          "id": "row_7",
+          "columns": [
+            {
+              "id": "col_18",
+              "width": 12,
+              "fieldIds": [
+                "fld_monitoring_table"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

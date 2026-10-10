@@ -1,0 +1,373 @@
+{
+  "version": "1.0.0",
+  "id": "blood_transfusion_chart",
+  "title": "Blood Transfusion Chart demo51",
+  "description": "Smita Memorial Hospital and Research Center - Blood Transfusion Monitoring Chart",
+  "settings": {
+    "submitButtonText": "Submit Chart",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Reset Form",
+    "theme": {
+      "primaryColor": "#991b1b",
+      "borderRadius": "md",
+      "fontFamily": "sans-serif"
+    },
+    "patientFormMode": "CONTINUE_EXISTING"
+  },
+  "fields": {
+    "patient_name": {
+      "id": "patient_name",
+      "name": "patient_name",
+      "type": "text",
+      "label": "Patient Name",
+      "validation": {
+        "required": true
+      }
+    },
+    "bed_no": {
+      "id": "bed_no",
+      "name": "bed_no",
+      "type": "text",
+      "label": "Bed No."
+    },
+    "date": {
+      "id": "date",
+      "name": "date",
+      "type": "date",
+      "label": "Date"
+    },
+    "ip_no": {
+      "id": "ip_no",
+      "name": "ip_no",
+      "type": "text",
+      "label": "IP No."
+    },
+    "age": {
+      "id": "age",
+      "name": "age",
+      "type": "number",
+      "label": "Age"
+    },
+    "sex": {
+      "id": "sex",
+      "name": "sex",
+      "type": "select",
+      "label": "Sex",
+      "options": [
+        {
+          "label": "Male",
+          "value": "male"
+        },
+        {
+          "label": "Female",
+          "value": "female"
+        },
+        {
+          "label": "Other",
+          "value": "other"
+        }
+      ]
+    },
+    "blood_grouping": {
+      "id": "blood_grouping",
+      "name": "blood_grouping",
+      "type": "text",
+      "label": "Blood Grouping"
+    },
+    "blood_component": {
+      "id": "blood_component",
+      "name": "blood_component",
+      "type": "text",
+      "label": "Blood Component to be Transfused"
+    },
+    "blood_bag_no": {
+      "id": "blood_bag_no",
+      "name": "blood_bag_no",
+      "type": "text",
+      "label": "Blood Bag No."
+    },
+    "date_collection_time": {
+      "id": "date_collection_time",
+      "name": "date_collection_time",
+      "type": "text",
+      "label": "Date of Collection & Time"
+    },
+    "date_expiry": {
+      "id": "date_expiry",
+      "name": "date_expiry",
+      "type": "date",
+      "label": "Date of Expiry"
+    },
+    "cross_matching_done_by": {
+      "id": "cross_matching_done_by",
+      "name": "cross_matching_done_by",
+      "type": "text",
+      "label": "Cross Matching Done By"
+    },
+    "checked_started_by": {
+      "id": "checked_started_by",
+      "name": "checked_started_by",
+      "type": "text",
+      "label": "Blood Transfusion Checked and Started By"
+    },
+    "cross_checked_by": {
+      "id": "cross_checked_by",
+      "name": "cross_checked_by",
+      "type": "text",
+      "label": "Cross Checked By"
+    },
+    "premedications": {
+      "id": "premedications",
+      "name": "premedications",
+      "type": "text",
+      "label": "Premedications"
+    },
+    "transfusion_started_at": {
+      "id": "transfusion_started_at",
+      "name": "transfusion_started_at",
+      "type": "text",
+      "label": "Transfusion Started At"
+    },
+    "transfusion_chart": {
+      "id": "transfusion_chart",
+      "name": "transfusion_chart",
+      "type": "table",
+      "label": "Transfusion Observation Log",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "parameter",
+            "label": "Parameter",
+            "type": "text"
+          },
+          {
+            "id": "before_transfusion",
+            "label": "Before Transfusion",
+            "type": "text"
+          },
+          {
+            "id": "after_15_mins",
+            "label": "After 15 Minutes",
+            "type": "text"
+          },
+          {
+            "id": "after_1_hour",
+            "label": "After 1 Hour",
+            "type": "text"
+          },
+          {
+            "id": "after_2_hours",
+            "label": "After 2 Hours",
+            "type": "text"
+          },
+          {
+            "id": "after_3_hours",
+            "label": "After 3 Hours",
+            "type": "text"
+          },
+          {
+            "id": "after_4_hours",
+            "label": "After 4 Hours",
+            "type": "text"
+          }
+        ],
+        "defaultRows": [
+          {
+            "parameter": "General Condition"
+          },
+          {
+            "parameter": "Temperature"
+          },
+          {
+            "parameter": "Pulse Rate"
+          },
+          {
+            "parameter": "Respiration Rate"
+          },
+          {
+            "parameter": "Blood Pressure"
+          },
+          {
+            "parameter": "Saturation"
+          },
+          {
+            "parameter": "Urine Output"
+          },
+          {
+            "parameter": "Blood Transfusion Finished At"
+          }
+        ],
+        "allowAddRows": true
+      }
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_patient_info",
+      "title": "Patient & Transfusion Details",
+      "rows": [
+        {
+          "id": "row_1",
+          "columns": [
+            {
+              "id": "col_1_1",
+              "width": 6,
+              "fieldIds": [
+                "patient_name"
+              ]
+            },
+            {
+              "id": "col_1_2",
+              "width": 3,
+              "fieldIds": [
+                "bed_no"
+              ]
+            },
+            {
+              "id": "col_1_3",
+              "width": 3,
+              "fieldIds": [
+                "date"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_2",
+          "columns": [
+            {
+              "id": "col_2_1",
+              "width": 4,
+              "fieldIds": [
+                "ip_no"
+              ]
+            },
+            {
+              "id": "col_2_2",
+              "width": 4,
+              "fieldIds": [
+                "age"
+              ]
+            },
+            {
+              "id": "col_2_3",
+              "width": 4,
+              "fieldIds": [
+                "sex"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_3",
+          "columns": [
+            {
+              "id": "col_3_1",
+              "width": 6,
+              "fieldIds": [
+                "blood_grouping"
+              ]
+            },
+            {
+              "id": "col_3_2",
+              "width": 6,
+              "fieldIds": [
+                "blood_component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_4",
+          "columns": [
+            {
+              "id": "col_4_1",
+              "width": 4,
+              "fieldIds": [
+                "blood_bag_no"
+              ]
+            },
+            {
+              "id": "col_4_2",
+              "width": 4,
+              "fieldIds": [
+                "date_collection_time"
+              ]
+            },
+            {
+              "id": "col_4_3",
+              "width": 4,
+              "fieldIds": [
+                "date_expiry"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_5",
+          "columns": [
+            {
+              "id": "col_5_1",
+              "width": 4,
+              "fieldIds": [
+                "cross_matching_done_by"
+              ]
+            },
+            {
+              "id": "col_5_2",
+              "width": 4,
+              "fieldIds": [
+                "checked_started_by"
+              ]
+            },
+            {
+              "id": "col_5_3",
+              "width": 4,
+              "fieldIds": [
+                "cross_checked_by"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_6",
+          "columns": [
+            {
+              "id": "col_6_1",
+              "width": 6,
+              "fieldIds": [
+                "premedications"
+              ]
+            },
+            {
+              "id": "col_6_2",
+              "width": 6,
+              "fieldIds": [
+                "transfusion_started_at"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_monitoring_chart",
+      "title": "Vital Signs & Monitoring Log",
+      "rows": [
+        {
+          "id": "row_7",
+          "columns": [
+            {
+              "id": "col_7_1",
+              "width": 12,
+              "fieldIds": [
+                "transfusion_chart"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

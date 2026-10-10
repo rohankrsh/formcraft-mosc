@@ -1,0 +1,44 @@
+%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj << /Length 2152 >>
+stream
+BT /F1 18 Tf 50 750 Td (PATIENT INTAKE & MEDICAL HISTORY FORM) Tj ET
+BT /F1 11 Tf 50 698 Td (Patient Full Name: __________________________   DOB: ______________   Gender: [ ] M  [ ] F) Tj ET
+BT /F1 11 Tf 50 676 Td (Emergency Contact: __________________________   Phone: ______________) Tj ET
+BT /F1 11 Tf 50 654 Td (Department: [ Cardiology / Neurology / Orthopedics / General ]) Tj ET
+BT /F1 11 Tf 50 632 Td () Tj ET
+BT /F1 11 Tf 50 610 Td (CURRENT MEDICATIONS TABLE:) Tj ET
+BT /F1 11 Tf 50 588 Td (+--------------------+-------------+--------------------+----------------------+) Tj ET
+BT /F1 11 Tf 50 566 Td (| Medication Name    | Dosage \mg\ | Frequency          | Start Date           |) Tj ET
+BT /F1 11 Tf 50 544 Td (+--------------------+-------------+--------------------+----------------------+) Tj ET
+BT /F1 11 Tf 50 522 Td (| Metformin          | 500mg       | Twice daily        | 2023-01-15           |) Tj ET
+BT /F1 11 Tf 50 500 Td (| Lisinopril         | 10mg        | Once daily         | 2023-05-10           |) Tj ET
+BT /F1 11 Tf 50 478 Td (| Atorvastatin       | 20mg        | Once daily at bedtime | 2023-08-20        |) Tj ET
+BT /F1 11 Tf 50 456 Td (+--------------------+-------------+--------------------+----------------------+) Tj ET
+BT /F1 11 Tf 50 434 Td () Tj ET
+BT /F1 11 Tf 50 412 Td (KNOWN ALLERGIES TABLE:) Tj ET
+BT /F1 11 Tf 50 390 Td (+--------------------+-------------------------+-------------------------------+) Tj ET
+BT /F1 11 Tf 50 368 Td (| Allergen           | Reaction Severity       | Symptoms Observed             |) Tj ET
+BT /F1 11 Tf 50 346 Td (+--------------------+-------------------------+-------------------------------+) Tj ET
+BT /F1 11 Tf 50 324 Td (| Penicillin         | Severe                  | Hives and difficulty breathing |) Tj ET
+BT /F1 11 Tf 50 302 Td (| Sulfa Drugs        | Mild                    | Skin rash                     |) Tj ET
+BT /F1 11 Tf 50 280 Td (+--------------------+-------------------------+-------------------------------+) Tj ET
+BT /F1 11 Tf 50 258 Td () Tj ET
+BT /F1 11 Tf 50 236 Td (Patient Signature: _______________________ Date: ____________________) Tj ET
+endstream
+endobj
+5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000002444 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+2514
+%%EOF

@@ -1,0 +1,82 @@
+{
+  "version": "1.0.0",
+  "id": "form_1791631952093",
+  "title": "Untitled Form",
+  "description": "",
+  "settings": {
+    "submitButtonText": "Submit Form",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Clear Form",
+    "patientFormMode": "NEW_RECORD",
+    "theme": {
+      "primaryColor": "#3b82f6",
+      "borderRadius": "md",
+      "fontFamily": "Inter, system-ui, sans-serif"
+    }
+  },
+  "fields": {
+    "fld_1791631955757_gt35j": {
+      "id": "fld_1791631955757_gt35j",
+      "name": "text_h9f5",
+      "type": "text",
+      "label": "Text Field",
+      "placeholder": "Enter text...",
+      "defaultValue": "",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1791631960814_o2r1m": {
+      "id": "fld_1791631960814_o2r1m",
+      "name": "date_ik5f",
+      "type": "date",
+      "label": "Date Picker",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_1791631953878",
+      "title": "General Information",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1791631953878",
+          "columns": [
+            {
+              "id": "col_1791631953878",
+              "width": 12,
+              "fieldIds": [
+                "fld_1791631955757_gt35j"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_1791631958566",
+      "title": "Section 2",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1791631958566",
+          "columns": [
+            {
+              "id": "col_1791631958566",
+              "width": 12,
+              "fieldIds": [
+                "fld_1791631960814_o2r1m"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

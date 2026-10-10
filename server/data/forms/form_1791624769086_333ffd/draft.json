@@ -1,0 +1,112 @@
+{
+  "id": "form_1791624769086_333ffd",
+  "version": "1.0.0",
+  "title": "Patient Registration - DRAFT MODIFICATION (Copy)",
+  "description": "A test form for patient intake and registration",
+  "settings": {
+    "submitButtonText": "Register Patient",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "primaryEntity": "PATIENT",
+    "primaryKeyColumn": "PATIENT_ID",
+    "enableFetchRecord": true,
+    "theme": {
+      "primaryColor": "#2563eb",
+      "borderRadius": "lg",
+      "fontFamily": "Inter"
+    }
+  },
+  "fields": {
+    "fld_mrn": {
+      "id": "fld_mrn",
+      "name": "patient_id",
+      "type": "number",
+      "label": "Patient MRN",
+      "dataBinding": {
+        "source": "oracle",
+        "table": "PATIENT",
+        "column": "PATIENT_ID",
+        "mode": "read-write",
+        "oracleType": "NUMBER"
+      },
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_name": {
+      "id": "fld_name",
+      "name": "first_name",
+      "type": "text",
+      "label": "Patient Full Name (Draft)",
+      "dataBinding": {
+        "source": "oracle",
+        "table": "PATIENT",
+        "column": "FIRST_NAME",
+        "mode": "read-write",
+        "oracleType": "STRING"
+      },
+      "validation": {
+        "required": true,
+        "minLength": 2
+      }
+    },
+    "fld_gender": {
+      "id": "fld_gender",
+      "name": "gender",
+      "type": "select",
+      "label": "Gender",
+      "dataBinding": {
+        "source": "oracle",
+        "table": "PATIENT",
+        "column": "GENDER",
+        "mode": "read-write",
+        "oracleType": "STRING"
+      },
+      "options": [
+        {
+          "label": "Male",
+          "value": "M"
+        },
+        {
+          "label": "Female",
+          "value": "F"
+        }
+      ]
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_1",
+      "title": "Patient Demographics",
+      "enableFetchRecord": true,
+      "rows": [
+        {
+          "id": "row_1",
+          "columns": [
+            {
+              "id": "col_1",
+              "width": 4,
+              "fieldIds": [
+                "fld_mrn"
+              ]
+            },
+            {
+              "id": "col_2",
+              "width": 4,
+              "fieldIds": [
+                "fld_name"
+              ]
+            },
+            {
+              "id": "col_3",
+              "width": 4,
+              "fieldIds": [
+                "fld_gender"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

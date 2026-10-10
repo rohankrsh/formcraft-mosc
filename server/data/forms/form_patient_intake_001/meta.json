@@ -1,0 +1,30 @@
+{
+  "id": "form_patient_intake_001",
+  "name": "Patient Intake & Health Questionnaire",
+  "slug": "patient-intake-health-questionnaire",
+  "status": "published",
+  "currentDraftVersion": 3,
+  "publishedVersion": 2,
+  "createdAt": "2026-09-11T07:58:41.222Z",
+  "updatedAt": "2026-10-10T11:32:24.710Z",
+  "publishedAt": "2026-09-11T14:11:40.387Z",
+  "primaryEntity": "PATIENT",
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

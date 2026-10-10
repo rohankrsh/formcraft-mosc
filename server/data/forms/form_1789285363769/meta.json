@@ -1,0 +1,30 @@
+{
+  "id": "form_1789285363769",
+  "name": "item details ",
+  "slug": "item-details",
+  "status": "published",
+  "currentDraftVersion": 2,
+  "publishedVersion": 1,
+  "createdAt": "2026-09-13T07:46:57.994Z",
+  "updatedAt": "2026-09-15T07:53:23.318Z",
+  "publishedAt": "2026-09-13T07:48:01.904Z",
+  "primaryEntity": null,
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

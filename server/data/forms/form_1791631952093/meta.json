@@ -1,0 +1,30 @@
+{
+  "id": "form_1791631952093",
+  "name": "Untitled Form",
+  "slug": "untitled-form-d344a",
+  "status": "published",
+  "currentDraftVersion": 2,
+  "publishedVersion": 1,
+  "createdAt": "2026-10-10T11:33:17.540Z",
+  "updatedAt": "2026-10-10T11:33:17.621Z",
+  "publishedAt": "2026-10-10T11:33:17.621Z",
+  "primaryEntity": null,
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

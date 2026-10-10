@@ -1,0 +1,221 @@
+{
+  "version": "1.0.0",
+  "id": "form_1789136297221",
+  "title": "detalis and  weight",
+  "description": "",
+  "settings": {
+    "submitButtonText": "Submit Form",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Clear Form",
+    "theme": {
+      "primaryColor": "#3b82f6",
+      "borderRadius": "md",
+      "fontFamily": "Inter, system-ui, sans-serif"
+    },
+    "enableFetchRecord": true,
+    "primaryEntity": "PATIENT",
+    "primaryKeyColumn": "PATIENT_ID"
+  },
+  "fields": {
+    "fld_1789136310079_699ze": {
+      "id": "fld_1789136310079_699ze",
+      "name": "patient name",
+      "type": "text",
+      "label": "name",
+      "placeholder": "Enter text...",
+      "defaultValue": "",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1789136316869_ytopr": {
+      "id": "fld_1789136316869_ytopr",
+      "name": "dob",
+      "type": "date",
+      "label": "dob",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1789140553050_4isu7": {
+      "id": "fld_1789140553050_4isu7",
+      "name": "weight",
+      "type": "number",
+      "label": "weight",
+      "placeholder": "0",
+      "defaultValue": 0,
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1789140582510_lvz79": {
+      "id": "fld_1789140582510_lvz79",
+      "name": "gender",
+      "type": "text",
+      "label": "gender",
+      "placeholder": "Enter text...",
+      "defaultValue": "",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1789222192359_3j560": {
+      "id": "fld_1789222192359_3j560",
+      "name": "mrno",
+      "type": "number",
+      "label": "MRNO",
+      "placeholder": "0",
+      "defaultValue": 0,
+      "validation": {
+        "required": true
+      },
+      "dataBinding": null
+    },
+    "fld_1789278266695_5b51p": {
+      "id": "fld_1789278266695_5b51p",
+      "name": "height",
+      "type": "number",
+      "label": "height",
+      "placeholder": "0",
+      "defaultValue": 0,
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_1789136299277",
+      "title": "General Information",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789136299277",
+          "columns": [
+            {
+              "id": "col_1789222189267_0",
+              "width": 6,
+              "fieldIds": [
+                "fld_1789136310079_699ze"
+              ]
+            },
+            {
+              "id": "col_1789222189267_1",
+              "width": 6,
+              "fieldIds": [
+                "fld_1789222192359_3j560"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_1789136314700_ja9",
+          "columns": [
+            {
+              "id": "col_1789136314700_0",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789136316869_ytopr"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_1789140542908_dic",
+          "columns": [
+            {
+              "id": "col_1789140542908_0",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789140553050_4isu7"
+              ]
+            }
+          ]
+        }
+      ],
+      "enableFetchRecord": true,
+      "fetchEntity": "PATIENT",
+      "fetchPrimaryKey": "PATIENT_ID"
+    },
+    {
+      "id": "sec_1789140570360",
+      "title": "Section 2",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789140570360",
+          "columns": [
+            {
+              "id": "col_1789140570360",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789140582510_lvz79"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_1789278261252",
+      "title": "Section 3",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789278261252",
+          "columns": [
+            {
+              "id": "col_1789278261252",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789278266695_5b51p"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sqlQueries": [
+    {
+      "id": "query_1789278963593_hglv",
+      "name": "patient_lookup",
+      "operation": "select",
+      "sql": "SELECT\n    p.patient_id,\n    p.mrno,\n    p.firstname,\n    p.middlename,\n    p.lastname,\n    p.dob,\n    (\n        SELECT vs.current_value\n        FROM (\n            SELECT current_value\n            FROM vitalsign\n            WHERE patient_id = p.patient_id\n              AND UPPER(TRIM(parameter_value)) = 'WEIGHT'\n              AND current_value IS NOT NULL\n            ORDER BY entered_datetime DESC\n        ) vs\n        WHERE ROWNUM = 1\n    ) AS weight,\n    (\n        SELECT ht.current_value\n        FROM (\n            SELECT current_value\n            FROM vitalsign\n            WHERE patient_id = p.patient_id\n              AND UPPER(TRIM(parameter_value)) = 'HEIGHT'\n              AND current_value IS NOT NULL\n            ORDER BY entered_datetime DESC\n        ) ht\n        WHERE ROWNUM = 1\n    ) AS height\nFROM patient p\nWHERE p.mrno = :mrno",
+      "enabled": true,
+      "executeOn": "fieldChange",
+      "triggerFieldKey": "mrno",
+      "parameterMappings": {
+        "mrno": {
+          "source": "form",
+          "fieldKey": "mrno"
+        }
+      },
+      "resultMappings": {
+        "patientId": "",
+        "mrno": "mrno",
+        "firstName": "",
+        "lastName": "",
+        "gender": "gender",
+        "firstname": "patient name",
+        "weight": "weight",
+        "height": "height",
+        "dob": "dob",
+        "PATIENT_ID": "",
+        "MRNO": "mrno",
+        "FIRSTNAME": "",
+        "MIDDLENAME": "",
+        "LASTNAME": "",
+        "DOB": "dob",
+        "WEIGHT": "weight",
+        "HEIGHT": "height"
+      }
+    }
+  ]
+}

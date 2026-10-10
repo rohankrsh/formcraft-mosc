@@ -1,0 +1,30 @@
+{
+  "id": "form_multi_queries_1789197970244",
+  "name": "Multi Query Form",
+  "slug": "multi-query-form-ede2f",
+  "status": "draft",
+  "currentDraftVersion": 1,
+  "publishedVersion": null,
+  "createdAt": "2026-09-12T07:26:10.245Z",
+  "updatedAt": "2026-09-12T07:26:10.245Z",
+  "publishedAt": null,
+  "primaryEntity": null,
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

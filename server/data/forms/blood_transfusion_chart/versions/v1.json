@@ -1,0 +1,435 @@
+{
+  "version": "1.0.0",
+  "id": "blood_transfusion_chart",
+  "title": "BLOOD TRANSFUSION CHART",
+  "description": "Dr. Suresh Advani's Smita Memorial Hospital and Research Center",
+  "settings": {
+    "submitButtonText": "Save Chart",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Reset",
+    "theme": {
+      "primaryColor": "#1e3a8a",
+      "borderRadius": "md",
+      "fontFamily": "Inter, sans-serif"
+    }
+  },
+  "fields": {
+    "fld_patient_name": {
+      "id": "fld_patient_name",
+      "name": "patient_name",
+      "type": "text",
+      "label": "PATIENT NAME",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_bed_no": {
+      "id": "fld_bed_no",
+      "name": "bed_no",
+      "type": "text",
+      "label": "BED NO."
+    },
+    "fld_date": {
+      "id": "fld_date",
+      "name": "date",
+      "type": "date",
+      "label": "DATE"
+    },
+    "fld_ip_no": {
+      "id": "fld_ip_no",
+      "name": "ip_no",
+      "type": "text",
+      "label": "IP NO."
+    },
+    "fld_sex": {
+      "id": "fld_sex",
+      "name": "sex",
+      "type": "select",
+      "label": "SEX",
+      "options": [
+        {
+          "label": "Male",
+          "value": "M"
+        },
+        {
+          "label": "Female",
+          "value": "F"
+        },
+        {
+          "label": "Other",
+          "value": "O"
+        }
+      ]
+    },
+    "fld_age": {
+      "id": "fld_age",
+      "name": "age",
+      "type": "number",
+      "label": "AGE"
+    },
+    "fld_blood_grouping": {
+      "id": "fld_blood_grouping",
+      "name": "blood_grouping",
+      "type": "select",
+      "label": "BLOOD GROUPING",
+      "options": [
+        {
+          "label": "A+",
+          "value": "A+"
+        },
+        {
+          "label": "A-",
+          "value": "A-"
+        },
+        {
+          "label": "B+",
+          "value": "B+"
+        },
+        {
+          "label": "B-",
+          "value": "B-"
+        },
+        {
+          "label": "AB+",
+          "value": "AB+"
+        },
+        {
+          "label": "AB-",
+          "value": "AB-"
+        },
+        {
+          "label": "O+",
+          "value": "O+"
+        },
+        {
+          "label": "O-",
+          "value": "O-"
+        }
+      ]
+    },
+    "fld_blood_component": {
+      "id": "fld_blood_component",
+      "name": "blood_component",
+      "type": "text",
+      "label": "BLOOD COMPONENT TO BE TRANSFUSED"
+    },
+    "fld_blood_bag_no": {
+      "id": "fld_blood_bag_no",
+      "name": "blood_bag_no",
+      "type": "text",
+      "label": "BLOOD BAG NO."
+    },
+    "fld_date_collection": {
+      "id": "fld_date_collection",
+      "name": "date_collection_time",
+      "type": "text",
+      "label": "DATE OF COLLECTION & TIME",
+      "placeholder": "DD/MM/YYYY HH:MM"
+    },
+    "fld_date_expiry": {
+      "id": "fld_date_expiry",
+      "name": "date_expiry",
+      "type": "date",
+      "label": "DATE OF EXPIRY"
+    },
+    "fld_cross_matching_by": {
+      "id": "fld_cross_matching_by",
+      "name": "cross_matching_by",
+      "type": "text",
+      "label": "CROSS MATCHING DONE BY"
+    },
+    "fld_cross_checked_by": {
+      "id": "fld_cross_checked_by",
+      "name": "cross_checked_by",
+      "type": "text",
+      "label": "CROSS CHECKED BY"
+    },
+    "fld_checked_started_by": {
+      "id": "fld_checked_started_by",
+      "name": "checked_started_by",
+      "type": "text",
+      "label": "BLOOD TRANSFUSION CHECKED AND STARTED BY"
+    },
+    "fld_premedications": {
+      "id": "fld_premedications",
+      "name": "premedications",
+      "type": "textarea",
+      "label": "PREMEDICATIONS"
+    },
+    "fld_transfusion_started_at": {
+      "id": "fld_transfusion_started_at",
+      "name": "transfusion_started_at",
+      "type": "text",
+      "label": "TRANSFUSION STARTED AT",
+      "placeholder": "HH:MM AM/PM"
+    },
+    "fld_monitoring_grid": {
+      "id": "fld_monitoring_grid",
+      "name": "monitoring_grid",
+      "type": "table",
+      "label": "VITAL SIGNS & OBSERVATIONS MONITORING",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "col_parameter",
+            "label": "PARAMETER / VITAL",
+            "type": "text"
+          },
+          {
+            "id": "col_before_transfusion",
+            "label": "BEFORE TRANSFUSION",
+            "type": "text"
+          },
+          {
+            "id": "col_after_15_min",
+            "label": "AFTER 15 MINUTES",
+            "type": "text"
+          },
+          {
+            "id": "col_after_1_hr",
+            "label": "AFTER 1 HOUR",
+            "type": "text"
+          },
+          {
+            "id": "col_after_2_hrs",
+            "label": "AFTER 2 HOURS",
+            "type": "text"
+          },
+          {
+            "id": "col_after_3_hrs",
+            "label": "AFTER 3 HOURS",
+            "type": "text"
+          },
+          {
+            "id": "col_after_4_hrs",
+            "label": "AFTER 4 HOURS",
+            "type": "text"
+          }
+        ],
+        "defaultRows": [
+          {
+            "col_parameter": "GENERAL CONDITION"
+          },
+          {
+            "col_parameter": "TEMPERATURE"
+          },
+          {
+            "col_parameter": "PULSE RATE"
+          },
+          {
+            "col_parameter": "RESPIRATION RATE"
+          },
+          {
+            "col_parameter": "BLOOD PRESSURE"
+          },
+          {
+            "col_parameter": "SATURATION"
+          },
+          {
+            "col_parameter": "URINE OUTPUT"
+          }
+        ],
+        "allowAddRows": true
+      }
+    },
+    "fld_transfusion_finished_at": {
+      "id": "fld_transfusion_finished_at",
+      "name": "transfusion_finished_at",
+      "type": "text",
+      "label": "BLOOD TRANSFUSION FINISHED AT",
+      "placeholder": "HH:MM AM/PM"
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_patient_info",
+      "title": "Patient & Transfusion Details",
+      "rows": [
+        {
+          "id": "row_1",
+          "columns": [
+            {
+              "id": "col_1_1",
+              "width": 8,
+              "fieldIds": [
+                "fld_patient_name"
+              ]
+            },
+            {
+              "id": "col_1_2",
+              "width": 4,
+              "fieldIds": [
+                "fld_bed_no"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_2",
+          "columns": [
+            {
+              "id": "col_2_1",
+              "width": 3,
+              "fieldIds": [
+                "fld_date"
+              ]
+            },
+            {
+              "id": "col_2_2",
+              "width": 3,
+              "fieldIds": [
+                "fld_ip_no"
+              ]
+            },
+            {
+              "id": "col_2_3",
+              "width": 3,
+              "fieldIds": [
+                "fld_sex"
+              ]
+            },
+            {
+              "id": "col_2_4",
+              "width": 3,
+              "fieldIds": [
+                "fld_age"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_3",
+          "columns": [
+            {
+              "id": "col_3_1",
+              "width": 6,
+              "fieldIds": [
+                "fld_blood_grouping"
+              ]
+            },
+            {
+              "id": "col_3_2",
+              "width": 6,
+              "fieldIds": [
+                "fld_blood_component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_4",
+          "columns": [
+            {
+              "id": "col_4_1",
+              "width": 4,
+              "fieldIds": [
+                "fld_blood_bag_no"
+              ]
+            },
+            {
+              "id": "col_4_2",
+              "width": 4,
+              "fieldIds": [
+                "fld_date_collection"
+              ]
+            },
+            {
+              "id": "col_4_3",
+              "width": 4,
+              "fieldIds": [
+                "fld_date_expiry"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_5",
+          "columns": [
+            {
+              "id": "col_5_1",
+              "width": 6,
+              "fieldIds": [
+                "fld_cross_matching_by"
+              ]
+            },
+            {
+              "id": "col_5_2",
+              "width": 6,
+              "fieldIds": [
+                "fld_cross_checked_by"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_6",
+          "columns": [
+            {
+              "id": "col_6_1",
+              "width": 12,
+              "fieldIds": [
+                "fld_checked_started_by"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_7",
+          "columns": [
+            {
+              "id": "col_7_1",
+              "width": 8,
+              "fieldIds": [
+                "fld_premedications"
+              ]
+            },
+            {
+              "id": "col_7_2",
+              "width": 4,
+              "fieldIds": [
+                "fld_transfusion_started_at"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_monitoring",
+      "title": "Transfusion Monitoring Chart",
+      "rows": [
+        {
+          "id": "row_mon_1",
+          "columns": [
+            {
+              "id": "col_mon_1_1",
+              "width": 12,
+              "fieldIds": [
+                "fld_monitoring_grid"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_completion",
+      "title": "Completion Status",
+      "rows": [
+        {
+          "id": "row_comp_1",
+          "columns": [
+            {
+              "id": "col_comp_1_1",
+              "width": 12,
+              "fieldIds": [
+                "fld_transfusion_finished_at"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

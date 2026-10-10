@@ -1,0 +1,30 @@
+{
+  "id": "form_1789136297221",
+  "name": "detalis and  weight",
+  "slug": "untitled-form-3a55a",
+  "status": "published",
+  "currentDraftVersion": 2,
+  "publishedVersion": 1,
+  "createdAt": "2026-09-11T15:55:14.535Z",
+  "updatedAt": "2026-09-16T10:31:30.160Z",
+  "publishedAt": "2026-09-16T10:31:30.160Z",
+  "primaryEntity": "PATIENT",
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

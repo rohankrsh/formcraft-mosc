@@ -1,0 +1,101 @@
+{
+  "version": "1.0.0",
+  "id": "form_verify_population_1789197970078",
+  "title": "Population Verification Form",
+  "settings": {
+    "submitButtonText": "Submit",
+    "submitAction": "download_json",
+    "showResetButton": false,
+    "primaryEntity": "PATIENT",
+    "primaryKeyColumn": "PATIENT_ID",
+    "enableFetchRecord": true
+  },
+  "fields": {
+    "fld_pid": {
+      "id": "fld_pid",
+      "name": "patientId",
+      "type": "number",
+      "label": "Patient ID"
+    },
+    "fld_mrno": {
+      "id": "fld_mrno",
+      "name": "mrno",
+      "type": "text",
+      "label": "MR Number"
+    },
+    "fld_fn": {
+      "id": "fld_fn",
+      "name": "firstName",
+      "type": "text",
+      "label": "First Name"
+    },
+    "fld_ln": {
+      "id": "fld_ln",
+      "name": "lastName",
+      "type": "text",
+      "label": "Last Name"
+    },
+    "fld_unrelated": {
+      "id": "fld_unrelated",
+      "name": "notes",
+      "type": "textarea",
+      "label": "Doctor Notes"
+    },
+    "fld_1789199274327_157fn": {
+      "id": "fld_1789199274327_157fn",
+      "name": "number_podj",
+      "type": "number",
+      "label": "Number Input",
+      "placeholder": "0",
+      "defaultValue": 0,
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_1789199268902",
+      "title": "General Information",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789199268902",
+          "columns": [
+            {
+              "id": "col_1789199268902",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789199274327_157fn"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sqlQueries": [
+    {
+      "id": "query_lookup_1789197970078",
+      "name": "patient_lookup",
+      "operation": "select",
+      "sql": "SELECT p.PATIENT_ID AS \"patientId\", p.MRNO AS \"mrno\", p.FIRSTNAME AS \"firstName\", p.LASTNAME AS \"lastName\" FROM PATIENT p WHERE p.MRNO = :mrno",
+      "enabled": true,
+      "parameterMappings": {
+        "mrno": {
+          "source": "form",
+          "fieldKey": "mrno"
+        }
+      },
+      "resultMappings": {
+        "patientId": "patientId",
+        "mrno": "mrno",
+        "firstName": "firstName",
+        "lastName": "lastName"
+      },
+      "executeOn": "fieldChange",
+      "triggerFieldKey": "mrno"
+    }
+  ]
+}

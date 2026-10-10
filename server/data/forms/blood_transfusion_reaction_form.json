@@ -1,0 +1,789 @@
+{
+  "version": "1.0.0",
+  "id": "blood_transfusion_reaction_form",
+  "title": "Blood Transfusion Reaction Form",
+  "description": "Smita Memorial Hospital and Research Center - License No: 09/SLA/2022",
+  "settings": {
+    "submitButtonText": "Submit Form",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Reset Form",
+    "theme": {
+      "primaryColor": "#8B0000",
+      "borderRadius": "sm",
+      "fontFamily": "sans-serif"
+    },
+    "primaryEntity": "PATIENT",
+    "primaryKeyColumn": "PATIENT_ID"
+  },
+  "fields": {
+    "fld_patient_name": {
+      "id": "fld_patient_name",
+      "name": "patient_name",
+      "type": "text",
+      "label": "Patient's Name",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_age": {
+      "id": "fld_age",
+      "name": "age",
+      "type": "number",
+      "label": "Age",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_sex": {
+      "id": "fld_sex",
+      "name": "sex",
+      "type": "select",
+      "label": "Sex",
+      "options": [
+        {
+          "label": "Male",
+          "value": "Male"
+        },
+        {
+          "label": "Female",
+          "value": "Female"
+        },
+        {
+          "label": "Other",
+          "value": "Other"
+        }
+      ],
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_blood_group": {
+      "id": "fld_blood_group",
+      "name": "blood_group",
+      "type": "text",
+      "label": "Blood Group"
+    },
+    "fld_mr_no": {
+      "id": "fld_mr_no",
+      "name": "mr_no",
+      "type": "text",
+      "label": "MR. No.",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_bed_ward_no": {
+      "id": "fld_bed_ward_no",
+      "name": "bed_ward_no",
+      "type": "text",
+      "label": "Bed No./Ward No."
+    },
+    "fld_consultant_name": {
+      "id": "fld_consultant_name",
+      "name": "consultant_name",
+      "type": "text",
+      "label": "Consultant Name"
+    },
+    "fld_diagnosis": {
+      "id": "fld_diagnosis",
+      "name": "diagnosis",
+      "type": "text",
+      "label": "Diagnosis"
+    },
+    "fld_bag_no_group": {
+      "id": "fld_bag_no_group",
+      "name": "bag_no_blood_group",
+      "type": "text",
+      "label": "Bag no/blood group"
+    },
+    "fld_product_used": {
+      "id": "fld_product_used",
+      "name": "product_used",
+      "type": "select",
+      "label": "Product used",
+      "options": [
+        {
+          "label": "PRBC",
+          "value": "PRBC"
+        },
+        {
+          "label": "FFP",
+          "value": "FFP"
+        },
+        {
+          "label": "PLT",
+          "value": "PLT"
+        }
+      ]
+    },
+    "fld_clerical_error": {
+      "id": "fld_clerical_error",
+      "name": "clerical_error",
+      "type": "radio",
+      "label": "Any clerical error",
+      "options": [
+        {
+          "label": "Yes",
+          "value": "Yes"
+        },
+        {
+          "label": "No",
+          "value": "No"
+        }
+      ]
+    },
+    "fld_prev_transfusion": {
+      "id": "fld_prev_transfusion",
+      "name": "previous_transfusion",
+      "type": "radio",
+      "label": "Previous transfusion",
+      "options": [
+        {
+          "label": "Yes",
+          "value": "Yes"
+        },
+        {
+          "label": "No",
+          "value": "No"
+        }
+      ]
+    },
+    "fld_transfusion_start": {
+      "id": "fld_transfusion_start",
+      "name": "transfusion_started_at",
+      "type": "text",
+      "label": "Transfusion started at",
+      "placeholder": "HH:MM / Date"
+    },
+    "fld_transfusion_stop": {
+      "id": "fld_transfusion_stop",
+      "name": "transfusion_stopped_at",
+      "type": "text",
+      "label": "Transfusion stopped at",
+      "placeholder": "HH:MM / Date"
+    },
+    "fld_volume_transfused": {
+      "id": "fld_volume_transfused",
+      "name": "volume_transfused",
+      "type": "text",
+      "label": "Volume transfused"
+    },
+    "fld_volume_remaining": {
+      "id": "fld_volume_remaining",
+      "name": "volume_remaining_in_bag",
+      "type": "text",
+      "label": "Volume remaining in bag"
+    },
+    "fld_blood_colour": {
+      "id": "fld_blood_colour",
+      "name": "blood_colour_bag_tubing",
+      "type": "text",
+      "label": "Colour of blood in bag or tubing"
+    },
+    "fld_blood_warmed": {
+      "id": "fld_blood_warmed",
+      "name": "blood_warmed_before_transfusion",
+      "type": "radio",
+      "label": "Was the blood/blood product warmed before transfusion?",
+      "options": [
+        {
+          "label": "Yes",
+          "value": "Yes"
+        },
+        {
+          "label": "No",
+          "value": "No"
+        }
+      ]
+    },
+    "fld_product_kept_where": {
+      "id": "fld_product_kept_where",
+      "name": "product_kept_location",
+      "type": "text",
+      "label": "Just before transfusion, where was product kept?",
+      "placeholder": "Ward/OT/etc."
+    },
+    "fld_storage_temp": {
+      "id": "fld_storage_temp",
+      "name": "storage_temperature",
+      "type": "text",
+      "label": "At what temperature was the product stored after collecting from blood bank"
+    },
+    "fld_storage_duration": {
+      "id": "fld_storage_duration",
+      "name": "storage_duration_if_yes",
+      "type": "text",
+      "label": "If yes, for how long"
+    },
+    "fld_pre_medication": {
+      "id": "fld_pre_medication",
+      "name": "pre_medication_given",
+      "type": "textarea",
+      "label": "Pre Medication given - Yes/No, if Yes details"
+    },
+    "fld_other_reaction": {
+      "id": "fld_other_reaction",
+      "name": "other_reaction_details",
+      "type": "textarea",
+      "label": "Any other reaction details"
+    },
+    "fld_sym_fever_chills": {
+      "id": "fld_sym_fever_chills",
+      "name": "sym_fever_chills",
+      "type": "checkbox",
+      "label": "Fever/Chills"
+    },
+    "fld_sym_shock": {
+      "id": "fld_sym_shock",
+      "name": "sym_shock",
+      "type": "checkbox",
+      "label": "Shock"
+    },
+    "fld_sym_vomiting": {
+      "id": "fld_sym_vomiting",
+      "name": "sym_vomiting",
+      "type": "checkbox",
+      "label": "Vomiting"
+    },
+    "fld_sym_anaphylactic": {
+      "id": "fld_sym_anaphylactic",
+      "name": "sym_anaphylactic",
+      "type": "checkbox",
+      "label": "Anaphylactic Reaction"
+    },
+    "fld_sym_dyspnoea": {
+      "id": "fld_sym_dyspnoea",
+      "name": "sym_dyspnoea",
+      "type": "checkbox",
+      "label": "Dyspnoea"
+    },
+    "fld_sym_pain_site": {
+      "id": "fld_sym_pain_site",
+      "name": "sym_pain_site",
+      "type": "checkbox",
+      "label": "Pain At The Infusion Site"
+    },
+    "fld_sym_back_pain": {
+      "id": "fld_sym_back_pain",
+      "name": "sym_back_pain",
+      "type": "checkbox",
+      "label": "Back Pain"
+    },
+    "fld_sym_oliguria": {
+      "id": "fld_sym_oliguria",
+      "name": "sym_oliguria_anuria",
+      "type": "checkbox",
+      "label": "Oliguria/Anuria"
+    },
+    "fld_sym_urticaria": {
+      "id": "fld_sym_urticaria",
+      "name": "sym_urticaria",
+      "type": "checkbox",
+      "label": "Urticaria"
+    },
+    "fld_sym_haematuria": {
+      "id": "fld_sym_haematuria",
+      "name": "sym_haematuria",
+      "type": "checkbox",
+      "label": "Haematuria"
+    },
+    "fld_sym_nausea": {
+      "id": "fld_sym_nausea",
+      "name": "sym_nausea",
+      "type": "checkbox",
+      "label": "Nausea"
+    },
+    "fld_vitals_table": {
+      "id": "fld_vitals_table",
+      "name": "vitals_and_lab_findings",
+      "type": "table",
+      "label": "Vital Signs & Laboratory Findings (If Available)",
+      "tableConfig": {
+        "allowAddRows": false,
+        "columns": [
+          {
+            "id": "col_findings",
+            "label": "Findings",
+            "type": "text"
+          },
+          {
+            "id": "col_temp",
+            "label": "Temperature",
+            "type": "text"
+          },
+          {
+            "id": "col_pulse",
+            "label": "Pulse",
+            "type": "text"
+          },
+          {
+            "id": "col_bp",
+            "label": "BP",
+            "type": "text"
+          },
+          {
+            "id": "col_hb",
+            "label": "HB",
+            "type": "text"
+          },
+          {
+            "id": "col_pcv",
+            "label": "PCV",
+            "type": "text"
+          },
+          {
+            "id": "col_bilirubin_total",
+            "label": "Bilirubin (Total)",
+            "type": "text"
+          },
+          {
+            "id": "col_bilirubin_direct",
+            "label": "Bilirubin (Direct)",
+            "type": "text"
+          }
+        ],
+        "defaultRows": [
+          {
+            "col_findings": "Pre Transfusion"
+          },
+          {
+            "col_findings": "Post Transfusion"
+          }
+        ]
+      }
+    },
+    "fld_nurse_sign": {
+      "id": "fld_nurse_sign",
+      "name": "nurse_sign_date",
+      "type": "text",
+      "label": "NAME/ID.NO/SIGN OF THE NURSE & DATE"
+    },
+    "fld_clinician_sign": {
+      "id": "fld_clinician_sign",
+      "name": "clinician_sign_date",
+      "type": "text",
+      "label": "NAME/ID.NO/SIGN OF THE CLINICIAN & DATE"
+    },
+    "fld_storage_reported_datetime": {
+      "id": "fld_storage_reported_datetime",
+      "name": "storage_reported_datetime",
+      "type": "text",
+      "label": "Transfusion Reaction Reported Date and Time:"
+    },
+    "fld_storage_received_datetime": {
+      "id": "fld_storage_received_datetime",
+      "name": "storage_received_datetime",
+      "type": "text",
+      "label": "Blood bag Received by: Date and Time:"
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_patient_info",
+      "title": "Patient Information",
+      "rows": [
+        {
+          "id": "row_pat_1",
+          "columns": [
+            {
+              "id": "col_pat_name",
+              "width": 6,
+              "fieldIds": [
+                "fld_patient_name"
+              ]
+            },
+            {
+              "id": "col_pat_age",
+              "width": 2,
+              "fieldIds": [
+                "fld_age"
+              ]
+            },
+            {
+              "id": "col_pat_sex",
+              "width": 2,
+              "fieldIds": [
+                "fld_sex"
+              ]
+            },
+            {
+              "id": "col_pat_bg",
+              "width": 2,
+              "fieldIds": [
+                "fld_blood_group"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pat_2",
+          "columns": [
+            {
+              "id": "col_pat_mr",
+              "width": 6,
+              "fieldIds": [
+                "fld_mr_no"
+              ]
+            },
+            {
+              "id": "col_pat_bed",
+              "width": 6,
+              "fieldIds": [
+                "fld_bed_ward_no"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pat_3",
+          "columns": [
+            {
+              "id": "col_pat_consultant",
+              "width": 6,
+              "fieldIds": [
+                "fld_consultant_name"
+              ]
+            },
+            {
+              "id": "col_pat_diagnosis",
+              "width": 6,
+              "fieldIds": [
+                "fld_diagnosis"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_transfusion_details",
+      "title": "Transfusion Details",
+      "description": "(TO BE FILLED BY THE CLINICIAN OR STAFF NURSE)",
+      "rows": [
+        {
+          "id": "row_td_1",
+          "columns": [
+            {
+              "id": "col_td_bag",
+              "width": 6,
+              "fieldIds": [
+                "fld_bag_no_group"
+              ]
+            },
+            {
+              "id": "col_td_product",
+              "width": 6,
+              "fieldIds": [
+                "fld_product_used"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_2",
+          "columns": [
+            {
+              "id": "col_td_clerical",
+              "width": 6,
+              "fieldIds": [
+                "fld_clerical_error"
+              ]
+            },
+            {
+              "id": "col_td_prev",
+              "width": 6,
+              "fieldIds": [
+                "fld_prev_transfusion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_3",
+          "columns": [
+            {
+              "id": "col_td_start",
+              "width": 6,
+              "fieldIds": [
+                "fld_transfusion_start"
+              ]
+            },
+            {
+              "id": "col_td_stop",
+              "width": 6,
+              "fieldIds": [
+                "fld_transfusion_stop"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_4",
+          "columns": [
+            {
+              "id": "col_td_vol_trans",
+              "width": 6,
+              "fieldIds": [
+                "fld_volume_transfused"
+              ]
+            },
+            {
+              "id": "col_td_vol_rem",
+              "width": 6,
+              "fieldIds": [
+                "fld_volume_remaining"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_5",
+          "columns": [
+            {
+              "id": "col_td_colour",
+              "width": 12,
+              "fieldIds": [
+                "fld_blood_colour"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_6",
+          "columns": [
+            {
+              "id": "col_td_warmed",
+              "width": 12,
+              "fieldIds": [
+                "fld_blood_warmed"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_7",
+          "columns": [
+            {
+              "id": "col_td_kept",
+              "width": 4,
+              "fieldIds": [
+                "fld_product_kept_where"
+              ]
+            },
+            {
+              "id": "col_td_temp",
+              "width": 4,
+              "fieldIds": [
+                "fld_storage_temp"
+              ]
+            },
+            {
+              "id": "col_td_duration",
+              "width": 4,
+              "fieldIds": [
+                "fld_storage_duration"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_8",
+          "columns": [
+            {
+              "id": "col_td_premed",
+              "width": 12,
+              "fieldIds": [
+                "fld_pre_medication"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_td_9",
+          "columns": [
+            {
+              "id": "col_td_other",
+              "width": 12,
+              "fieldIds": [
+                "fld_other_reaction"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_symptoms",
+      "title": "Tick the Appropriate",
+      "rows": [
+        {
+          "id": "row_sym_1",
+          "columns": [
+            {
+              "id": "col_sym_fever",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_fever_chills"
+              ]
+            },
+            {
+              "id": "col_sym_shock",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_shock"
+              ]
+            },
+            {
+              "id": "col_sym_vomit",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_vomiting"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_sym_2",
+          "columns": [
+            {
+              "id": "col_sym_anaph",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_anaphylactic"
+              ]
+            },
+            {
+              "id": "col_sym_dysp",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_dyspnoea"
+              ]
+            },
+            {
+              "id": "col_sym_pain",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_pain_site"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_sym_3",
+          "columns": [
+            {
+              "id": "col_sym_back",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_back_pain"
+              ]
+            },
+            {
+              "id": "col_sym_olig",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_oliguria"
+              ]
+            },
+            {
+              "id": "col_sym_urtic",
+              "width": 4,
+              "fieldIds": [
+                "fld_sym_urticaria"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_sym_4",
+          "columns": [
+            {
+              "id": "col_sym_haem",
+              "width": 6,
+              "fieldIds": [
+                "fld_sym_haematuria"
+              ]
+            },
+            {
+              "id": "col_sym_nausea",
+              "width": 6,
+              "fieldIds": [
+                "fld_sym_nausea"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_vitals",
+      "title": "Vital Signs & Laboratory Findings",
+      "rows": [
+        {
+          "id": "row_vitals_table",
+          "columns": [
+            {
+              "id": "col_vitals_table",
+              "width": 12,
+              "fieldIds": [
+                "fld_vitals_table"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_signatures",
+      "title": "Signatures & Verification",
+      "description": "Please provide the following samples along with this duly filled form: Compatibility/issue report along with the unit, post transfusion blood sample (clotted/edta) and urine sample.",
+      "rows": [
+        {
+          "id": "row_sig_1",
+          "columns": [
+            {
+              "id": "col_sig_nurse",
+              "width": 6,
+              "fieldIds": [
+                "fld_nurse_sign"
+              ]
+            },
+            {
+              "id": "col_sig_clinician",
+              "width": 6,
+              "fieldIds": [
+                "fld_clinician_sign"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_blood_storage",
+      "title": "Blood Storage Use Only",
+      "rows": [
+        {
+          "id": "row_bs_1",
+          "columns": [
+            {
+              "id": "col_bs_reported",
+              "width": 6,
+              "fieldIds": [
+                "fld_storage_reported_datetime"
+              ]
+            },
+            {
+              "id": "col_bs_received",
+              "width": 6,
+              "fieldIds": [
+                "fld_storage_received_datetime"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

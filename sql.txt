@@ -1,0 +1,33 @@
+SELECT
+    p.patient_id,
+    p.mrno,
+    p.firstname,
+    p.middlename,
+    p.lastname,
+    p.dob,
+    (
+        SELECT vs.current_value
+        FROM (
+            SELECT current_value
+            FROM vitalsign
+            WHERE patient_id = p.patient_id
+              AND UPPER(TRIM(parameter_value)) = 'WEIGHT'
+              AND current_value IS NOT NULL
+            ORDER BY entered_datetime DESC
+        ) vs
+        WHERE ROWNUM = 1
+    ) AS weight,
+    (
+        SELECT ht.current_value
+        FROM (
+            SELECT current_value
+            FROM vitalsign
+            WHERE patient_id = p.patient_id
+              AND UPPER(TRIM(parameter_value)) = 'HEIGHT'
+              AND current_value IS NOT NULL
+            ORDER BY entered_datetime DESC
+        ) ht
+        WHERE ROWNUM = 1
+    ) AS height
+FROM patient p
+WHERE p.mrno = :mrno

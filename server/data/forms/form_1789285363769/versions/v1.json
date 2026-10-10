@@ -1,0 +1,148 @@
+{
+  "version": "1.0.0",
+  "id": "form_1789285363769",
+  "title": "item details ",
+  "description": "this  hard asf",
+  "settings": {
+    "submitButtonText": "Submit Form",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Clear Form",
+    "theme": {
+      "primaryColor": "#3b82f6",
+      "borderRadius": "md",
+      "fontFamily": "Inter, system-ui, sans-serif"
+    }
+  },
+  "fields": {
+    "fld_1789285464240_gnauj": {
+      "id": "fld_1789285464240_gnauj",
+      "name": "id",
+      "type": "number",
+      "label": "Item ID",
+      "placeholder": "0",
+      "defaultValue": 0,
+      "validation": {
+        "required": true
+      },
+      "dataBinding": null
+    },
+    "fld_1789285498312_kh3zx": {
+      "id": "fld_1789285498312_kh3zx",
+      "name": "name",
+      "type": "text",
+      "label": "Name",
+      "placeholder": "Enter text...",
+      "defaultValue": "",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1789285527836_lecy5": {
+      "id": "fld_1789285527836_lecy5",
+      "name": "LASTPURCHASERATE",
+      "type": "number",
+      "label": "last rate",
+      "placeholder": "0",
+      "defaultValue": 0,
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_1789285389121",
+      "title": "General Information",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789285389121",
+          "columns": [
+            {
+              "id": "col_1789285389121",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789285464240_gnauj"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_1789285493325",
+      "title": "Section 2",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789285493325",
+          "columns": [
+            {
+              "id": "col_1789285493325",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789285498312_kh3zx"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_1789285521736",
+      "title": "Section 3",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1789285521736",
+          "columns": [
+            {
+              "id": "col_1789285521736",
+              "width": 12,
+              "fieldIds": [
+                "fld_1789285527836_lecy5"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sqlQueries": [
+    {
+      "id": "query_1789285563107_uo06",
+      "name": "patient_lookup",
+      "operation": "select",
+      "sql": "SELECT\n    i.id,\n    i.name,\n    i.lastpurchaserate\nFROM item i\nWHERE i.id = :id;",
+      "enabled": true,
+      "executeOn": "fieldChange",
+      "triggerFieldKey": "id",
+      "parameterMappings": {
+        "mrno": {
+          "source": "form",
+          "fieldKey": "id"
+        },
+        "id": {
+          "source": "form",
+          "fieldKey": "id"
+        }
+      },
+      "resultMappings": {
+        "patientId": "",
+        "mrno": "",
+        "firstName": "",
+        "lastName": "",
+        "gender": "",
+        "id": "id",
+        "lastpurchaserate": "LASTPURCHASERATE",
+        "name": "name",
+        "ID": "id",
+        "NAME": "name",
+        "LASTPURCHASERATE": "LASTPURCHASERATE"
+      }
+    }
+  ]
+}

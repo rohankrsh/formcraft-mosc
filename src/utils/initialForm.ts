@@ -1,0 +1,313 @@
+import type { FormDefinition } from '../types/schema';
+
+export const createEmptyForm = (): FormDefinition => ({
+  version: '1.0.0',
+  id: `form_${Date.now()}`,
+  title: 'Untitled Form',
+  description: '',
+  settings: {
+    submitButtonText: 'Submit Form',
+    submitAction: 'download_json',
+    showResetButton: true,
+    resetButtonText: 'Clear Form',
+    patientFormMode: 'NEW_RECORD',
+    theme: {
+      primaryColor: '#3b82f6',
+      borderRadius: 'md',
+      fontFamily: 'Inter, system-ui, sans-serif',
+    },
+  },
+  fields: {},
+  layout: [],
+});
+
+
+export const defaultInitialForm: FormDefinition = {
+  version: '1.0.0',
+  id: 'form_patient_intake_001',
+  title: 'Patient Intake & Health Questionnaire',
+  description: 'Please complete all required fields prior to your appointment.',
+  settings: {
+    submitButtonText: 'Submit & Download Record',
+    submitAction: 'download_json',
+    showResetButton: true,
+    resetButtonText: 'Reset Form',
+    patientFormMode: 'NEW_RECORD',
+    theme: {
+      primaryColor: '#3b82f6',
+      borderRadius: 'md',
+      fontFamily: 'Inter, system-ui, sans-serif',
+    },
+  },
+  fields: {
+    fld_heading_1: {
+      id: 'fld_heading_1',
+      name: 'demographics_header',
+      type: 'heading',
+      label: 'Patient Demographics',
+      helpText: 'Primary patient identity and contact verification',
+    },
+    fld_fname: {
+      id: 'fld_fname',
+      name: 'firstName',
+      type: 'text',
+      label: 'First Name',
+      placeholder: 'e.g. Sarah',
+      defaultValue: '',
+      helpText: 'Legal first name',
+      validation: {
+        required: true,
+        min: 2,
+        max: 50,
+      },
+      dataBinding: null,
+    },
+    fld_lname: {
+      id: 'fld_lname',
+      name: 'lastName',
+      type: 'text',
+      label: 'Last Name',
+      placeholder: 'e.g. Connor',
+      defaultValue: '',
+      validation: {
+        required: true,
+        min: 2,
+        max: 50,
+      },
+      dataBinding: null,
+    },
+    fld_dob: {
+      id: 'fld_dob',
+      name: 'dateOfBirth',
+      type: 'date',
+      label: 'Date of Birth',
+      validation: {
+        required: true,
+      },
+      dataBinding: null,
+    },
+    fld_gender: {
+      id: 'fld_gender',
+      name: 'gender',
+      type: 'radio',
+      label: 'Gender',
+      defaultValue: 'female',
+      options: [
+        { label: 'Female', value: 'female' },
+        { label: 'Male', value: 'male' },
+        { label: 'Other', value: 'other' },
+      ],
+      validation: {
+        required: true,
+      },
+      dataBinding: null,
+    },
+    fld_email: {
+      id: 'fld_email',
+      name: 'email',
+      type: 'text',
+      label: 'Email Address',
+      placeholder: 'sarah.connor@example.com',
+      validation: {
+        required: true,
+        pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+        customErrorMessage: 'Please enter a valid email address.',
+      },
+      dataBinding: null,
+    },
+    fld_phone: {
+      id: 'fld_phone',
+      name: 'phoneNumber',
+      type: 'text',
+      label: 'Phone Number',
+      placeholder: '+1 (555) 234-5678',
+      validation: {
+        pattern: '^[0-9+() -]{7,20}$',
+        customErrorMessage: 'Please enter a valid contact phone number.',
+      },
+      dataBinding: null,
+    },
+    fld_dept: {
+      id: 'fld_dept',
+      name: 'department',
+      type: 'select',
+      label: 'Department / Clinic',
+      defaultValue: 'cardiology',
+      options: [
+        { label: 'Cardiology', value: 'cardiology' },
+        { label: 'Neurology', value: 'neurology' },
+        { label: 'General Medicine', value: 'general_medicine' },
+        { label: 'Orthopedics', value: 'orthopedics' },
+      ],
+      validation: {
+        required: true,
+      },
+      dataBinding: null,
+    },
+    fld_pain_level: {
+      id: 'fld_pain_level',
+      name: 'painLevel',
+      type: 'number',
+      label: 'Current Pain Level (0 - 10)',
+      placeholder: '0 to 10',
+      defaultValue: 0,
+      validation: {
+        min: 0,
+        max: 10,
+      },
+      dataBinding: null,
+    },
+    fld_div_1: {
+      id: 'fld_div_1',
+      name: 'divider_1',
+      type: 'divider',
+      label: '',
+    },
+    fld_symptoms: {
+      id: 'fld_symptoms',
+      name: 'symptoms',
+      type: 'textarea',
+      label: 'Chief Complaints / Current Symptoms',
+      placeholder: 'Describe your symptoms, onset time, and any medications taken...',
+      helpText: 'Be as detailed as possible to assist your care provider.',
+      validation: {
+        required: false,
+        max: 1000,
+      },
+      dataBinding: null,
+    },
+    fld_consent: {
+      id: 'fld_consent',
+      name: 'patientConsent',
+      type: 'checkbox',
+      label: 'Consent & Acknowledgement',
+      defaultValue: [],
+      options: [
+        { label: 'I acknowledge that the information provided is accurate.', value: 'accurate_info' },
+        { label: 'I consent to electronic storage and processing of medical intake.', value: 'electronic_proc' },
+      ],
+      validation: {
+        required: true,
+      },
+      dataBinding: null,
+    },
+  },
+  layout: [
+    {
+      id: 'sec_1',
+      title: 'Patient Identification',
+      description: 'Personal details and primary demographic data',
+      collapsible: false,
+      rows: [
+        {
+          id: 'row_1_1',
+          columns: [
+            {
+              id: 'col_1_1_1',
+              width: 12,
+              fieldIds: ['fld_heading_1'],
+            },
+          ],
+        },
+        {
+          id: 'row_1_2',
+          columns: [
+            {
+              id: 'col_1_2_1',
+              width: 6,
+              fieldIds: ['fld_fname'],
+            },
+            {
+              id: 'col_1_2_2',
+              width: 6,
+              fieldIds: ['fld_lname'],
+            },
+          ],
+        },
+        {
+          id: 'row_1_3',
+          columns: [
+            {
+              id: 'col_1_3_1',
+              width: 6,
+              fieldIds: ['fld_dob'],
+            },
+            {
+              id: 'col_1_3_2',
+              width: 6,
+              fieldIds: ['fld_gender'],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'sec_2',
+      title: 'Contact & Clinical Intake',
+      description: 'Reaching out and preliminary symptom assessment',
+      collapsible: false,
+      rows: [
+        {
+          id: 'row_2_1',
+          columns: [
+            {
+              id: 'col_2_1_1',
+              width: 6,
+              fieldIds: ['fld_email'],
+            },
+            {
+              id: 'col_2_1_2',
+              width: 6,
+              fieldIds: ['fld_phone'],
+            },
+          ],
+        },
+        {
+          id: 'row_2_2',
+          columns: [
+            {
+              id: 'col_2_2_1',
+              width: 6,
+              fieldIds: ['fld_dept'],
+            },
+            {
+              id: 'col_2_2_2',
+              width: 6,
+              fieldIds: ['fld_pain_level'],
+            },
+          ],
+        },
+        {
+          id: 'row_2_3',
+          columns: [
+            {
+              id: 'col_2_3_1',
+              width: 12,
+              fieldIds: ['fld_symptoms'],
+            },
+          ],
+        },
+        {
+          id: 'row_2_4',
+          columns: [
+            {
+              id: 'col_2_4_1',
+              width: 12,
+              fieldIds: ['fld_div_1'],
+            },
+          ],
+        },
+        {
+          id: 'row_2_5',
+          columns: [
+            {
+              id: 'col_2_4_2',
+              width: 12,
+              fieldIds: ['fld_consent'],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
