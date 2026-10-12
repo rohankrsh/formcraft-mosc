@@ -7,10 +7,12 @@ import * as runtimeService from '../services/runtimeService.js';
  */
 export async function getPatients(req, res) {
   try {
-    const { departmentId, serviceCenterId, search, page, limit } = req.query;
+    const { department, departmentId, serviceCenter, serviceCenterId, search, page, limit } = req.query;
 
     const result = await patientService.getPatients({
+      department: department ? String(department).trim() : undefined,
       departmentId: departmentId ? String(departmentId).trim() : undefined,
+      serviceCenter: serviceCenter ? String(serviceCenter).trim() : undefined,
       serviceCenterId: serviceCenterId ? String(serviceCenterId).trim() : undefined,
       search: search ? String(search).trim() : undefined,
       page: page ? parseInt(page, 10) : 1,

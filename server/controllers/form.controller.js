@@ -1,6 +1,7 @@
 import * as formService from '../services/formService.js';
 import { validateFormForPublishing } from '../services/publishService.js';
 import { invalidateRuntimeCache } from '../services/runtimeService.js';
+import { resolveDepartment, matchesDepartmentScope } from '../services/departmentFilterService.js';
 
 export async function saveForm(req, res) {
   try {
@@ -63,7 +64,15 @@ export async function getForm(req, res) {
 
 export async function listForms(req, res) {
   try {
-    const forms = await formService.listForms();
+    const { department, departmentId, serviceCenter, serviceCenterId } = req.query;
+    let forms = await formService.listForms();
+
+    if (department || departmentId) {
+      const resolvedDept = await resolveDepartment(department || departmentId);
+      const rawSc = serviceCenter || serviceCenterId;
+      forms = forms.filter((f) => matchesDepartmentScope(f, resolvedDept, rawSc));
+    }
+
     const baseUrl = process.env.PUBLIC_FORM_BASE_URL || `${req.protocol}://${req.get('host')}`;
 
     const formsWithUrls = forms.map((f) => ({
@@ -256,11 +265,19 @@ export async function deleteForm(req, res) {
 
 export async function getDeployedForms(req, res) {
   try {
+    const { department, departmentId, serviceCenter, serviceCenterId } = req.query;
+    const rawDept = department || departmentId;
+    const rawSc = serviceCenter || serviceCenterId;
+
+    const resolvedDept = await resolveDepartment(rawDept);
+
     const forms = await formService.listForms();
     const deployed = forms.filter((f) => f.status === 'published' && f.publishedVersion);
+    const filtered = deployed.filter((f) => matchesDepartmentScope(f, resolvedDept, rawSc));
+
     const baseUrl = process.env.PUBLIC_FORM_BASE_URL || `${req.protocol}://${req.get('host')}`;
 
-    const formsWithUrls = deployed.map((f) => ({
+    const formsWithUrls = filtered.map((f) => ({
       id: f.id,
       title: f.title || f.name || 'Untitled Form',
       slug: f.slug,
@@ -269,6 +286,10 @@ export async function getDeployedForms(req, res) {
       runtimeUrl: f.slug ? `/forms/${f.slug}` : `/runtime/forms/${f.id}`,
       fullUrl: f.slug ? `${baseUrl}/forms/${f.slug}` : `${baseUrl}/runtime/forms/${f.id}`,
       publishedAt: f.publishedAt,
+      departmentId: f.departmentId || null,
+      departmentName: f.departmentName || null,
+      serviceCenterId: f.serviceCenterId || null,
+      serviceCenterName: f.serviceCenterName || null,
     }));
 
     return res.json({

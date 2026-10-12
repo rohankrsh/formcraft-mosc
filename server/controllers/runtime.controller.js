@@ -1,10 +1,27 @@
 import * as runtimeService from '../services/runtimeService.js';
 import * as submissionService from '../services/submissionService.js';
+import { resolveDepartment, matchesDepartmentScope } from '../services/departmentFilterService.js';
 
 export async function getPublishedForm(req, res) {
   const { slug } = req.params;
+  const rawDept = req.query.department || req.query.departmentId;
+  const rawServiceCenter = req.query.serviceCenter;
+
   try {
     const form = await runtimeService.getPublishedFormBySlug(slug);
+
+    if (rawDept) {
+      const resolvedDept = await resolveDepartment(rawDept);
+      const allowed = matchesDepartmentScope(form, resolvedDept, rawServiceCenter);
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          code: 'DEPARTMENT_ACCESS_DENIED',
+          error: `Access Denied: This form is restricted and not available for department '${rawDept}'.`,
+        });
+      }
+    }
+
     return res.json({ success: true, form });
   } catch (err) {
     console.error(`[RuntimeController] getPublishedForm("${slug}") error:`, err.message);
@@ -59,9 +76,23 @@ export async function getRuntimeRecord(req, res) {
  */
 export async function getPatientFormState(req, res) {
   const { slug } = req.params;
-  const { mrno, patientId, admissionNumber } = req.query;
+  const { mrno, patientId, admissionNumber, department, departmentId, serviceCenter } = req.query;
+  const rawDept = department || departmentId;
 
   try {
+    if (rawDept) {
+      const form = await runtimeService.getPublishedFormBySlug(slug);
+      const resolvedDept = await resolveDepartment(rawDept);
+      const allowed = matchesDepartmentScope(form, resolvedDept, serviceCenter);
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          code: 'DEPARTMENT_ACCESS_DENIED',
+          error: `Access Denied: This form is restricted and not available for department '${rawDept}'.`,
+        });
+      }
+    }
+
     const result = await submissionService.getPatientFormState(slug, {
       mrno,
       patientId,
@@ -145,6 +176,9 @@ export async function submitForm(req, res) {
   const payload = req.body || {};
   const formData = payload.data !== undefined ? payload.data : payload;
 
+  const rawDept = payload.department || payload.departmentId || req.query.department || req.query.departmentId;
+  const rawServiceCenter = payload.serviceCenter || req.query.serviceCenter;
+
   const mrno = payload.mrno || req.query.mrno;
   const patientId = payload.patientId || req.query.patientId;
   const admissionNumber = payload.admissionNumber || req.query.admissionNumber;
@@ -154,6 +188,19 @@ export async function submitForm(req, res) {
   const submissionId = payload.submissionId || null;
 
   try {
+    if (rawDept) {
+      const form = await runtimeService.getPublishedFormBySlug(slug);
+      const resolvedDept = await resolveDepartment(rawDept);
+      const allowed = matchesDepartmentScope(form, resolvedDept, rawServiceCenter);
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          code: 'DEPARTMENT_ACCESS_DENIED',
+          error: `Access Denied: This form is restricted and not available for department '${rawDept}'.`,
+        });
+      }
+    }
+
     const result = await submissionService.saveFormSubmission(slug, {
       data: formData,
       mrno,

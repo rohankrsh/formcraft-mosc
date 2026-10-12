@@ -73,6 +73,10 @@ export async function getPublishedFormBySlug(slug) {
     version: meta.publishedVersion,
     publishedAt: meta.publishedAt,
     permissions: meta.permissions,
+    departmentId: meta.departmentId || publishedDefinition.settings?.departmentId || null,
+    departmentName: meta.departmentName || publishedDefinition.settings?.departmentName || null,
+    serviceCenterId: meta.serviceCenterId || publishedDefinition.settings?.serviceCenterId || null,
+    serviceCenterName: meta.serviceCenterName || publishedDefinition.settings?.serviceCenterName || null,
     definition: publishedDefinition,
   };
 

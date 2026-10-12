@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ExternalLink,
   ChevronLeft,
@@ -39,6 +39,20 @@ export const PatientTable: React.FC<PatientTableProps> = ({
   onLimitChange,
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlDepartment = searchParams.get('department') || searchParams.get('departmentId') || '';
+  const urlServiceCenter = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId') || '';
+
+  const buildRuntimeFormUrl = (slug: string, mrno: string) => {
+    let url = `/forms/${encodeURIComponent(slug)}?mrno=${encodeURIComponent(mrno)}`;
+    if (urlDepartment) {
+      url += `&department=${encodeURIComponent(urlDepartment)}`;
+    }
+    if (urlServiceCenter) {
+      url += `&serviceCenter=${encodeURIComponent(urlServiceCenter)}`;
+    }
+    return url;
+  };
 
   const handleFormSelect = (mrno: string, formValue: string) => {
     onSelectFormForPatient(mrno, formValue);
@@ -50,7 +64,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     );
     if (form) {
       const slug = form.slug || form.id;
-      navigate(`/forms/${encodeURIComponent(slug)}?mrno=${encodeURIComponent(mrno)}`);
+      navigate(buildRuntimeFormUrl(slug, mrno));
     }
   };
 
@@ -62,7 +76,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     );
     if (form) {
       const slug = form.slug || form.id;
-      navigate(`/forms/${encodeURIComponent(slug)}?mrno=${encodeURIComponent(mrno)}`);
+      navigate(buildRuntimeFormUrl(slug, mrno));
     }
   };
 
@@ -227,7 +241,9 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                           onChange={(e) => handleFormSelect(patient.mrno, e.target.value)}
                           className="w-48 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 cursor-pointer transition-all"
                         >
-                          <option value="">Select Form ({deployedForms.length})</option>
+                          <option value="">
+                            {deployedForms.length > 0 ? `Select Form (${deployedForms.length})` : 'No Forms Available (0)'}
+                          </option>
                           {deployedForms.map((form) => (
                             <option
                               key={form.id}

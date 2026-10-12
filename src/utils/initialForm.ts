@@ -11,6 +11,8 @@ export const createEmptyForm = (): FormDefinition => ({
     showResetButton: true,
     resetButtonText: 'Clear Form',
     patientFormMode: 'NEW_RECORD',
+    departmentId: 'ALL',
+    departmentName: 'All Departments (Organization-wide)',
     theme: {
       primaryColor: '#3b82f6',
       borderRadius: 'md',
@@ -33,6 +35,8 @@ export const defaultInitialForm: FormDefinition = {
     showResetButton: true,
     resetButtonText: 'Reset Form',
     patientFormMode: 'NEW_RECORD',
+    departmentId: 'ALL',
+    departmentName: 'All Departments (Organization-wide)',
     theme: {
       primaryColor: '#3b82f6',
       borderRadius: 'md',

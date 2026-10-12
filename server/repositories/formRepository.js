@@ -214,6 +214,10 @@ export class FileFormRepository extends FormRepository {
     for (const [, item] of this.cache.entries()) {
       result.push({
         ...item.meta,
+        departmentId: item.meta.departmentId || item.draft?.settings?.departmentId || item.publishedDefinition?.settings?.departmentId || null,
+        departmentName: item.meta.departmentName || item.draft?.settings?.departmentName || item.publishedDefinition?.settings?.departmentName || null,
+        serviceCenterId: item.meta.serviceCenterId || item.draft?.settings?.serviceCenterId || item.publishedDefinition?.settings?.serviceCenterId || null,
+        serviceCenterName: item.meta.serviceCenterName || item.draft?.settings?.serviceCenterName || item.publishedDefinition?.settings?.serviceCenterName || null,
         hasDraft: !!item.draft,
         isPublished: item.meta.status === 'published' && !!item.meta.publishedVersion,
       });
@@ -306,6 +310,10 @@ export class FileFormRepository extends FormRepository {
         name: formDef.title || existing.meta.name,
         slug,
         primaryEntity: formDef.settings?.primaryEntity || null,
+        departmentId: formDef.settings?.departmentId ?? metadataUpdates.departmentId ?? existing.meta.departmentId ?? null,
+        departmentName: formDef.settings?.departmentName ?? metadataUpdates.departmentName ?? existing.meta.departmentName ?? null,
+        serviceCenterId: formDef.settings?.serviceCenterId ?? metadataUpdates.serviceCenterId ?? existing.meta.serviceCenterId ?? null,
+        serviceCenterName: formDef.settings?.serviceCenterName ?? metadataUpdates.serviceCenterName ?? existing.meta.serviceCenterName ?? null,
         updatedAt: now,
         ...metadataUpdates,
       };
@@ -324,6 +332,10 @@ export class FileFormRepository extends FormRepository {
         updatedAt: now,
         publishedAt: null,
         primaryEntity: formDef.settings?.primaryEntity || null,
+        departmentId: formDef.settings?.departmentId ?? metadataUpdates.departmentId ?? null,
+        departmentName: formDef.settings?.departmentName ?? metadataUpdates.departmentName ?? null,
+        serviceCenterId: formDef.settings?.serviceCenterId ?? metadataUpdates.serviceCenterId ?? null,
+        serviceCenterName: formDef.settings?.serviceCenterName ?? metadataUpdates.serviceCenterName ?? null,
         permissions: {
           canView: ['all'],
           canCreate: ['all'],
@@ -396,6 +408,10 @@ export class FileFormRepository extends FormRepository {
       publishedAt: now,
       updatedAt: now,
       primaryEntity: definitionToPublish.settings?.primaryEntity || null,
+      departmentId: definitionToPublish.settings?.departmentId ?? existing.meta.departmentId ?? null,
+      departmentName: definitionToPublish.settings?.departmentName ?? existing.meta.departmentName ?? null,
+      serviceCenterId: definitionToPublish.settings?.serviceCenterId ?? existing.meta.serviceCenterId ?? null,
+      serviceCenterName: definitionToPublish.settings?.serviceCenterName ?? existing.meta.serviceCenterName ?? null,
     };
 
     await fs.promises.writeFile(path.join(formDir, 'meta.json'), JSON.stringify(updatedMeta, null, 2), 'utf-8');

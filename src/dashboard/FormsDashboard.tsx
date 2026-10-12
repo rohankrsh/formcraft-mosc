@@ -22,6 +22,7 @@ import {
   Layers,
   Trash2,
   Users,
+  Building,
 } from 'lucide-react';
 import type { FormMetadata } from '../types/schema';
 
@@ -159,7 +160,9 @@ export const FormsDashboard: React.FC = () => {
     const matchesSearch =
       (f.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (f.slug || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.primaryEntity || '').toLowerCase().includes(searchQuery.toLowerCase());
+      (f.primaryEntity || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (f.departmentName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (f.departmentId || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     if (!matchesSearch) return false;
     if (statusFilter === 'all') return true;
@@ -260,6 +263,7 @@ export const FormsDashboard: React.FC = () => {
                 <tr className="bg-slate-50 dark:bg-slate-850/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
                   <th className="px-6 py-4">Form Name & Identity</th>
                   <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Department</th>
                   <th className="px-4 py-4">Version</th>
                   <th className="px-4 py-4">Database Binding</th>
                   <th className="px-4 py-4">Public Runtime URL</th>
@@ -269,13 +273,13 @@ export const FormsDashboard: React.FC = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                       Loading forms...
                     </td>
                   </tr>
                 ) : filteredForms.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-16 text-center text-slate-400 space-y-2">
+                    <td colSpan={7} className="px-6 py-16 text-center text-slate-400 space-y-2">
                       <Layers className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
                       <p className="font-semibold text-slate-700 dark:text-slate-300">No forms found</p>
                       <p className="text-[11px] text-slate-500">
@@ -330,6 +334,20 @@ export const FormsDashboard: React.FC = () => {
                           {f.status === 'archived' && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-bold">
                               <Archive className="w-3.5 h-3.5" /> Archived
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Department Badge */}
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {f.departmentName && f.departmentId !== 'ALL' && !f.departmentName.toLowerCase().includes('all departments') ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[11px] font-semibold">
+                              <Building className="w-3 h-3 shrink-0" />
+                              <span>{f.departmentName}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px]">
+                              <span>All Depts</span>
                             </span>
                           )}
                         </td>

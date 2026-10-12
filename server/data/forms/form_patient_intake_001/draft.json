@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "id": "form_patient_intake_001",
-  "title": "Patient Intake & Health Questionnaire",
+  "title": "testtt",
   "description": "Please complete all required fields prior to your appointment.",
   "settings": {
     "submitButtonText": "Submit & Download Record",
@@ -9,13 +9,13 @@
     "showResetButton": true,
     "resetButtonText": "Reset Form",
     "patientFormMode": "NEW_RECORD",
+    "departmentId": "70",
+    "departmentName": "PLASTIC SURGERY",
     "theme": {
       "primaryColor": "#3b82f6",
       "borderRadius": "md",
       "fontFamily": "Inter, system-ui, sans-serif"
-    },
-    "primaryEntity": "PATIENT",
-    "primaryKeyColumn": "PATIENT_ID"
+    }
   },
   "fields": {
     "fld_heading_1": {

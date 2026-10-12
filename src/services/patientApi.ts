@@ -37,10 +37,16 @@ export interface DeployedForm {
   runtimeUrl: string;
   fullUrl?: string;
   publishedAt?: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
+  serviceCenterId?: string | null;
+  serviceCenterName?: string | null;
 }
 
 export interface PatientQueryParams {
+  department?: string;
   departmentId?: string;
+  serviceCenter?: string;
   serviceCenterId?: string;
   search?: string;
   page?: number;
@@ -63,10 +69,15 @@ export interface PatientsResponse {
 export async function fetchPatients(params: PatientQueryParams = {}): Promise<PatientsResponse> {
   const searchParams = new URLSearchParams();
 
-  if (params.departmentId && params.departmentId !== 'all') {
+  if (params.department && params.department !== 'all') {
+    searchParams.set('department', params.department);
+  } else if (params.departmentId && params.departmentId !== 'all') {
     searchParams.set('departmentId', params.departmentId);
   }
-  if (params.serviceCenterId && params.serviceCenterId !== 'all') {
+
+  if (params.serviceCenter && params.serviceCenter !== 'all') {
+    searchParams.set('serviceCenter', params.serviceCenter);
+  } else if (params.serviceCenterId && params.serviceCenterId !== 'all') {
     searchParams.set('serviceCenterId', params.serviceCenterId);
   }
   if (params.search && params.search.trim() !== '') {
@@ -118,10 +129,23 @@ export async function fetchServiceCenters(): Promise<ServiceCenter[]> {
 }
 
 /**
- * Fetches currently deployed/published forms (cached across patient rows).
+ * Fetches currently deployed/published forms with optional department and service center filtering.
  */
-export async function fetchDeployedForms(): Promise<DeployedForm[]> {
-  const res = await fetch('/api/deployed-forms');
+export async function fetchDeployedForms(params?: {
+  department?: string;
+  serviceCenter?: string;
+}): Promise<DeployedForm[]> {
+  const searchParams = new URLSearchParams();
+  if (params?.department && params.department.toLowerCase() !== 'all') {
+    searchParams.set('department', params.department);
+  }
+  if (params?.serviceCenter && params.serviceCenter.toLowerCase() !== 'all') {
+    searchParams.set('serviceCenter', params.serviceCenter);
+  }
+  const queryStr = searchParams.toString();
+  const url = queryStr ? `/api/deployed-forms?${queryStr}` : '/api/deployed-forms';
+
+  const res = await fetch(url);
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
     throw new Error(errData.error || 'Failed to fetch deployed forms');

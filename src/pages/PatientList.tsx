@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   LayoutGrid,
@@ -43,15 +43,23 @@ export const PatientList: React.FC = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // Filter & Search state
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-  const [selectedServiceCenter, setSelectedServiceCenter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+  // URL Query Parameters
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Pagination state
-  const [page, setPage] = useState<number>(1);
-  const [limit, setLimit] = useState<number>(25);
+  const urlDepartment = searchParams.get('department') || searchParams.get('departmentId') || '';
+  const urlServiceCenter = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId') || '';
+  const urlSearch = searchParams.get('search') || '';
+  const urlPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+  const urlLimit = Math.max(1, parseInt(searchParams.get('limit') || '25', 10) || 25);
+
+  // Local search query for debounced input
+  const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
+
+  useEffect(() => {
+    setSearchQuery(urlSearch);
+  }, [urlSearch]);
+
+  // Pagination totals
   const [totalPatients, setTotalPatients] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
 
@@ -67,7 +75,49 @@ export const PatientList: React.FC = () => {
   const [isLoadingMetadata, setIsLoadingMetadata] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Debounce search input
+  // Synchronize URL query parameters while preserving active filters
+  const updateUrlParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [key, val] of Object.entries(updates)) {
+            if (!val || val === 'all' || val.trim() === '') {
+              next.delete(key);
+            } else {
+              next.set(key, val);
+            }
+          }
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  // Resolve matching department & service center display values for the UI dropdowns
+  const selectedDepartment = useMemo(() => {
+    if (!urlDepartment || urlDepartment.toLowerCase() === 'all') return 'all';
+    const found = departments.find(
+      (d) =>
+        d.departmentId === urlDepartment ||
+        d.departmentName.toUpperCase() === urlDepartment.toUpperCase()
+    );
+    return found ? found.departmentName : urlDepartment;
+  }, [urlDepartment, departments]);
+
+  const selectedServiceCenter = useMemo(() => {
+    if (!urlServiceCenter || urlServiceCenter.toLowerCase() === 'all') return 'all';
+    const found = serviceCenters.find(
+      (sc) =>
+        sc.serviceCenterId === urlServiceCenter ||
+        sc.serviceCenterName.toUpperCase() === urlServiceCenter.toUpperCase()
+    );
+    return found ? found.serviceCenterName : urlServiceCenter;
+  }, [urlServiceCenter, serviceCenters]);
+
+  // Debounced search input handler
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -75,16 +125,18 @@ export const PatientList: React.FC = () => {
       clearTimeout(searchTimeoutRef.current);
     }
     searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearch(query);
-      setPage(1); // Reset to page 1 on new search
+      updateUrlParams({
+        search: query.trim() || null,
+        page: '1',
+      });
     }, 300);
   };
 
-  // Load dropdown filters and deployed forms once on component mount
+  // Load dropdown master filters (departments, service centers) once on component mount
   const loadMetadata = useCallback(async () => {
     setIsLoadingMetadata(true);
     try {
-      const [deptList, scList, formsList] = await Promise.all([
+      const [deptList, scList] = await Promise.all([
         fetchDepartments().catch((err) => {
           console.warn('Failed to fetch departments:', err);
           return [] as Department[];
@@ -93,15 +145,10 @@ export const PatientList: React.FC = () => {
           console.warn('Failed to fetch service centers:', err);
           return [] as ServiceCenter[];
         }),
-        fetchDeployedForms().catch((err) => {
-          console.warn('Failed to fetch deployed forms:', err);
-          return [] as DeployedForm[];
-        }),
       ]);
 
       setDepartments(deptList);
       setServiceCenters(scList);
-      setDeployedForms(formsList);
     } catch (err) {
       console.error('Metadata fetch error:', err);
     } finally {
@@ -113,18 +160,42 @@ export const PatientList: React.FC = () => {
     loadMetadata();
   }, [loadMetadata]);
 
-  // Load patients when filters, search, or pagination changes
+  // Load deployed forms filtered by the active department & service center URL parameters
+  useEffect(() => {
+    let isCancelled = false;
+    fetchDeployedForms({
+      department: urlDepartment || undefined,
+      serviceCenter: urlServiceCenter || undefined,
+    })
+      .then((formsList) => {
+        if (!isCancelled) {
+          setDeployedForms(formsList);
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch department deployed forms:', err);
+        if (!isCancelled) {
+          setDeployedForms([]);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [urlDepartment, urlServiceCenter]);
+
+  // Load patients dynamically whenever URL filters, search, or pagination changes
   const loadPatients = useCallback(async () => {
     setIsLoadingPatients(true);
     setErrorMessage(null);
 
     try {
       const res = await fetchPatients({
-        departmentId: selectedDepartment !== 'all' ? selectedDepartment : undefined,
-        serviceCenterId: selectedServiceCenter !== 'all' ? selectedServiceCenter : undefined,
-        search: debouncedSearch.trim() || undefined,
-        page,
-        limit,
+        department: urlDepartment || undefined,
+        serviceCenter: urlServiceCenter || undefined,
+        search: urlSearch.trim() || undefined,
+        page: urlPage,
+        limit: urlLimit,
       });
 
       if (res.success) {
@@ -146,29 +217,47 @@ export const PatientList: React.FC = () => {
     } finally {
       setIsLoadingPatients(false);
     }
-  }, [selectedDepartment, selectedServiceCenter, debouncedSearch, page, limit]);
+  }, [urlDepartment, urlServiceCenter, urlSearch, urlPage, urlLimit]);
 
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
 
-  // Filter handlers
-  const handleDepartmentChange = (deptId: string) => {
-    setSelectedDepartment(deptId);
-    setPage(1);
+  // Filter handlers updating URL parameters
+  const handleDepartmentChange = (dept: string) => {
+    updateUrlParams({
+      department: dept !== 'all' ? dept : null,
+      departmentId: null, // clear old legacy id param if changing
+      page: '1',
+    });
   };
 
-  const handleServiceCenterChange = (scId: string) => {
-    setSelectedServiceCenter(scId);
-    setPage(1);
+  const handleServiceCenterChange = (sc: string) => {
+    updateUrlParams({
+      serviceCenter: sc !== 'all' ? sc : null,
+      serviceCenterId: null, // clear old legacy id param if changing
+      page: '1',
+    });
   };
 
   const handleResetFilters = () => {
-    setSelectedDepartment('all');
-    setSelectedServiceCenter('all');
     setSearchQuery('');
-    setDebouncedSearch('');
-    setPage(1);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams();
+        if (prev.get('limit')) next.set('limit', prev.get('limit')!);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  const handlePageChange = (newPage: number) => {
+    updateUrlParams({ page: String(newPage) });
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    updateUrlParams({ limit: String(newLimit), page: '1' });
   };
 
   const handleSelectFormForPatient = (mrno: string, formKey: string) => {
@@ -334,15 +423,12 @@ export const PatientList: React.FC = () => {
           selectedForms={selectedForms}
           onSelectFormForPatient={handleSelectFormForPatient}
           isLoading={isLoadingPatients}
-          page={page}
+          page={urlPage}
           totalPages={totalPages}
           totalPatients={totalPatients}
-          limit={limit}
-          onPageChange={(newPage) => setPage(newPage)}
-          onLimitChange={(newLimit) => {
-            setLimit(newLimit);
-            setPage(1);
-          }}
+          limit={urlLimit}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
         />
       </main>
     </div>

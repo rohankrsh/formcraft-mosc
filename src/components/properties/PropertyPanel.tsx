@@ -16,6 +16,7 @@ import {
   Edit3,
   AlertTriangle,
   Users,
+  Building,
 } from 'lucide-react';
 import { useFormStore } from '../../store/useFormStore';
 import type { FormField, FieldOption, FormTheme, TableColumn, OracleBindType, DataBindingMode, SqlQueryDefinition } from '../../types/schema';
@@ -26,6 +27,12 @@ import {
   type AllowlistedTable,
   type AllowlistedColumn,
 } from '../../services/databaseApi';
+import {
+  fetchDepartments,
+  fetchServiceCenters,
+  type Department,
+  type ServiceCenter,
+} from '../../services/patientApi';
 
 const COLOR_PRESETS = [
   { name: 'Blue', hex: '#3b82f6' },
@@ -59,6 +66,8 @@ export const PropertyPanel: React.FC = () => {
   const [columnsByTable, setColumnsByTable] = useState<Record<string, AllowlistedColumn[]>>({});
   const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
   const [editingQuery, setEditingQuery] = useState<SqlQueryDefinition | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [serviceCenters, setServiceCenters] = useState<ServiceCenter[]>([]);
 
   const fieldKeyWarnings = useMemo(() => {
     const keys = new Map<string, number>();
@@ -87,10 +96,36 @@ export const PropertyPanel: React.FC = () => {
     fetchAllowlistedTables().then((tables) => {
       if (isMounted) setAvailableTables(tables);
     });
+    fetchDepartments().then((depts) => {
+      if (isMounted) setDepartments(depts);
+    }).catch((err) => console.warn('Failed to load departments in builder:', err.message));
+    fetchServiceCenters().then((scs) => {
+      if (isMounted) setServiceCenters(scs);
+    }).catch((err) => console.warn('Failed to load service centers in builder:', err.message));
     return () => {
       isMounted = false;
     };
   }, []);
+
+  const selectedDeptValue = useMemo(() => {
+    const rawId = form.settings.departmentId;
+    const rawName = form.settings.departmentName;
+    if (!rawId && !rawName) return 'ALL';
+    if (rawId && String(rawId).toUpperCase() === 'ALL') return 'ALL';
+    if (rawName && (rawName.toUpperCase() === 'ALL' || rawName.toLowerCase().includes('all departments'))) return 'ALL';
+
+    if (rawId) {
+      const match = departments.find((d) => String(d.departmentId) === String(rawId));
+      if (match) return String(match.departmentId);
+    }
+    if (rawName) {
+      const match = departments.find(
+        (d) => d.departmentName.toUpperCase() === rawName.toUpperCase()
+      );
+      if (match) return String(match.departmentId);
+    }
+    return rawId || rawName || 'ALL';
+  }, [form.settings.departmentId, form.settings.departmentName, departments]);
 
   const loadColumnsForTable = async (tableName: string) => {
     if (!tableName || columnsByTable[tableName]) return;
@@ -170,6 +205,102 @@ export const PropertyPanel: React.FC = () => {
                 onChange={(e) => updateMetadata(form.title, e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 dark:bg-slate-850 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 resize-none"
               />
+            </div>
+          </div>
+
+          <hr className="border-slate-200 dark:border-slate-800" />
+
+          {/* Department Assignment (Role-Based Form Visibility) */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+              <Building className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <h4 className="text-[11px] font-bold uppercase tracking-wider">
+                Department Assignment
+              </h4>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              Assign this form to a clinical department. Users accessing the application will only see forms assigned to their department.
+            </p>
+
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                Assigned Department
+              </label>
+              <select
+                id="form-settings-department-select"
+                value={selectedDeptValue}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'ALL' || !val) {
+                    updateSettings({
+                      departmentId: 'ALL',
+                      departmentName: 'All Departments (Organization-wide)',
+                    });
+                  } else {
+                    const match = departments.find((d) => String(d.departmentId) === String(val));
+                    updateSettings({
+                      departmentId: val,
+                      departmentName: match ? match.departmentName : val,
+                    });
+                  }
+                }}
+                className="w-full bg-slate-50 border border-slate-200 dark:bg-slate-850 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+              >
+                <option value="ALL">All Departments (Organization-wide)</option>
+                {departments.map((d) => (
+                  <option key={d.departmentId} value={String(d.departmentId)}>
+                    {d.departmentName} (ID: {d.departmentId})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                Service Center (Optional)
+              </label>
+              <select
+                id="form-settings-service-center-select"
+                value={form.settings.serviceCenterId || form.settings.serviceCenterName || 'ALL'}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'ALL' || !val) {
+                    updateSettings({
+                      serviceCenterId: undefined,
+                      serviceCenterName: undefined,
+                    });
+                  } else {
+                    const match = serviceCenters.find(
+                      (s) => String(s.serviceCenterId) === val || s.serviceCenterName === val
+                    );
+                    updateSettings({
+                      serviceCenterId: match?.serviceCenterId || val,
+                      serviceCenterName: match?.serviceCenterName || val,
+                    });
+                  }
+                }}
+                className="w-full bg-slate-50 border border-slate-200 dark:bg-slate-850 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+              >
+                <option value="ALL">All Service Centers (Unrestricted)</option>
+                {serviceCenters.map((s) => (
+                  <option
+                    key={s.serviceCenterId || s.serviceCenterName}
+                    value={s.serviceCenterId || s.serviceCenterName}
+                  >
+                    {s.serviceCenterName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 text-[10px] text-blue-700 dark:text-blue-300">
+              {selectedDeptValue === 'ALL' ? (
+                <span>Global Scope: Accessible across all departments and encounters.</span>
+              ) : (
+                <span>
+                  Restricted Scope: Visible only to <strong>{form.settings.departmentName || selectedDeptValue}</strong> users.
+                </span>
+              )}
             </div>
           </div>
 

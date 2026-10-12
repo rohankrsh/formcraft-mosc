@@ -131,18 +131,56 @@ function mapPatientRow(row) {
  * @param {number} [params.page=1]
  * @param {number} [params.limit=25]
  */
-export async function getPatients({ departmentId, serviceCenterId, search, page = 1, limit = 25 }) {
+export async function getPatients({
+  department,
+  departmentId,
+  serviceCenter,
+  serviceCenterId,
+  search,
+  page = 1,
+  limit = 25,
+}) {
   const binds = {};
   let whereClauses = '';
 
-  if (departmentId && String(departmentId).trim() !== '') {
-    whereClauses += ' AND hDept.DEPARTMENT_ID = :departmentId';
-    binds.departmentId = Number(departmentId) || departmentId;
+  const rawDept = (department ?? departmentId ?? '').toString().trim();
+  if (rawDept && rawDept.toLowerCase() !== 'all') {
+    const isDeptNumeric = /^\d+$/.test(rawDept);
+    if (isDeptNumeric) {
+      whereClauses += ` AND (
+        hDept.DEPARTMENT_ID = :deptIdNum
+        OR UPPER(TRIM(hDept.DEPARTMENT_NAME)) = :deptParamUpper
+        OR UPPER(TRIM(hDept.DEPARTMENT_CODE)) = :deptParamUpper
+      )`;
+      binds.deptIdNum = Number(rawDept);
+      binds.deptParamUpper = rawDept.toUpperCase();
+    } else {
+      whereClauses += ` AND (
+        UPPER(TRIM(hDept.DEPARTMENT_NAME)) = :deptParamUpper
+        OR UPPER(TRIM(hDept.DEPARTMENT_CODE)) = :deptParamUpper
+      )`;
+      binds.deptParamUpper = rawDept.toUpperCase();
+    }
   }
 
-  if (serviceCenterId && String(serviceCenterId).trim() !== '') {
-    whereClauses += ' AND c.SERVICE_CENTER_ID = :serviceCenterId';
-    binds.serviceCenterId = Number(serviceCenterId) || serviceCenterId;
+  const rawSc = (serviceCenter ?? serviceCenterId ?? '').toString().trim();
+  if (rawSc && rawSc.toLowerCase() !== 'all') {
+    const isScNumeric = /^\d+$/.test(rawSc);
+    if (isScNumeric) {
+      whereClauses += ` AND (
+        c.SERVICE_CENTER_ID = :scIdNum
+        OR UPPER(TRIM(c.SERVICE_CENTER_NAME)) = :scParamUpper
+        OR UPPER(TRIM(c.SERVICE_CENTER_CODE)) = :scParamUpper
+      )`;
+      binds.scIdNum = Number(rawSc);
+      binds.scParamUpper = rawSc.toUpperCase();
+    } else {
+      whereClauses += ` AND (
+        UPPER(TRIM(c.SERVICE_CENTER_NAME)) = :scParamUpper
+        OR UPPER(TRIM(c.SERVICE_CENTER_CODE)) = :scParamUpper
+      )`;
+      binds.scParamUpper = rawSc.toUpperCase();
+    }
   }
 
   if (search && String(search).trim() !== '') {

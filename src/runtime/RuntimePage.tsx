@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Sparkles, AlertTriangle, FileQuestion, Sun, Moon, ArrowLeft } from 'lucide-react';
+import { Sparkles, AlertTriangle, FileQuestion, Sun, Moon, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { fetchPublishedForm, type PublishedFormResponse } from './runtimeApi';
 import { FormRuntime } from './FormRuntime';
 import type { FormDefinition } from '../types/schema';
@@ -9,7 +9,7 @@ export const RuntimePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [loading, setLoading] = useState(true);
   const [errorState, setErrorState] = useState<{
-    type: 'not_found' | 'unavailable' | 'archived' | 'error';
+    type: 'not_found' | 'unavailable' | 'archived' | 'forbidden' | 'error';
     message: string;
   } | null>(null);
 
@@ -54,7 +54,12 @@ export const RuntimePage: React.FC = () => {
       .then((res: PublishedFormResponse) => {
         if (!isMounted) return;
         if (!res.success || !res.form) {
-          if (res.code === 'FORM_UNAVAILABLE') {
+          if (res.code === 'DEPARTMENT_ACCESS_DENIED') {
+            setErrorState({
+              type: 'forbidden',
+              message: res.error || 'Access Denied: This form is restricted and not available for your department.',
+            });
+          } else if (res.code === 'FORM_UNAVAILABLE') {
             setErrorState({
               type: 'unavailable',
               message: res.error || 'This form is currently unavailable. Please contact the administrator.',
@@ -139,9 +144,17 @@ export const RuntimePage: React.FC = () => {
 
         {!loading && errorState && (
           <div className="max-w-md w-full mx-auto my-auto text-center py-16 px-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl space-y-5 animate-in fade-in zoom-in-95">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center ring-8 ring-amber-500/5">
+            <div
+              className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center ring-8 ${
+                errorState.type === 'forbidden'
+                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-500/5'
+                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-500/5'
+              }`}
+            >
               {errorState.type === 'not_found' ? (
                 <FileQuestion className="w-7 h-7" />
+              ) : errorState.type === 'forbidden' ? (
+                <ShieldAlert className="w-7 h-7" />
               ) : (
                 <AlertTriangle className="w-7 h-7" />
               )}
@@ -151,6 +164,8 @@ export const RuntimePage: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 {errorState.type === 'not_found'
                   ? 'Form Not Found'
+                  : errorState.type === 'forbidden'
+                  ? 'Access Denied'
                   : errorState.type === 'unavailable'
                   ? 'Form Unavailable'
                   : 'Form Notice'}

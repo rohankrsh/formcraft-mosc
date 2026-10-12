@@ -56,10 +56,21 @@ export const PatientFilters: React.FC<PatientFiltersProps> = ({
               >
                 <option value="all">All Departments ({departments.length})</option>
                 {departments.map((dept) => (
-                  <option key={dept.departmentId} value={dept.departmentId}>
+                  <option key={dept.departmentId} value={dept.departmentName}>
                     {dept.departmentName}
                   </option>
                 ))}
+                {selectedDepartment &&
+                  selectedDepartment !== 'all' &&
+                  !departments.some(
+                    (d) =>
+                      d.departmentName.toUpperCase() === selectedDepartment.toUpperCase() ||
+                      d.departmentId === selectedDepartment
+                  ) && (
+                    <option key="custom-dept" value={selectedDepartment}>
+                      {selectedDepartment}
+                    </option>
+                  )}
               </select>
             </div>
           </div>
@@ -83,10 +94,21 @@ export const PatientFilters: React.FC<PatientFiltersProps> = ({
               >
                 <option value="all">All Service Centers ({serviceCenters.length})</option>
                 {serviceCenters.map((sc) => (
-                  <option key={sc.serviceCenterId} value={sc.serviceCenterId}>
+                  <option key={sc.serviceCenterId} value={sc.serviceCenterName}>
                     {sc.serviceCenterName}
                   </option>
                 ))}
+                {selectedServiceCenter &&
+                  selectedServiceCenter !== 'all' &&
+                  !serviceCenters.some(
+                    (sc) =>
+                      sc.serviceCenterName.toUpperCase() === selectedServiceCenter.toUpperCase() ||
+                      sc.serviceCenterId === selectedServiceCenter
+                  ) && (
+                    <option key="custom-sc" value={selectedServiceCenter}>
+                      {selectedServiceCenter}
+                    </option>
+                  )}
               </select>
             </div>
           </div>

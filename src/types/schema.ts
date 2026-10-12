@@ -124,6 +124,10 @@ export interface FormSettings {
   primaryKeyColumn?: string;
   enableFetchRecord?: boolean;
   patientFormMode?: PatientFormMode;
+  departmentId?: string;
+  departmentName?: string;
+  serviceCenterId?: string;
+  serviceCenterName?: string;
 }
 
 export interface SqlQueryParameterMapping {
@@ -183,6 +187,10 @@ export interface FormMetadata {
   runtimeUrl?: string | null;
   isPublished?: boolean;
   hasDraft?: boolean;
+  departmentId?: string | null;
+  departmentName?: string | null;
+  serviceCenterId?: string | null;
+  serviceCenterName?: string | null;
 }
 
 export interface FormVersionRecord {
