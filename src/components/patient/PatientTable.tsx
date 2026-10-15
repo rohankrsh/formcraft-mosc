@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   ExternalLink,
   ChevronLeft,
@@ -8,6 +8,7 @@ import {
   Stethoscope,
   Bed,
   AlertCircle,
+  History,
 } from 'lucide-react';
 import type { Patient, DeployedForm } from '../../services/patientApi';
 
@@ -23,6 +24,7 @@ interface PatientTableProps {
   limit: number;
   onPageChange: (newPage: number) => void;
   onLimitChange: (newLimit: number) => void;
+  onOpenSubmittedForms?: (patient: Patient) => void;
 }
 
 export const PatientTable: React.FC<PatientTableProps> = ({
@@ -37,8 +39,10 @@ export const PatientTable: React.FC<PatientTableProps> = ({
   limit,
   onPageChange,
   onLimitChange,
+  onOpenSubmittedForms,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const urlDepartment = searchParams.get('department') || searchParams.get('departmentId') || '';
   const urlServiceCenter = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId') || '';
@@ -64,7 +68,9 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     );
     if (form) {
       const slug = form.slug || form.id;
-      navigate(buildRuntimeFormUrl(slug, mrno));
+      navigate(buildRuntimeFormUrl(slug, mrno), {
+        state: { returnUrl: location.pathname + location.search },
+      });
     }
   };
 
@@ -76,7 +82,9 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     );
     if (form) {
       const slug = form.slug || form.id;
-      navigate(buildRuntimeFormUrl(slug, mrno));
+      navigate(buildRuntimeFormUrl(slug, mrno), {
+        state: { returnUrl: location.pathname + location.search },
+      });
     }
   };
 
@@ -97,6 +105,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
               <th className="py-3.5 px-4">Department</th>
               <th className="py-3.5 px-4">Service Center</th>
               {/* <th className="py-3.5 px-4">Mobile</th> */}
+              <th className="py-3.5 px-4 text-center">Submitted Forms</th>
               <th className="py-3.5 px-4 min-w-[260px] text-right">Deployed Form Action</th>
             </tr>
           </thead>
@@ -115,12 +124,13 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   <td className="py-4 px-4"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28" /></td>
                   <td className="py-4 px-4"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24" /></td>
                   {/* <td className="py-4 px-4"><div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20" /></td> */}
+                  <td className="py-4 px-4 text-center"><div className="h-7 bg-slate-200 dark:bg-slate-800 rounded-xl w-32 mx-auto" /></td>
                   <td className="py-4 px-4"><div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-48 ml-auto" /></td>
                 </tr>
               ))
             ) : patients.length === 0 ? (
               <tr>
-                <td colSpan={10} className="py-16 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={11} className="py-16 text-center text-slate-500 dark:text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
                     <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
                       <AlertCircle className="w-6 h-6" />
@@ -221,17 +231,18 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                       </span>
                     </td>
 
-                    {/* Mobile Number */}
-                    {/* <td className="py-3 px-4 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400 text-[11px]">
-                      {patient.mobileNo ? (
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          {patient.mobileNo}
-                        </span>
-                      ) : (
-                        '—'
-                      )}
-                    </td> */}
+                    {/* Submitted Forms Action Column */}
+                    <td className="py-3 px-4 whitespace-nowrap text-center">
+                      <button
+                        type="button"
+                        onClick={() => onOpenSubmittedForms?.(patient)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 font-semibold text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
+                        title={`View submitted forms for MRNO ${patient.mrno}`}
+                      >
+                        <History className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                        <span>Submitted Forms</span>
+                      </button>
+                    </td>
 
                     {/* Deployed Form Dropdown Action */}
                     <td className="py-3 px-4 whitespace-nowrap text-right">

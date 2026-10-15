@@ -11,6 +11,8 @@ export const createEmptyForm = (): FormDefinition => ({
     showResetButton: true,
     resetButtonText: 'Clear Form',
     patientFormMode: 'NEW_RECORD',
+    departmentIds: ['ALL'],
+    departmentNames: ['All Departments (Organization-wide)'],
     departmentId: 'ALL',
     departmentName: 'All Departments (Organization-wide)',
     theme: {
@@ -35,6 +37,8 @@ export const defaultInitialForm: FormDefinition = {
     showResetButton: true,
     resetButtonText: 'Reset Form',
     patientFormMode: 'NEW_RECORD',
+    departmentIds: ['ALL'],
+    departmentNames: ['All Departments (Organization-wide)'],
     departmentId: 'ALL',
     departmentName: 'All Departments (Organization-wide)',
     theme: {

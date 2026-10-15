@@ -1,0 +1,42 @@
+{
+  "id": "form_1792064812076",
+  "name": "MAGJ HOSPITAL",
+  "slug": "magj-hospital",
+  "status": "published",
+  "currentDraftVersion": 6,
+  "publishedVersion": 5,
+  "createdAt": "2026-10-15T11:58:22.692Z",
+  "updatedAt": "2026-10-15T12:04:42.644Z",
+  "publishedAt": "2026-10-15T12:04:42.644Z",
+  "primaryEntity": null,
+  "departmentIds": [
+    "73",
+    "72"
+  ],
+  "departmentNames": [
+    "UROLOGY",
+    "PULMONARY MEDICINE"
+  ],
+  "departmentId": "73",
+  "departmentName": "UROLOGY, PULMONARY MEDICINE",
+  "serviceCenterId": null,
+  "serviceCenterName": null,
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

@@ -1,5 +1,6 @@
 import { formRepository } from '../repositories/formRepository.js';
 import * as formDataService from './formDataService.js';
+import { normalizeDepartmentAssignment } from './departmentFilterService.js';
 
 // In-memory cache for ultra-fast runtime lookups of immutable published definitions
 const runtimeCache = new Map(); // slug -> { meta, definition }
@@ -65,6 +66,13 @@ export async function getPublishedFormBySlug(slug) {
     throw err;
   }
 
+  const deptNorm = normalizeDepartmentAssignment({
+    departmentIds: meta.departmentIds || publishedDefinition.settings?.departmentIds,
+    departmentNames: meta.departmentNames || publishedDefinition.settings?.departmentNames,
+    departmentId: meta.departmentId || publishedDefinition.settings?.departmentId,
+    departmentName: meta.departmentName || publishedDefinition.settings?.departmentName,
+  });
+
   const result = {
     id: meta.id,
     slug: meta.slug,
@@ -73,8 +81,16 @@ export async function getPublishedFormBySlug(slug) {
     version: meta.publishedVersion,
     publishedAt: meta.publishedAt,
     permissions: meta.permissions,
-    departmentId: meta.departmentId || publishedDefinition.settings?.departmentId || null,
-    departmentName: meta.departmentName || publishedDefinition.settings?.departmentName || null,
+    departmentIds: deptNorm.departmentIds,
+    departmentNames: deptNorm.departmentNames,
+    departmentId:
+      meta.departmentId ||
+      publishedDefinition.settings?.departmentId ||
+      (deptNorm.departmentIds.length === 1 ? deptNorm.departmentIds[0] : (deptNorm.isShared ? 'ALL' : deptNorm.departmentIds[0] || null)),
+    departmentName:
+      meta.departmentName ||
+      publishedDefinition.settings?.departmentName ||
+      (deptNorm.departmentNames.length === 1 ? deptNorm.departmentNames[0] : (deptNorm.isShared ? 'All Departments (Organization-wide)' : deptNorm.departmentNames.join(', ') || null)),
     serviceCenterId: meta.serviceCenterId || publishedDefinition.settings?.serviceCenterId || null,
     serviceCenterName: meta.serviceCenterName || publishedDefinition.settings?.serviceCenterName || null,
     definition: publishedDefinition,

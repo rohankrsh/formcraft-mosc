@@ -24,6 +24,7 @@ import {
   type ServiceCenter,
   type DeployedForm,
 } from '../services/patientApi';
+import { PatientSubmittedFormsModal } from '../components/patient/PatientSubmittedFormsModal';
 
 export const PatientList: React.FC = () => {
   // Theme state matching FormCraft
@@ -69,6 +70,7 @@ export const PatientList: React.FC = () => {
   const [serviceCenters, setServiceCenters] = useState<ServiceCenter[]>([]);
   const [deployedForms, setDeployedForms] = useState<DeployedForm[]>([]);
   const [selectedForms, setSelectedForms] = useState<Record<string, string>>({});
+  const [activeSubmittedFormsPatient, setActiveSubmittedFormsPatient] = useState<Patient | null>(null);
 
   // Loading & Error states
   const [isLoadingPatients, setIsLoadingPatients] = useState<boolean>(true);
@@ -429,6 +431,16 @@ export const PatientList: React.FC = () => {
           limit={urlLimit}
           onPageChange={handlePageChange}
           onLimitChange={handleLimitChange}
+          onOpenSubmittedForms={(patient) => setActiveSubmittedFormsPatient(patient)}
+        />
+
+        {/* Patient-Wise Submitted Forms History & Viewer Modal */}
+        <PatientSubmittedFormsModal
+          isOpen={!!activeSubmittedFormsPatient}
+          onClose={() => setActiveSubmittedFormsPatient(null)}
+          patient={activeSubmittedFormsPatient}
+          departmentContext={urlDepartment}
+          serviceCenterContext={urlServiceCenter}
         />
       </main>
     </div>

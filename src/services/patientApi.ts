@@ -153,3 +153,79 @@ export async function fetchDeployedForms(params?: {
   const data = await res.json();
   return data.forms || data.data || [];
 }
+
+export interface PatientSubmissionSummary {
+  id: number | string;
+  recordId?: number | string | null;
+  formId?: string;
+  formSlug?: string;
+  formName: string;
+  formVersion?: number;
+  submittedAt?: string;
+  updatedAt?: string;
+  submittedBy?: string;
+  status?: string;
+  submissionMode?: 'NEW_RECORD' | 'CONTINUE_EXISTING';
+}
+
+export interface PatientSubmissionsResponse {
+  success: boolean;
+  patient: Partial<Patient>;
+  submissions: PatientSubmissionSummary[];
+  error?: string;
+}
+
+export interface PatientSubmissionDetailResponse {
+  success: boolean;
+  patient?: Partial<Patient>;
+  submission: PatientSubmissionSummary & {
+    mrno: string;
+    admissionNumber?: string;
+    formData: Record<string, any>;
+  };
+  form: any;
+  error?: string;
+}
+
+/**
+ * Fetches all submitted forms for a given patient MRNO.
+ */
+export async function fetchPatientSubmittedForms(
+  mrno: string,
+  params?: { department?: string; serviceCenter?: string }
+): Promise<PatientSubmissionsResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.department && params.department.toLowerCase() !== 'all') {
+    searchParams.set('department', params.department);
+  }
+  if (params?.serviceCenter && params.serviceCenter.toLowerCase() !== 'all') {
+    searchParams.set('serviceCenter', params.serviceCenter);
+  }
+
+  const queryStr = searchParams.toString();
+  const url = `/api/patients/${encodeURIComponent(mrno)}/submitted-forms${queryStr ? `?${queryStr}` : ''}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || `Failed to fetch submitted forms (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Fetches a specific historical submission with its data and original form definition snapshot.
+ */
+export async function fetchPatientSubmissionDetail(
+  mrno: string,
+  submissionId: string | number
+): Promise<PatientSubmissionDetailResponse> {
+  const url = `/api/patients/${encodeURIComponent(mrno)}/submitted-forms/${encodeURIComponent(submissionId)}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || `Failed to fetch submission detail (HTTP ${res.status})`);
+  }
+  return res.json();
+}

@@ -60,6 +60,8 @@ export async function listForms() {
     currentDraftVersion: f.currentDraftVersion,
     publishedVersion: f.publishedVersion,
     primaryEntity: f.primaryEntity || null,
+    departmentIds: f.departmentIds || [],
+    departmentNames: f.departmentNames || [],
     departmentId: f.departmentId || null,
     departmentName: f.departmentName || null,
     serviceCenterId: f.serviceCenterId || null,

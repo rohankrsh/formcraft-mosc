@@ -586,6 +586,12 @@ export const LivePreview: React.FC = () => {
 
       {/* Static Floating Top-Left Download PDF Button (always available) */}
       <DownloadPdfButton
+        form={form}
+        formData={formData}
+        dynamicOptions={loadedOptions}
+        metadata={{
+          recordId: activeRecordId || undefined,
+        }}
         targetElementId="preview-form-printable-container"
         formTitle={form.title}
         recordId={activeRecordId}
@@ -601,6 +607,12 @@ export const LivePreview: React.FC = () => {
         <div className="border-b border-slate-200 dark:border-slate-800 pb-6 space-y-3">
           <div className="flex items-center justify-between gap-4">
             <DownloadPdfButton
+              form={form}
+              formData={formData}
+              dynamicOptions={loadedOptions}
+              metadata={{
+                recordId: activeRecordId || undefined,
+              }}
               targetElementId="preview-form-printable-container"
               formTitle={form.title}
               recordId={activeRecordId}

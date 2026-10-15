@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Sparkles, AlertTriangle, FileQuestion, Sun, Moon, ArrowLeft, ShieldAlert } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useParams, useSearchParams, useLocation, Link } from 'react-router-dom';
+import { Sparkles, AlertTriangle, FileQuestion, Sun, Moon, ArrowLeft, ShieldAlert, Users } from 'lucide-react';
 import { fetchPublishedForm, type PublishedFormResponse } from './runtimeApi';
 import { FormRuntime } from './FormRuntime';
 import type { FormDefinition } from '../types/schema';
 
 export const RuntimePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+
   const [loading, setLoading] = useState(true);
   const [errorState, setErrorState] = useState<{
     type: 'not_found' | 'unavailable' | 'archived' | 'forbidden' | 'error';
@@ -22,6 +25,29 @@ export const RuntimePage: React.FC = () => {
   } | null>(null);
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Safely construct return URL to Patient List preserving department and serviceCenter filters
+  const patientListUrl = useMemo(() => {
+    // 1. Router state returnUrl from Patient List if available
+    const stateReturnUrl = (location.state as { returnUrl?: string })?.returnUrl;
+    if (stateReturnUrl && typeof stateReturnUrl === 'string' && stateReturnUrl.startsWith('/patients')) {
+      return stateReturnUrl;
+    }
+
+    // 2. Safe query reconstruction preserving department and serviceCenter filters
+    const params = new URLSearchParams();
+    const dept = searchParams.get('department') || searchParams.get('departmentId');
+    const sc = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId');
+    if (dept && dept.trim()) {
+      params.set('department', dept.trim());
+    }
+    if (sc && sc.trim()) {
+      params.set('serviceCenter', sc.trim());
+    }
+
+    const qs = params.toString();
+    return qs ? `/patients?${qs}` : '/patients';
+  }, [location.state, searchParams]);
 
   useEffect(() => {
     // Sync theme with document class
@@ -98,23 +124,32 @@ export const RuntimePage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-      {/* Top Lightweight Runtime Navigation Bar */}
-      <nav className="h-14 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
+      {/* Top Navigation Bar */}
+      <nav className="h-14 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 no-print">
         <div className="flex items-center gap-3">
           <Link
-            to="/"
-            className="flex items-center gap-2 group text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+            to={patientListUrl}
+            id="btn-return-patient-list"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shadow-xs"
+            title="Return to Inpatient List"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-xs">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-slate-900 dark:text-white text-xs tracking-tight">
-              FormCraft
-            </span>
-            <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-              Runtime
-            </span>
+            <ArrowLeft className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            <Users className="w-4 h-4 text-blue-500" />
+            <span>Patient List</span>
           </Link>
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="font-bold text-slate-800 dark:text-slate-200 text-xs tracking-tight truncate max-w-[280px]">
+              {publishedForm?.title || 'FormCraft'}
+            </span>
+            {publishedForm?.version && (
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
+                v{publishedForm.version}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -177,11 +212,12 @@ export const RuntimePage: React.FC = () => {
 
             <div className="pt-2">
               <Link
-                to="/"
+                to={patientListUrl}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Return to Home</span>
+                <Users className="w-3.5 h-3.5 text-blue-500" />
+                <span>Return to Patient List</span>
               </Link>
             </div>
           </div>

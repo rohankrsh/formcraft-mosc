@@ -763,6 +763,15 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
       {/* Static Floating Top-Left Download PDF Button */}
       <DownloadPdfButton
+        form={form}
+        formData={formData}
+        dynamicOptions={dynamicOptions}
+        metadata={{
+          mrno: normalizedMrno || undefined,
+          department: params.get('department') || undefined,
+          serviceCenter: params.get('serviceCenter') || undefined,
+          recordId: currentRecordId,
+        }}
         targetElementId="form-printable-container"
         formTitle={form.title}
         recordId={currentRecordId}
@@ -779,8 +788,17 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div className="space-y-2">
               {/* Header Badges & Actions */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap no-print">
                 <DownloadPdfButton
+                  form={form}
+                  formData={formData}
+                  dynamicOptions={dynamicOptions}
+                  metadata={{
+                    mrno: normalizedMrno || undefined,
+                    department: params.get('department') || undefined,
+                    serviceCenter: params.get('serviceCenter') || undefined,
+                    recordId: currentRecordId,
+                  }}
                   targetElementId="form-printable-container"
                   formTitle={form.title}
                   recordId={currentRecordId}
@@ -832,7 +850,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
             {/* Fetch Record Bar (if enabled) */}
             {hasFetchEnabled && (
-              <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
+              <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-2 no-print">
                 <div className="relative">
                   <input
                     type="text"
@@ -870,7 +888,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
               .map((q) => (
                 <div
                   key={q.id}
-                  className="bg-slate-50 dark:bg-slate-850 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-2"
+                  className="bg-slate-50 dark:bg-slate-850 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-2 no-print"
                 >
                   <button
                     type="button"
@@ -892,7 +910,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Previous Submissions History Card (Feature C: Mode 1 NEW_RECORD) */}
         {patientFormMode === 'NEW_RECORD' && normalizedMrno && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4 no-print">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
@@ -989,7 +1007,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Patient Auto-Fetch Loading Banner */}
         {patientFetchLoading && (
-          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-blue-800 dark:text-blue-300 text-xs animate-pulse">
+          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-blue-800 dark:text-blue-300 text-xs animate-pulse no-print">
             <Loader2 className="w-4 h-4 shrink-0 animate-spin text-blue-600 dark:text-blue-400" />
             <span className="font-semibold">Loading patient context and records...</span>
           </div>
@@ -997,7 +1015,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Patient Auto-Fetch Error Banner */}
         {patientFetchError && (
-          <div className="flex items-center justify-between gap-2.5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs animate-in fade-in">
+          <div className="flex items-center justify-between gap-2.5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs animate-in fade-in no-print">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <span>{patientFetchError}</span>
@@ -1015,7 +1033,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Patient Auto-Fetch Success Notice */}
         {patientFetchNotice && (
-          <div className="flex items-center justify-between gap-2.5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs animate-in fade-in">
+          <div className="flex items-center justify-between gap-2.5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs animate-in fade-in no-print">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <span>{patientFetchNotice}</span>
@@ -1033,7 +1051,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Notice Message */}
         {noticeMessage && (
-          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs animate-in fade-in no-print">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span>{noticeMessage}</span>
           </div>
@@ -1041,7 +1059,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Server Error Banner */}
         {serverError && (
-          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs animate-in fade-in no-print">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
             <span>{serverError}</span>
           </div>
@@ -1049,7 +1067,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Form Submission Success Banner / Notice */}
         {submitSuccess && (
-          <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs space-y-3 animate-in fade-in">
+          <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs space-y-3 animate-in fade-in no-print">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -1123,7 +1141,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
         </div>
 
         {/* Sticky Footer Submit Action Bar */}
-        <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl flex items-center justify-between gap-4">
+        <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl flex items-center justify-between gap-4 no-print">
           <div>
             {isEditMode ? (
               <span className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">

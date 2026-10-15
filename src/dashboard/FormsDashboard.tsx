@@ -157,12 +157,16 @@ export const FormsDashboard: React.FC = () => {
 
   // Filter forms based on search query and status tab
   const filteredForms = forms.filter((f) => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      (f.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.slug || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.primaryEntity || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.departmentName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.departmentId || '').toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      (f.name || '').toLowerCase().includes(q) ||
+      (f.slug || '').toLowerCase().includes(q) ||
+      (f.primaryEntity || '').toLowerCase().includes(q) ||
+      (f.departmentName || '').toLowerCase().includes(q) ||
+      (f.departmentId || '').toLowerCase().includes(q) ||
+      (f.departmentNames || []).some((dn) => dn.toLowerCase().includes(q)) ||
+      (f.departmentIds || []).some((di) => di.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
     if (statusFilter === 'all') return true;
@@ -340,7 +344,33 @@ export const FormsDashboard: React.FC = () => {
 
                         {/* Department Badge */}
                         <td className="px-4 py-4 whitespace-nowrap">
-                          {f.departmentName && f.departmentId !== 'ALL' && !f.departmentName.toLowerCase().includes('all departments') ? (
+                          {f.departmentNames &&
+                          f.departmentNames.length > 0 &&
+                          !f.departmentIds?.includes('ALL') &&
+                          !f.departmentNames.some((n) => n.toLowerCase().includes('all departments')) ? (
+                            <div className="flex flex-wrap items-center gap-1 max-w-[220px]">
+                              {f.departmentNames.slice(0, 2).map((deptName, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[11px] font-semibold"
+                                  title={deptName}
+                                >
+                                  <Building className="w-2.5 h-2.5 shrink-0" />
+                                  <span className="truncate max-w-[85px]">{deptName}</span>
+                                </span>
+                              ))}
+                              {f.departmentNames.length > 2 && (
+                                <span
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-semibold cursor-help"
+                                  title={f.departmentNames.join(', ')}
+                                >
+                                  +{f.departmentNames.length - 2} more
+                                </span>
+                              )}
+                            </div>
+                          ) : f.departmentName &&
+                            f.departmentId !== 'ALL' &&
+                            !f.departmentName.toLowerCase().includes('all departments') ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[11px] font-semibold">
                               <Building className="w-3 h-3 shrink-0" />
                               <span>{f.departmentName}</span>

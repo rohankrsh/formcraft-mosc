@@ -1,7 +1,7 @@
 import * as formService from '../services/formService.js';
 import { validateFormForPublishing } from '../services/publishService.js';
 import { invalidateRuntimeCache } from '../services/runtimeService.js';
-import { resolveDepartment, matchesDepartmentScope } from '../services/departmentFilterService.js';
+import { resolveDepartment, matchesDepartmentScope, getRequestDepartmentContext } from '../services/departmentFilterService.js';
 
 export async function saveForm(req, res) {
   try {
@@ -64,12 +64,12 @@ export async function getForm(req, res) {
 
 export async function listForms(req, res) {
   try {
-    const { department, departmentId, serviceCenter, serviceCenterId } = req.query;
+    const { rawDept } = getRequestDepartmentContext(req);
+    const rawSc = req.query.serviceCenter || req.query.serviceCenterId || req.headers['x-service-center'];
     let forms = await formService.listForms();
 
-    if (department || departmentId) {
-      const resolvedDept = await resolveDepartment(department || departmentId);
-      const rawSc = serviceCenter || serviceCenterId;
+    if (rawDept) {
+      const resolvedDept = await resolveDepartment(rawDept);
       forms = forms.filter((f) => matchesDepartmentScope(f, resolvedDept, rawSc));
     }
 
@@ -265,9 +265,8 @@ export async function deleteForm(req, res) {
 
 export async function getDeployedForms(req, res) {
   try {
-    const { department, departmentId, serviceCenter, serviceCenterId } = req.query;
-    const rawDept = department || departmentId;
-    const rawSc = serviceCenter || serviceCenterId;
+    const { rawDept } = getRequestDepartmentContext(req);
+    const rawSc = req.query.serviceCenter || req.query.serviceCenterId || req.headers['x-service-center'];
 
     const resolvedDept = await resolveDepartment(rawDept);
 
@@ -286,6 +285,8 @@ export async function getDeployedForms(req, res) {
       runtimeUrl: f.slug ? `/forms/${f.slug}` : `/runtime/forms/${f.id}`,
       fullUrl: f.slug ? `${baseUrl}/forms/${f.slug}` : `${baseUrl}/runtime/forms/${f.id}`,
       publishedAt: f.publishedAt,
+      departmentIds: f.departmentIds || (f.departmentId ? [f.departmentId] : []),
+      departmentNames: f.departmentNames || (f.departmentName ? [f.departmentName] : []),
       departmentId: f.departmentId || null,
       departmentName: f.departmentName || null,
       serviceCenterId: f.serviceCenterId || null,

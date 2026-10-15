@@ -4,6 +4,15 @@ import { executeQuery, withTransaction, oracledb, getOracleHealth } from '../dat
 import { getPublishedFormBySlug } from './runtimeService.js';
 import { validateFormData, insertFormData, updateFormData } from './formDataService.js';
 import * as patientService from './patientService.js';
+import { formRepository } from '../repositories/formRepository.js';
+import {
+  checkFormAccess,
+  isUserAdmin,
+  isFormShared,
+  getRequestDepartmentContext,
+  resolveDepartment,
+  matchesDepartmentScope,
+} from './departmentFilterService.js';
 
 const SUBMISSIONS_DIR = path.resolve('server/data/submissions');
 if (!fs.existsSync(SUBMISSIONS_DIR)) {
@@ -573,5 +582,398 @@ export async function saveFormSubmission(slug, {
     updatedAt: isUpdate ? nowIso : undefined,
     status: isUpdate ? 'Updated' : 'Submitted',
     mode,
+  };
+}
+
+/**
+ * Checks whether user has permission to view a patient submission for a given form.
+ * Enforces department and service center restrictions, while allowing unrestricted viewing
+ * when user is admin, form is shared, or when viewing without a department filter.
+ */
+async function checkPatientSubmissionAccess(formRecord, req, serviceCenterOverride = null) {
+  if (!req || !formRecord) return { allowed: true };
+  if (isUserAdmin(req)) return { allowed: true };
+  if (isFormShared(formRecord)) return { allowed: true };
+
+  const { rawDept } = getRequestDepartmentContext(req);
+  const rawSc = serviceCenterOverride || req.headers['x-service-center'] || req.query?.serviceCenter || null;
+
+  // If a department constraint is present, form must match that department
+  if (rawDept && rawDept.toLowerCase() !== 'all') {
+    const resolvedDept = await resolveDepartment(rawDept);
+    const allowed = matchesDepartmentScope(formRecord, resolvedDept, rawSc);
+    if (!allowed) {
+      return {
+        allowed: false,
+        code: 'DEPARTMENT_ACCESS_DENIED',
+        error: `Access Denied: This submission belongs to a form restricted and not available for department '${rawDept}'.`,
+      };
+    }
+  }
+
+  // If a service center constraint is present, check SC scope
+  if (rawSc && rawSc.toLowerCase() !== 'all') {
+    const allowed = matchesDepartmentScope(formRecord, null, rawSc);
+    if (!allowed) {
+      return {
+        allowed: false,
+        code: 'SERVICE_CENTER_ACCESS_DENIED',
+        error: `Access Denied: This submission belongs to a form not available for service center '${rawSc}'.`,
+      };
+    }
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Retrieves all submitted forms for a given patient MRNO across all forms.
+ * Enforces department & service center access control.
+ */
+export async function getAllPatientSubmissions(mrno, { department, serviceCenter, req } = {}) {
+  const normalizedMrno = mrno ? String(mrno).trim() : '';
+  if (!normalizedMrno) {
+    return { patient: { mrno: '' }, submissions: [] };
+  }
+
+  // 1. Resolve patient context
+  const patient = await resolvePatientContext(normalizedMrno);
+  const normalizedPatientId = patient.patientId;
+
+  let patientInfo = {
+    mrno: normalizedMrno,
+    patientName: `Patient #${normalizedMrno}`,
+  };
+
+  try {
+    const fullPatient = await patientService.getPatientByMrno(normalizedMrno);
+    if (fullPatient) {
+      patientInfo = {
+        mrno: fullPatient.mrno || normalizedMrno,
+        patientName: fullPatient.patient_name || fullPatient.patientName || `Patient #${normalizedMrno}`,
+        age: fullPatient.age,
+        gender: fullPatient.gender,
+        admissionDate: fullPatient.admission_date || fullPatient.admissionDate,
+        bedNo: fullPatient.bed_no || fullPatient.bedNo,
+        admissionNumber: fullPatient.admission_number || fullPatient.admissionNumber,
+        departmentName: fullPatient.department_name || fullPatient.departmentName,
+        serviceCenter: fullPatient.service_center || fullPatient.serviceCenter,
+        consultant: fullPatient.consultant,
+      };
+    }
+  } catch (pErr) {
+    console.warn('[SubmissionService] Notice fetching patient info for MRNO:', normalizedMrno, pErr.message);
+  }
+
+  // 2. Fetch submissions from Oracle or fallback file system
+  const health = await getOracleHealth();
+  let rawSubmissions = [];
+
+  if (health.connected) {
+    try {
+      const sql = `
+        SELECT ID, RECORD_ID, FORM_ID, FORM_SLUG, FORM_VERSION, PATIENT_ID, MRNO,
+               ADMISSION_NUMBER, SUBMITTED_AT, UPDATED_AT, SUBMITTED_BY, STATUS, SUBMISSION_MODE
+        FROM FORMCRAFT_SUBMISSIONS
+        WHERE (MRNO = :b_mrno OR (:b_patId IS NOT NULL AND PATIENT_ID = :b_patId))
+        ORDER BY NVL(UPDATED_AT, SUBMITTED_AT) DESC
+      `;
+      const binds = {
+        b_mrno: normalizedMrno,
+        b_patId: normalizedPatientId || null,
+      };
+      const res = await executeQuery(sql, binds);
+      if (res.rows) {
+        rawSubmissions = res.rows.map((r) => ({
+          id: r.ID,
+          recordId: r.RECORD_ID || r.ID,
+          formId: r.FORM_ID,
+          formSlug: r.FORM_SLUG,
+          formVersion: r.FORM_VERSION,
+          patientId: r.PATIENT_ID,
+          mrno: r.MRNO,
+          admissionNumber: r.ADMISSION_NUMBER,
+          submittedAt: toIsoString(r.SUBMITTED_AT),
+          updatedAt: toIsoString(r.UPDATED_AT),
+          submittedBy: r.SUBMITTED_BY || 'Clinician',
+          status: r.STATUS || 'Submitted',
+          submissionMode: r.SUBMISSION_MODE || 'NEW_RECORD',
+        }));
+      }
+    } catch (dbErr) {
+      console.warn('[SubmissionService] Notice querying all patient submissions from Oracle:', dbErr.message);
+    }
+  }
+
+  // If no submissions from DB or DB unavailable, also check file storage
+  if (rawSubmissions.length === 0) {
+    try {
+      if (fs.existsSync(SUBMISSIONS_DIR)) {
+        const files = await fs.promises.readdir(SUBMISSIONS_DIR);
+        const suffix = `_${normalizedMrno}.json`;
+        for (const file of files) {
+          if (file.endsWith(suffix)) {
+            try {
+              const content = await fs.promises.readFile(path.join(SUBMISSIONS_DIR, file), 'utf-8');
+              const arr = JSON.parse(content);
+              if (Array.isArray(arr)) {
+                for (const item of arr) {
+                  rawSubmissions.push({
+                    id: item.id,
+                    recordId: item.recordId || item.id,
+                    formId: item.formId,
+                    formSlug: item.formSlug || file.replace(suffix, ''),
+                    formVersion: item.formVersion || 1,
+                    patientId: item.patientId,
+                    mrno: item.mrno || normalizedMrno,
+                    admissionNumber: item.admissionNumber,
+                    submittedAt: item.submittedAt,
+                    updatedAt: item.updatedAt,
+                    submittedBy: item.submittedBy || 'Clinician',
+                    status: item.status || 'Submitted',
+                    submissionMode: item.submissionMode || 'NEW_RECORD',
+                  });
+                }
+              }
+            } catch {
+              // ignore single file error
+            }
+          }
+        }
+      }
+    } catch (fsErr) {
+      console.warn('[SubmissionService] Notice reading fallback patient submissions:', fsErr.message);
+    }
+  }
+
+  // Sort newest first
+  rawSubmissions.sort((a, b) => {
+    const tA = new Date(a.updatedAt || a.submittedAt || 0).getTime();
+    const tB = new Date(b.updatedAt || b.submittedAt || 0).getTime();
+    return tB - tA;
+  });
+
+  // 3. Resolve human-readable form names and apply access control
+  const formCache = new Map();
+  const authorizedSubmissions = [];
+
+  for (const sub of rawSubmissions) {
+    const slugKey = (sub.formSlug || '').toLowerCase();
+    const idKey = (sub.formId || '').toLowerCase();
+    const cacheKey = slugKey || idKey;
+
+    let formRecord = null;
+    if (cacheKey && formCache.has(cacheKey)) {
+      formRecord = formCache.get(cacheKey);
+    } else if (cacheKey) {
+      try {
+        if (sub.formSlug) formRecord = await formRepository.getFormBySlug(sub.formSlug);
+        if (!formRecord && sub.formId) formRecord = await formRepository.getFormById(sub.formId);
+      } catch {
+        // ignore
+      }
+      formCache.set(cacheKey, formRecord);
+    }
+
+    // Security check: If department restrictions apply and user is not admin
+    if (req && formRecord) {
+      const access = await checkPatientSubmissionAccess(formRecord, req, serviceCenter);
+      if (!access.allowed) {
+        continue; // user not authorized to see forms of other departments
+      }
+    }
+
+    const formName =
+      formRecord?.publishedDefinition?.title ||
+      formRecord?.draft?.title ||
+      formRecord?.meta?.name ||
+      sub.formSlug ||
+      sub.formId ||
+      'Clinical Form';
+
+    authorizedSubmissions.push({
+      ...sub,
+      formName,
+    });
+  }
+
+  return {
+    patient: patientInfo,
+    submissions: authorizedSubmissions,
+  };
+}
+
+/**
+ * Retrieves a specific historical submission by MRNO and submission ID.
+ * Returns the exact saved submission data and original frozen form definition snapshot.
+ */
+export async function getPatientSubmissionDetail(mrno, submissionId, { req } = {}) {
+  const normalizedMrno = mrno ? String(mrno).trim() : '';
+  const numId = Number(submissionId);
+
+  let rawRow = null;
+  const health = await getOracleHealth();
+
+  if (health.connected && !isNaN(numId)) {
+    try {
+      const sql = `
+        SELECT ID, RECORD_ID, FORM_ID, FORM_SLUG, FORM_VERSION, PATIENT_ID, MRNO,
+               ADMISSION_NUMBER, SUBMITTED_AT, UPDATED_AT, SUBMITTED_BY, STATUS, SUBMISSION_MODE, FORM_DATA
+        FROM FORMCRAFT_SUBMISSIONS
+        WHERE ID = :b_id
+      `;
+      const res = await executeQuery(sql, { b_id: numId });
+      if (res.rows && res.rows.length > 0) {
+        rawRow = res.rows[0];
+      }
+    } catch (dbErr) {
+      console.warn('[SubmissionService] Notice querying single submission from Oracle:', dbErr.message);
+    }
+  }
+
+  let submission = null;
+  if (rawRow) {
+    // Check patient matching
+    if (normalizedMrno && rawRow.MRNO && String(rawRow.MRNO) !== normalizedMrno) {
+      const err = new Error('Unauthorized access: submission belongs to a different patient.');
+      err.status = 403;
+      err.code = 'UNAUTHORIZED_PATIENT_ACCESS';
+      throw err;
+    }
+
+    const parsedData = await parseFormDataFromRow(rawRow.FORM_DATA);
+    submission = {
+      id: rawRow.ID,
+      recordId: rawRow.RECORD_ID || rawRow.ID,
+      formId: rawRow.FORM_ID,
+      formSlug: rawRow.FORM_SLUG,
+      formVersion: rawRow.FORM_VERSION,
+      patientId: rawRow.PATIENT_ID,
+      mrno: rawRow.MRNO || normalizedMrno,
+      admissionNumber: rawRow.ADMISSION_NUMBER,
+      submittedAt: toIsoString(rawRow.SUBMITTED_AT),
+      updatedAt: toIsoString(rawRow.UPDATED_AT),
+      submittedBy: rawRow.SUBMITTED_BY || 'Clinician',
+      status: rawRow.STATUS || 'Submitted',
+      submissionMode: rawRow.SUBMISSION_MODE || 'NEW_RECORD',
+      formData: parsedData,
+    };
+  } else {
+    // Check file storage fallback
+    if (fs.existsSync(SUBMISSIONS_DIR)) {
+      const files = await fs.promises.readdir(SUBMISSIONS_DIR);
+      const suffix = `_${normalizedMrno}.json`;
+      for (const file of files) {
+        if (file.endsWith(suffix)) {
+          try {
+            const content = await fs.promises.readFile(path.join(SUBMISSIONS_DIR, file), 'utf-8');
+            const arr = JSON.parse(content);
+            const match = arr.find((item) => String(item.id) === String(submissionId));
+            if (match) {
+              submission = {
+                id: match.id,
+                recordId: match.recordId || match.id,
+                formId: match.formId,
+                formSlug: match.formSlug || file.replace(suffix, ''),
+                formVersion: match.formVersion || 1,
+                patientId: match.patientId,
+                mrno: match.mrno || normalizedMrno,
+                admissionNumber: match.admissionNumber,
+                submittedAt: match.submittedAt,
+                updatedAt: match.updatedAt,
+                submittedBy: match.submittedBy || 'Clinician',
+                status: match.status || 'Submitted',
+                submissionMode: match.submissionMode || 'NEW_RECORD',
+                formData: match.formData || match.data || {},
+              };
+              break;
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+  }
+
+  if (!submission) {
+    const err = new Error(`Submission #${submissionId} not found for patient ${normalizedMrno}.`);
+    err.status = 404;
+    err.code = 'SUBMISSION_NOT_FOUND';
+    throw err;
+  }
+
+  // Load Form Definition & Version Snapshot
+  let formDefinition = null;
+  let formRecord = null;
+  try {
+    if (submission.formSlug) formRecord = await formRepository.getFormBySlug(submission.formSlug);
+    if (!formRecord && submission.formId) formRecord = await formRepository.getFormById(submission.formId);
+  } catch {
+    // ignore
+  }
+
+  // Security check for department access on this submission's form
+  if (req && formRecord) {
+    const access = await checkPatientSubmissionAccess(formRecord, req);
+    if (!access.allowed) {
+      const err = new Error(access.error || 'Access Denied: You do not have permission to view this submission.');
+      err.status = 403;
+      err.code = access.code || 'DEPARTMENT_ACCESS_DENIED';
+      throw err;
+    }
+  }
+
+  // Attempt to load the exact frozen version snapshot
+  const formIdToUse = formRecord?.meta?.id || submission.formId;
+  if (formIdToUse && submission.formVersion) {
+    try {
+      formDefinition = await formRepository.getVersionDefinition(formIdToUse, submission.formVersion);
+    } catch {
+      // ignore
+    }
+  }
+
+  // Fallback to published definition or draft
+  if (!formDefinition && formRecord) {
+    formDefinition = formRecord.publishedDefinition || formRecord.draft;
+  }
+
+  // Fallback minimal form definition if form definition is completely missing
+  if (!formDefinition) {
+    formDefinition = {
+      version: '1.0.0',
+      id: submission.formId || submission.formSlug,
+      title: submission.formSlug || 'Clinical Form',
+      description: 'Historical clinical record',
+      settings: {
+        submitButtonText: 'Submit Form',
+        submitAction: 'download_json',
+        showResetButton: false,
+        theme: {
+          primaryColor: '#2563eb',
+          borderRadius: 'md',
+          fontFamily: 'Inter, system-ui, sans-serif',
+        },
+      },
+      fields: {},
+      layout: [],
+    };
+  }
+
+  const formName =
+    formDefinition.title ||
+    formRecord?.publishedDefinition?.title ||
+    formRecord?.meta?.name ||
+    submission.formSlug ||
+    'Clinical Form';
+
+  return {
+    success: true,
+    submission: {
+      ...submission,
+      formName,
+    },
+    form: formDefinition,
   };
 }

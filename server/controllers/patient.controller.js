@@ -1,5 +1,7 @@
 import * as patientService from '../services/patientService.js';
 import * as runtimeService from '../services/runtimeService.js';
+import * as submissionService from '../services/submissionService.js';
+import { checkFormAccess } from '../services/departmentFilterService.js';
 
 /**
  * Controller for retrieving patients with filtering and pagination.
@@ -105,6 +107,15 @@ export async function getPatientFormData(req, res) {
       });
     }
 
+    const access = await checkFormAccess(formRecord, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to access patient data for this form.',
+      });
+    }
+
     // 2. Fetch patient data using bind variable
     const patientData = await patientService.getPatientByMrno(mrno);
 
@@ -121,6 +132,76 @@ export async function getPatientFormData(req, res) {
       success: false,
       code: err.code || 'PATIENT_DATA_ERROR',
       error: err.message || `Unable to fetch patient data for MRNO ${mrno}.`,
+    });
+  }
+}
+
+/**
+ * Controller for retrieving a patient's submitted forms history.
+ * GET /api/patients/:mrno/submitted-forms
+ */
+export async function getPatientSubmittedForms(req, res) {
+  const { mrno } = req.params;
+  const { department, serviceCenter } = req.query;
+
+  if (!mrno || !String(mrno).trim()) {
+    return res.status(400).json({
+      success: false,
+      error: 'MRNO parameter is required.',
+      submissions: [],
+    });
+  }
+
+  try {
+    const result = await submissionService.getAllPatientSubmissions(mrno, {
+      department,
+      serviceCenter,
+      req,
+    });
+
+    return res.json({
+      success: true,
+      ...result,
+    });
+  } catch (err) {
+    console.error(`[PatientController] getPatientSubmittedForms error for MRNO ${mrno}:`, err.message);
+    const status = err.status || 500;
+    return res.status(status).json({
+      success: false,
+      code: err.code || 'SUBMISSION_HISTORY_ERROR',
+      error: err.message || 'Unable to fetch patient submission history.',
+      submissions: [],
+    });
+  }
+}
+
+/**
+ * Controller for retrieving a specific historical submission for read-only viewing.
+ * GET /api/patients/:mrno/submitted-forms/:submissionId
+ */
+export async function getPatientSubmissionDetail(req, res) {
+  const { mrno, submissionId } = req.params;
+
+  if (!mrno || !submissionId) {
+    return res.status(400).json({
+      success: false,
+      error: 'MRNO and submissionId parameters are required.',
+    });
+  }
+
+  try {
+    const result = await submissionService.getPatientSubmissionDetail(mrno, submissionId, { req });
+    return res.json({
+      success: true,
+      ...result,
+    });
+  } catch (err) {
+    console.error(`[PatientController] getPatientSubmissionDetail error for MRNO ${mrno}, submissionId ${submissionId}:`, err.message);
+    const status = err.status || 500;
+    return res.status(status).json({
+      success: false,
+      code: err.code || 'SUBMISSION_DETAIL_ERROR',
+      error: err.message || 'Unable to retrieve submission record.',
     });
   }
 }

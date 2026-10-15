@@ -124,6 +124,8 @@ export interface FormSettings {
   primaryKeyColumn?: string;
   enableFetchRecord?: boolean;
   patientFormMode?: PatientFormMode;
+  departmentIds?: string[];
+  departmentNames?: string[];
   departmentId?: string;
   departmentName?: string;
   serviceCenterId?: string;
@@ -187,6 +189,8 @@ export interface FormMetadata {
   runtimeUrl?: string | null;
   isPublished?: boolean;
   hasDraft?: boolean;
+  departmentIds?: string[];
+  departmentNames?: string[];
   departmentId?: string | null;
   departmentName?: string | null;
   serviceCenterId?: string | null;

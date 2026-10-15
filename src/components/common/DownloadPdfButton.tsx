@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FileDown, Loader2, Check } from 'lucide-react';
 import { downloadFormAsPdf } from '../../utils/exportPdf';
+import type { FormDefinition } from '../../types/schema';
 
 interface DownloadPdfButtonProps {
   targetElementId?: string;
@@ -8,6 +9,15 @@ interface DownloadPdfButtonProps {
   recordId?: string | number | null;
   className?: string;
   variant?: 'floating' | 'inline' | 'header';
+  form?: FormDefinition;
+  formData?: Record<string, any>;
+  dynamicOptions?: Record<string, { label: string; value: string }[]>;
+  metadata?: {
+    mrno?: string;
+    department?: string;
+    serviceCenter?: string;
+    recordId?: string | number | null;
+  };
 }
 
 export const DownloadPdfButton: React.FC<DownloadPdfButtonProps> = ({
@@ -16,6 +26,10 @@ export const DownloadPdfButton: React.FC<DownloadPdfButtonProps> = ({
   recordId,
   className = '',
   variant = 'header',
+  form,
+  formData,
+  dynamicOptions,
+  metadata,
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
@@ -32,6 +46,13 @@ export const DownloadPdfButton: React.FC<DownloadPdfButtonProps> = ({
         formTitle,
         recordId,
         fileName: formTitle,
+        form,
+        formData,
+        dynamicOptions,
+        metadata: {
+          ...metadata,
+          recordId: recordId ?? metadata?.recordId,
+        },
       });
       setIsDownloaded(true);
       setTimeout(() => setIsDownloaded(false), 2500);

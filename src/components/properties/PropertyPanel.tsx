@@ -17,6 +17,9 @@ import {
   AlertTriangle,
   Users,
   Building,
+  Check,
+  Search,
+  Globe,
 } from 'lucide-react';
 import { useFormStore } from '../../store/useFormStore';
 import type { FormField, FieldOption, FormTheme, TableColumn, OracleBindType, DataBindingMode, SqlQueryDefinition } from '../../types/schema';
@@ -107,25 +110,190 @@ export const PropertyPanel: React.FC = () => {
     };
   }, []);
 
-  const selectedDeptValue = useMemo(() => {
+  const [scopeMode, setScopeMode] = useState<'all' | 'specific' | null>(null);
+  const [lastSpecificDepartmentIds, setLastSpecificDepartmentIds] = useState<string[]>([]);
+
+  // Reset explicit scope override if form changes
+  useEffect(() => {
+    setScopeMode(null);
+  }, [form.id]);
+
+  const isOrganizationWide = useMemo(() => {
+    if (scopeMode !== null) return scopeMode === 'all';
+
+    const rawIds = form.settings.departmentIds;
     const rawId = form.settings.departmentId;
     const rawName = form.settings.departmentName;
-    if (!rawId && !rawName) return 'ALL';
-    if (rawId && String(rawId).toUpperCase() === 'ALL') return 'ALL';
-    if (rawName && (rawName.toUpperCase() === 'ALL' || rawName.toLowerCase().includes('all departments'))) return 'ALL';
 
-    if (rawId) {
-      const match = departments.find((d) => String(d.departmentId) === String(rawId));
-      if (match) return String(match.departmentId);
+    // 1. If departmentIds array is present:
+    // It is ONLY organization-wide if it explicitly contains 'ALL'.
+    // If it's an array without 'ALL' (e.g. ['51'] or [] when switched to specific), it is in Specific Depts mode!
+    if (Array.isArray(rawIds)) {
+      return rawIds.some((id) => String(id).toUpperCase() === 'ALL');
     }
-    if (rawName) {
+
+    // 2. Legacy single-department checks
+    if (rawId && String(rawId).toUpperCase() === 'ALL') return true;
+    if (rawName && (rawName.toUpperCase() === 'ALL' || rawName.toLowerCase().includes('all departments'))) return true;
+
+    // 3. If rawId is set to a specific department code/ID (e.g. '51' or 'CARDIOLOGY'), it is specific
+    if (rawId && String(rawId).trim() !== '') return false;
+
+    // 4. Default for unassigned legacy forms
+    return true;
+  }, [form.settings.departmentIds, form.settings.departmentId, form.settings.departmentName, scopeMode]);
+
+  const selectedDepartmentIds = useMemo(() => {
+    const rawIds = form.settings.departmentIds;
+    if (Array.isArray(rawIds) && rawIds.length > 0) {
+      return rawIds
+        .map((id) => String(id).trim())
+        .filter((id) => id.length > 0 && id.toUpperCase() !== 'ALL');
+    }
+    const rawId = form.settings.departmentId;
+    if (rawId && String(rawId).toUpperCase() !== 'ALL') {
       const match = departments.find(
-        (d) => d.departmentName.toUpperCase() === rawName.toUpperCase()
+        (d) => String(d.departmentId) === String(rawId) || d.departmentName.toUpperCase() === String(rawId).toUpperCase()
       );
-      if (match) return String(match.departmentId);
+      return match ? [String(match.departmentId)] : [String(rawId).trim()];
     }
-    return rawId || rawName || 'ALL';
-  }, [form.settings.departmentId, form.settings.departmentName, departments]);
+    const rawName = form.settings.departmentName;
+    if (rawName && rawName.toUpperCase() !== 'ALL' && !rawName.toLowerCase().includes('all departments')) {
+      const match = departments.find((d) => d.departmentName.toUpperCase() === rawName.toUpperCase());
+      if (match) return [String(match.departmentId)];
+    }
+    return [];
+  }, [form.settings.departmentIds, form.settings.departmentId, form.settings.departmentName, departments]);
+
+  // Keep lastSpecificDepartmentIds updated whenever user selects departments
+  useEffect(() => {
+    if (selectedDepartmentIds.length > 0) {
+      setLastSpecificDepartmentIds(selectedDepartmentIds);
+    }
+  }, [selectedDepartmentIds]);
+
+  const [deptSearchQuery, setDeptSearchQuery] = useState('');
+
+  const filteredDepartments = useMemo(() => {
+    if (!deptSearchQuery.trim()) return departments;
+    const q = deptSearchQuery.toLowerCase().trim();
+    return departments.filter(
+      (d) =>
+        d.departmentName.toLowerCase().includes(q) ||
+        String(d.departmentId).toLowerCase().includes(q)
+    );
+  }, [departments, deptSearchQuery]);
+
+  const handleToggleDepartment = (deptId: string) => {
+    setScopeMode('specific');
+    const idStr = String(deptId).trim();
+    let nextIds: string[];
+    if (selectedDepartmentIds.includes(idStr)) {
+      nextIds = selectedDepartmentIds.filter((id) => id !== idStr);
+    } else {
+      nextIds = [...selectedDepartmentIds, idStr];
+    }
+    nextIds = Array.from(new Set(nextIds));
+
+    if (nextIds.length === 0) {
+      updateSettings({
+        departmentIds: [],
+        departmentNames: [],
+        departmentId: '',
+        departmentName: '',
+      });
+      return;
+    }
+
+    const nextNames = nextIds.map((id) => {
+      const d = departments.find((dept) => String(dept.departmentId) === id);
+      return d ? d.departmentName : id;
+    });
+
+    updateSettings({
+      departmentIds: nextIds,
+      departmentNames: nextNames,
+      departmentId: nextIds[0],
+      departmentName: nextNames.join(', '),
+    });
+  };
+
+  const handleRemoveDepartment = (deptId: string) => {
+    setScopeMode('specific');
+    const idStr = String(deptId).trim();
+    const nextIds = selectedDepartmentIds.filter((id) => id !== idStr);
+    const nextNames = nextIds.map((id) => {
+      const d = departments.find((dept) => String(dept.departmentId) === id);
+      return d ? d.departmentName : id;
+    });
+    updateSettings({
+      departmentIds: nextIds,
+      departmentNames: nextNames,
+      departmentId: nextIds[0] || '',
+      departmentName: nextNames.join(', '),
+    });
+  };
+
+  const handleSetOrganizationWide = () => {
+    setScopeMode('all');
+    updateSettings({
+      departmentIds: ['ALL'],
+      departmentNames: ['All Departments (Organization-wide)'],
+      departmentId: 'ALL',
+      departmentName: 'All Departments (Organization-wide)',
+    });
+  };
+
+  const handleSetSpecificDepartments = () => {
+    setScopeMode('specific');
+    // If we have previously selected departments saved, restore them!
+    const restoreIds =
+      lastSpecificDepartmentIds.length > 0
+        ? lastSpecificDepartmentIds
+        : (form.settings.departmentIds || []).filter((id) => String(id).toUpperCase() !== 'ALL');
+
+    if (restoreIds.length > 0) {
+      const restoreNames = restoreIds.map((id) => {
+        const d = departments.find((dept) => String(dept.departmentId) === id);
+        return d ? d.departmentName : id;
+      });
+      updateSettings({
+        departmentIds: restoreIds,
+        departmentNames: restoreNames,
+        departmentId: restoreIds[0],
+        departmentName: restoreNames.join(', '),
+      });
+    } else {
+      updateSettings({
+        departmentIds: [],
+        departmentNames: [],
+        departmentId: '',
+        departmentName: '',
+      });
+    }
+  };
+
+  const handleSelectAllDepartments = () => {
+    setScopeMode('specific');
+    const allIds = departments.map((d) => String(d.departmentId));
+    const allNames = departments.map((d) => d.departmentName);
+    updateSettings({
+      departmentIds: allIds,
+      departmentNames: allNames,
+      departmentId: allIds[0] || '',
+      departmentName: allNames.join(', '),
+    });
+  };
+
+  const handleClearAllDepartments = () => {
+    setScopeMode('specific');
+    updateSettings({
+      departmentIds: [],
+      departmentNames: [],
+      departmentId: '',
+      departmentName: '',
+    });
+  };
 
   const loadColumnsForTable = async (tableName: string) => {
     if (!tableName || columnsByTable[tableName]) return;
@@ -210,50 +378,189 @@ export const PropertyPanel: React.FC = () => {
 
           <hr className="border-slate-200 dark:border-slate-800" />
 
-          {/* Department Assignment (Role-Based Form Visibility) */}
+          {/* Department Assignment (Multi-Department Role-Based Form Visibility) */}
           <div className="space-y-3">
-            <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
-              <Building className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <h4 className="text-[11px] font-bold uppercase tracking-wider">
-                Department Assignment
-              </h4>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                <Building className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <h4 className="text-[11px] font-bold uppercase tracking-wider">
+                  Department Assignment
+                </h4>
+              </div>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
+                {isOrganizationWide
+                  ? 'Org-wide'
+                  : `${selectedDepartmentIds.length} Dept${selectedDepartmentIds.length === 1 ? '' : 's'}`}
+              </span>
             </div>
+
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              Assign this form to a clinical department. Users accessing the application will only see forms assigned to their department.
+              Assign this form to one or multiple clinical departments. Users from any assigned department can access this form.
             </p>
 
-            <div>
-              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Assigned Department
-              </label>
-              <select
-                id="form-settings-department-select"
-                value={selectedDeptValue}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'ALL' || !val) {
-                    updateSettings({
-                      departmentId: 'ALL',
-                      departmentName: 'All Departments (Organization-wide)',
-                    });
-                  } else {
-                    const match = departments.find((d) => String(d.departmentId) === String(val));
-                    updateSettings({
-                      departmentId: val,
-                      departmentName: match ? match.departmentName : val,
-                    });
-                  }
-                }}
-                className="w-full bg-slate-50 border border-slate-200 dark:bg-slate-850 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+            {/* Scope Selection: All vs Specific */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <button
+                type="button"
+                id="btn-scope-all-departments"
+                onClick={handleSetOrganizationWide}
+                className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-[11px] font-semibold transition-all ${
+                  isOrganizationWide
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
               >
-                <option value="ALL">All Departments (Organization-wide)</option>
-                {departments.map((d) => (
-                  <option key={d.departmentId} value={String(d.departmentId)}>
-                    {d.departmentName} (ID: {d.departmentId})
-                  </option>
-                ))}
-              </select>
+                <Globe className="w-3 h-3" />
+                <span>All Departments</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-scope-specific-departments"
+                onClick={handleSetSpecificDepartments}
+                className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-[11px] font-semibold transition-all ${
+                  !isOrganizationWide
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Building className="w-3 h-3" />
+                <span>Specific Depts</span>
+              </button>
             </div>
+
+            {isOrganizationWide ? (
+              <div className="p-3 bg-blue-50/60 border border-blue-200/70 dark:bg-blue-950/20 dark:border-blue-900/40 rounded-lg text-blue-800 dark:text-blue-300 flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 mt-0.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <div className="text-[11px] leading-tight">
+                  <p className="font-semibold">Organization-wide Access</p>
+                  <p className="text-blue-600/80 dark:text-blue-400/80 mt-0.5">
+                    This form is accessible by staff in every department across the hospital.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {/* Actions: Select All / Clear All */}
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-medium text-slate-600 dark:text-slate-400">
+                    Assigned Departments ({selectedDepartmentIds.length})
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      id="btn-dept-select-all"
+                      onClick={handleSelectAllDepartments}
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline text-[10px]"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-slate-300 dark:text-slate-600">|</span>
+                    <button
+                      type="button"
+                      id="btn-dept-clear-all"
+                      onClick={handleClearAllDepartments}
+                      className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium hover:underline text-[10px]"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+
+                {/* Selected Departments Chips */}
+                {selectedDepartmentIds.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-lg max-h-28 overflow-y-auto">
+                    {selectedDepartmentIds.map((id) => {
+                      const dept = departments.find((d) => String(d.departmentId) === id);
+                      const name = dept ? dept.departmentName : `ID: ${id}`;
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[11px] font-medium"
+                        >
+                          <span>{name}</span>
+                          <span className="text-[9px] text-blue-500 dark:text-blue-400 font-mono">
+                            #{id}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDepartment(id)}
+                            className="p-0.5 rounded-full hover:bg-blue-200/80 dark:hover:bg-blue-800/80 text-blue-600 dark:text-blue-300 transition-colors"
+                            title={`Remove ${name}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-lg border border-dashed border-amber-300 bg-amber-50/70 dark:border-amber-800/60 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                    <span>Please select at least one department below.</span>
+                  </div>
+                )}
+
+                {/* Searchable Multi-Select Department List */}
+                <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-850">
+                  <div className="p-1.5 border-b border-slate-200 dark:border-slate-750 flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/80">
+                    <Search className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+                    <input
+                      type="text"
+                      id="form-settings-department-search"
+                      value={deptSearchQuery}
+                      onChange={(e) => setDeptSearchQuery(e.target.value)}
+                      placeholder="Filter departments..."
+                      className="w-full bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-none placeholder-slate-400"
+                    />
+                    {deptSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setDeptSearchQuery('')}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mr-1"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredDepartments.map((d) => {
+                      const idStr = String(d.departmentId);
+                      const isSelected = selectedDepartmentIds.includes(idStr);
+                      return (
+                        <label
+                          key={d.departmentId}
+                          className={`flex items-center justify-between px-2.5 py-1.5 cursor-pointer text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
+                            isSelected ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleDepartment(idStr)}
+                              className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                              {d.departmentName}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                            ID: {d.departmentId}
+                          </span>
+                        </label>
+                      );
+                    })}
+                    {filteredDepartments.length === 0 && (
+                      <div className="p-3 text-center text-slate-400 text-xs">
+                        No departments match &ldquo;{deptSearchQuery}&rdquo;
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -291,16 +598,6 @@ export const PropertyPanel: React.FC = () => {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 text-[10px] text-blue-700 dark:text-blue-300">
-              {selectedDeptValue === 'ALL' ? (
-                <span>Global Scope: Accessible across all departments and encounters.</span>
-              ) : (
-                <span>
-                  Restricted Scope: Visible only to <strong>{form.settings.departmentName || selectedDeptValue}</strong> users.
-                </span>
-              )}
             </div>
           </div>
 

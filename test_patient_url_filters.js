@@ -1,7 +1,7 @@
 import assert from 'assert';
 
 const BASE_URL = 'http://localhost:3001';
-const VITE_URL = 'http://localhost:5174';
+const VITE_URL = process.env.VITE_URL || 'http://localhost:5173';
 
 function logPass(msg) {
   console.log(`✅ [PASS] ${msg}`);

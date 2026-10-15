@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { normalizeDepartmentAssignment } from '../services/departmentFilterService.js';
 
 const FORMS_ROOT = path.resolve('server/data/forms');
 
@@ -212,10 +213,21 @@ export class FileFormRepository extends FormRepository {
     await this.init();
     const result = [];
     for (const [, item] of this.cache.entries()) {
+      const deptNorm = normalizeDepartmentAssignment(item.meta || item.draft || item.publishedDefinition);
       result.push({
         ...item.meta,
-        departmentId: item.meta.departmentId || item.draft?.settings?.departmentId || item.publishedDefinition?.settings?.departmentId || null,
-        departmentName: item.meta.departmentName || item.draft?.settings?.departmentName || item.publishedDefinition?.settings?.departmentName || null,
+        departmentIds: deptNorm.departmentIds,
+        departmentNames: deptNorm.departmentNames,
+        departmentId:
+          item.meta.departmentId ||
+          item.draft?.settings?.departmentId ||
+          item.publishedDefinition?.settings?.departmentId ||
+          (deptNorm.departmentIds.length === 1 ? deptNorm.departmentIds[0] : (deptNorm.isShared ? 'ALL' : deptNorm.departmentIds[0] || null)),
+        departmentName:
+          item.meta.departmentName ||
+          item.draft?.settings?.departmentName ||
+          item.publishedDefinition?.settings?.departmentName ||
+          (deptNorm.departmentNames.length === 1 ? deptNorm.departmentNames[0] : (deptNorm.isShared ? 'All Departments (Organization-wide)' : deptNorm.departmentNames.join(', ') || null)),
         serviceCenterId: item.meta.serviceCenterId || item.draft?.settings?.serviceCenterId || item.publishedDefinition?.settings?.serviceCenterId || null,
         serviceCenterName: item.meta.serviceCenterName || item.draft?.settings?.serviceCenterName || item.publishedDefinition?.settings?.serviceCenterName || null,
         hasDraft: !!item.draft,
@@ -295,6 +307,25 @@ export class FileFormRepository extends FormRepository {
       await fs.promises.mkdir(path.join(formDir, 'versions'), { recursive: true });
     }
 
+    const deptNorm = normalizeDepartmentAssignment({
+      departmentIds: formDef.settings?.departmentIds ?? metadataUpdates.departmentIds ?? existing?.meta?.departmentIds,
+      departmentNames: formDef.settings?.departmentNames ?? metadataUpdates.departmentNames ?? existing?.meta?.departmentNames,
+      departmentId: formDef.settings?.departmentId ?? metadataUpdates.departmentId ?? existing?.meta?.departmentId,
+      departmentName: formDef.settings?.departmentName ?? metadataUpdates.departmentName ?? existing?.meta?.departmentName,
+    });
+
+    if (!formDef.settings) formDef.settings = {};
+    formDef.settings.departmentIds = deptNorm.departmentIds;
+    formDef.settings.departmentNames = deptNorm.departmentNames;
+    formDef.settings.departmentId =
+      deptNorm.departmentIds.length === 1
+        ? deptNorm.departmentIds[0]
+        : (deptNorm.isShared ? 'ALL' : deptNorm.departmentIds[0] || null);
+    formDef.settings.departmentName =
+      deptNorm.departmentNames.length === 1
+        ? deptNorm.departmentNames[0]
+        : (deptNorm.isShared ? 'All Departments (Organization-wide)' : deptNorm.departmentNames.join(', ') || null);
+
     let meta;
     if (existing) {
       // Retain existing slug unless explicitly changing or missing
@@ -310,8 +341,10 @@ export class FileFormRepository extends FormRepository {
         name: formDef.title || existing.meta.name,
         slug,
         primaryEntity: formDef.settings?.primaryEntity || null,
-        departmentId: formDef.settings?.departmentId ?? metadataUpdates.departmentId ?? existing.meta.departmentId ?? null,
-        departmentName: formDef.settings?.departmentName ?? metadataUpdates.departmentName ?? existing.meta.departmentName ?? null,
+        departmentIds: deptNorm.departmentIds,
+        departmentNames: deptNorm.departmentNames,
+        departmentId: formDef.settings.departmentId,
+        departmentName: formDef.settings.departmentName,
         serviceCenterId: formDef.settings?.serviceCenterId ?? metadataUpdates.serviceCenterId ?? existing.meta.serviceCenterId ?? null,
         serviceCenterName: formDef.settings?.serviceCenterName ?? metadataUpdates.serviceCenterName ?? existing.meta.serviceCenterName ?? null,
         updatedAt: now,
@@ -332,8 +365,10 @@ export class FileFormRepository extends FormRepository {
         updatedAt: now,
         publishedAt: null,
         primaryEntity: formDef.settings?.primaryEntity || null,
-        departmentId: formDef.settings?.departmentId ?? metadataUpdates.departmentId ?? null,
-        departmentName: formDef.settings?.departmentName ?? metadataUpdates.departmentName ?? null,
+        departmentIds: deptNorm.departmentIds,
+        departmentNames: deptNorm.departmentNames,
+        departmentId: formDef.settings.departmentId,
+        departmentName: formDef.settings.departmentName,
         serviceCenterId: formDef.settings?.serviceCenterId ?? metadataUpdates.serviceCenterId ?? null,
         serviceCenterName: formDef.settings?.serviceCenterName ?? metadataUpdates.serviceCenterName ?? null,
         permissions: {
@@ -398,6 +433,13 @@ export class FileFormRepository extends FormRepository {
     // Freeze snapshot into immutable version file
     await fs.promises.writeFile(versionPath, JSON.stringify(definitionToPublish, null, 2), 'utf-8');
 
+    const deptNorm = normalizeDepartmentAssignment({
+      departmentIds: definitionToPublish.settings?.departmentIds ?? existing.meta?.departmentIds,
+      departmentNames: definitionToPublish.settings?.departmentNames ?? existing.meta?.departmentNames,
+      departmentId: definitionToPublish.settings?.departmentId ?? existing.meta?.departmentId,
+      departmentName: definitionToPublish.settings?.departmentName ?? existing.meta?.departmentName,
+    });
+
     // Update metadata
     const updatedMeta = {
       ...existing.meta,
@@ -408,8 +450,16 @@ export class FileFormRepository extends FormRepository {
       publishedAt: now,
       updatedAt: now,
       primaryEntity: definitionToPublish.settings?.primaryEntity || null,
-      departmentId: definitionToPublish.settings?.departmentId ?? existing.meta.departmentId ?? null,
-      departmentName: definitionToPublish.settings?.departmentName ?? existing.meta.departmentName ?? null,
+      departmentIds: deptNorm.departmentIds,
+      departmentNames: deptNorm.departmentNames,
+      departmentId:
+        deptNorm.departmentIds.length === 1
+          ? deptNorm.departmentIds[0]
+          : (deptNorm.isShared ? 'ALL' : deptNorm.departmentIds[0] || null),
+      departmentName:
+        deptNorm.departmentNames.length === 1
+          ? deptNorm.departmentNames[0]
+          : (deptNorm.isShared ? 'All Departments (Organization-wide)' : deptNorm.departmentNames.join(', ') || null),
       serviceCenterId: definitionToPublish.settings?.serviceCenterId ?? existing.meta.serviceCenterId ?? null,
       serviceCenterName: definitionToPublish.settings?.serviceCenterName ?? existing.meta.serviceCenterName ?? null,
     };

@@ -1,25 +1,20 @@
 import * as runtimeService from '../services/runtimeService.js';
 import * as submissionService from '../services/submissionService.js';
-import { resolveDepartment, matchesDepartmentScope } from '../services/departmentFilterService.js';
+import { checkFormAccess } from '../services/departmentFilterService.js';
 
 export async function getPublishedForm(req, res) {
   const { slug } = req.params;
-  const rawDept = req.query.department || req.query.departmentId;
-  const rawServiceCenter = req.query.serviceCenter;
 
   try {
     const form = await runtimeService.getPublishedFormBySlug(slug);
 
-    if (rawDept) {
-      const resolvedDept = await resolveDepartment(rawDept);
-      const allowed = matchesDepartmentScope(form, resolvedDept, rawServiceCenter);
-      if (!allowed) {
-        return res.status(403).json({
-          success: false,
-          code: 'DEPARTMENT_ACCESS_DENIED',
-          error: `Access Denied: This form is restricted and not available for department '${rawDept}'.`,
-        });
-      }
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to access this form.',
+      });
     }
 
     return res.json({ success: true, form });
@@ -37,6 +32,16 @@ export async function getPublishedForm(req, res) {
 export async function getRuntimeOptions(req, res) {
   const { slug } = req.params;
   try {
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to access options for this form.',
+      });
+    }
+
     const options = await runtimeService.getRuntimeOptions(slug);
     return res.json({ success: true, data: options });
   } catch (err) {
@@ -55,6 +60,16 @@ export async function getRuntimeOptions(req, res) {
 export async function getRuntimeRecord(req, res) {
   const { slug, recordId } = req.params;
   try {
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to view records for this form.',
+      });
+    }
+
     const data = await runtimeService.getRuntimeRecord(slug, recordId);
     return res.json({ success: true, data });
   } catch (err) {
@@ -76,21 +91,17 @@ export async function getRuntimeRecord(req, res) {
  */
 export async function getPatientFormState(req, res) {
   const { slug } = req.params;
-  const { mrno, patientId, admissionNumber, department, departmentId, serviceCenter } = req.query;
-  const rawDept = department || departmentId;
+  const { mrno, patientId, admissionNumber } = req.query;
 
   try {
-    if (rawDept) {
-      const form = await runtimeService.getPublishedFormBySlug(slug);
-      const resolvedDept = await resolveDepartment(rawDept);
-      const allowed = matchesDepartmentScope(form, resolvedDept, serviceCenter);
-      if (!allowed) {
-        return res.status(403).json({
-          success: false,
-          code: 'DEPARTMENT_ACCESS_DENIED',
-          error: `Access Denied: This form is restricted and not available for department '${rawDept}'.`,
-        });
-      }
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to access this form.',
+      });
     }
 
     const result = await submissionService.getPatientFormState(slug, {
@@ -121,6 +132,16 @@ export async function getSubmissionHistory(req, res) {
   const { mrno, patientId } = req.query;
 
   try {
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to view submissions for this form.',
+      });
+    }
+
     const submissions = await submissionService.getSubmissionHistory(slug, {
       mrno,
       patientId,
@@ -149,6 +170,16 @@ export async function getHistoricalSubmission(req, res) {
   const { mrno, patientId } = req.query;
 
   try {
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to view this submission.',
+      });
+    }
+
     const submission = await submissionService.getHistoricalSubmission(slug, targetId, {
       mrno,
       patientId,
@@ -176,9 +207,6 @@ export async function submitForm(req, res) {
   const payload = req.body || {};
   const formData = payload.data !== undefined ? payload.data : payload;
 
-  const rawDept = payload.department || payload.departmentId || req.query.department || req.query.departmentId;
-  const rawServiceCenter = payload.serviceCenter || req.query.serviceCenter;
-
   const mrno = payload.mrno || req.query.mrno;
   const patientId = payload.patientId || req.query.patientId;
   const admissionNumber = payload.admissionNumber || req.query.admissionNumber;
@@ -188,17 +216,14 @@ export async function submitForm(req, res) {
   const submissionId = payload.submissionId || null;
 
   try {
-    if (rawDept) {
-      const form = await runtimeService.getPublishedFormBySlug(slug);
-      const resolvedDept = await resolveDepartment(rawDept);
-      const allowed = matchesDepartmentScope(form, resolvedDept, rawServiceCenter);
-      if (!allowed) {
-        return res.status(403).json({
-          success: false,
-          code: 'DEPARTMENT_ACCESS_DENIED',
-          error: `Access Denied: This form is restricted and not available for department '${rawDept}'.`,
-        });
-      }
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to submit data to this form.',
+      });
     }
 
     const result = await submissionService.saveFormSubmission(slug, {
@@ -243,6 +268,16 @@ export async function insertRuntimeData(req, res) {
   const mrno = req.body?.mrno || req.query.mrno;
 
   try {
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to insert data to this form.',
+      });
+    }
+
     // If mrno is present, route through mode-aware submissionService
     if (mrno) {
       const result = await submissionService.saveFormSubmission(slug, {
@@ -285,6 +320,16 @@ export async function updateRuntimeData(req, res) {
   const mrno = req.body?.mrno || req.query.mrno;
 
   try {
+    const form = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(form, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to update data on this form.',
+      });
+    }
+
     if (mrno) {
       const result = await submissionService.saveFormSubmission(slug, {
         data: submittedData,
@@ -327,6 +372,15 @@ export async function executeRuntimeQuery(req, res) {
   const parameters = req.body?.parameters || req.body || {};
   try {
     const published = await runtimeService.getPublishedFormBySlug(slug);
+    const access = await checkFormAccess(published, req);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        code: access.code || 'DEPARTMENT_ACCESS_DENIED',
+        error: access.error || 'Access Denied: You do not have permission to execute queries on this form.',
+      });
+    }
+
     const { executeFormQuery: runQuery } = await import('../services/queryExecutionService.js');
     const result = await runQuery(published.definition, queryId, parameters);
     return res.json(result);
