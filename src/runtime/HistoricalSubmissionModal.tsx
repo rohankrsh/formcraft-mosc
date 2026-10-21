@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Calendar, User, Hash, Printer, ShieldAlert } from 'lucide-react';
 import type { FormDefinition, FormField, FormSubmissionRecord } from '../types/schema';
+import { PainFaceIcon, getPainScaleItem } from '../components/painAssessment/PainScaleData';
 
 interface HistoricalSubmissionModalProps {
   isOpen: boolean;
@@ -104,6 +105,49 @@ export const HistoricalSubmissionModal: React.FC<HistoricalSubmissionModalProps>
       );
     }
 
+    if (field.type === 'pain_assessment') {
+      const pVal = typeof val === 'object' && val !== null ? val : {};
+      const score = typeof pVal.score === 'number' ? pVal.score : null;
+      const scaleItem = score !== null ? getPainScaleItem(score) : null;
+      const painPresent = pVal.painPresent === 'yes' ? 'Yes' : pVal.painPresent === 'no' ? 'No' : '—';
+      const location = pVal.location ? String(pVal.location).trim() : '—';
+
+      return (
+        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 mt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-750">
+              <span className="block text-[10px] uppercase font-bold text-slate-400">Pain Present?</span>
+              <span className={`font-bold ${painPresent === 'Yes' ? 'text-rose-600 dark:text-rose-400' : painPresent === 'No' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                {painPresent}
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-750">
+              <span className="block text-[10px] uppercase font-bold text-slate-400">Location</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block" title={location}>
+                {location}
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-750">
+              <span className="block text-[10px] uppercase font-bold text-slate-400">Score</span>
+              {score !== null ? (
+                <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                  <PainFaceIcon score={score} className="w-4 h-4 shrink-0" />
+                  <span>{score} / 10 &bull; {scaleItem?.label}</span>
+                </div>
+              ) : (
+                <span className="text-slate-400 italic">Not recorded</span>
+              )}
+            </div>
+          </div>
+          {scaleItem && (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 italic px-1">
+              Assessment note: {scaleItem.description}
+            </p>
+          )}
+        </div>
+      );
+    }
+
     return <span className="font-medium text-slate-900 dark:text-slate-100">{String(val)}</span>;
   };
 
@@ -186,7 +230,7 @@ export const HistoricalSubmissionModal: React.FC<HistoricalSubmissionModalProps>
                       <div
                         key={field.id}
                         className={`p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 ${
-                          field.type === 'table' ? 'md:col-span-2' : ''
+                          field.type === 'table' || field.type === 'pain_assessment' ? 'md:col-span-2' : ''
                         }`}
                       >
                         <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
@@ -203,11 +247,12 @@ export const HistoricalSubmissionModal: React.FC<HistoricalSubmissionModalProps>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {fieldsList.map((field) => {
                 if (field.type === 'heading' || field.type === 'divider') return null;
+                const isFullWidth = field.type === 'table' || field.type === 'pain_assessment';
                 return (
                   <div
                     key={field.id}
                     className={`p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 ${
-                      field.type === 'table' ? 'md:col-span-2' : ''
+                      isFullWidth ? 'md:col-span-2' : ''
                     }`}
                   >
                     <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">

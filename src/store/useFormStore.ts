@@ -208,6 +208,21 @@ const createDefaultField = (type: FieldType): FormField => {
           ],
         },
       };
+    case 'pain_assessment':
+      return {
+        id,
+        name: baseName,
+        type: 'pain_assessment',
+        label: 'PAIN ASSESSMENT',
+        helpText: 'Record pain presence, location, and severity using a 0–10 facial scale',
+        defaultValue: {
+          painPresent: '',
+          location: '',
+          score: null,
+        },
+        validation: { required: false },
+        dataBinding: null,
+      };
   }
 };
 

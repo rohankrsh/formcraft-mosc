@@ -1,0 +1,40 @@
+{
+  "id": "mosc_initial_nursing_assessment",
+  "name": "NEW MALANKARA ORTHODOX SYRIAN CHURCH MEDICAL COLLEGE HOSPITAL - INITIAL NURSING ASSESSMENT FORM",
+  "slug": "malankara-orthodox-syrian-church-medical-college-hospital-initial-nursing-assessment-form-43ce9",
+  "status": "published",
+  "currentDraftVersion": 5,
+  "publishedVersion": 4,
+  "createdAt": "2026-10-21T04:31:09.264Z",
+  "updatedAt": "2026-10-21T05:05:49.805Z",
+  "publishedAt": "2026-10-21T04:52:16.135Z",
+  "primaryEntity": "PATIENT",
+  "departmentIds": [
+    "ALL"
+  ],
+  "departmentNames": [
+    "All Departments (Organization-wide)"
+  ],
+  "departmentId": "ALL",
+  "departmentName": "All Departments (Organization-wide)",
+  "serviceCenterId": null,
+  "serviceCenterName": null,
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

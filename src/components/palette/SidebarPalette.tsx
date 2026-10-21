@@ -17,6 +17,7 @@ import {
   Table,
   PanelLeftClose,
   PanelLeftOpen,
+  Activity,
 } from 'lucide-react';
 import type { FieldType } from '../../types/schema';
 import { useFormStore } from '../../store/useFormStore';
@@ -96,6 +97,13 @@ const FIELD_PALETTE: PaletteFieldDefinition[] = [
     description: 'Tabular data with rows & columns',
     icon: Table,
     badge: 'New',
+  },
+  {
+    type: 'pain_assessment',
+    label: 'Pain Assessment',
+    description: 'Record pain presence, location, and severity using a selectable 0–10 facial scale',
+    icon: Activity,
+    badge: 'Clinical',
   },
 ];
 

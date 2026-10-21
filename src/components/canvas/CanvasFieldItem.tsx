@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { FormField } from '../../types/schema';
 import { useFormStore } from '../../store/useFormStore';
+import { PainAssessmentInput } from '../painAssessment/PainAssessmentInput';
 
 interface CanvasFieldItemProps {
   field: FormField;
@@ -291,6 +292,21 @@ export const CanvasFieldItem: React.FC<CanvasFieldItemProps> = ({
               <span>{columns.length} columns &bull; {field.tableConfig?.allowAddRows !== false ? 'Dynamic rows' : 'Fixed rows'}</span>
               <span className="text-blue-500 font-medium">+ Add Row</span>
             </div>
+          </div>
+        );
+      }
+
+      case 'pain_assessment': {
+        return (
+          <div className="w-full pointer-events-none">
+            <PainAssessmentInput
+              value={field.defaultValue}
+              label={field.label}
+              helpText={field.helpText}
+              required={field.validation?.required}
+              isBuilderPreview={true}
+              disabled={true}
+            />
           </div>
         );
       }

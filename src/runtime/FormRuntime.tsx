@@ -633,12 +633,20 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
       const rules = field.validation || {};
 
       if (rules.required) {
-        if (
+        let isFieldEmpty =
           val === undefined ||
           val === null ||
           val === '' ||
-          (Array.isArray(val) && val.length === 0)
-        ) {
+          (Array.isArray(val) && val.length === 0);
+
+        if (!isFieldEmpty && field.type === 'pain_assessment' && typeof val === 'object') {
+          isFieldEmpty =
+            !val.painPresent &&
+            val.score === null &&
+            (!val.location || String(val.location).trim() === '');
+        }
+
+        if (isFieldEmpty) {
           newErrors[key] = rules.customErrorMessage || `${field.label} is required.`;
           continue;
         }

@@ -17,6 +17,7 @@ import {
 import { useFormStore } from '../../store/useFormStore';
 import type { FormField } from '../../types/schema';
 import { DownloadPdfButton } from '../common/DownloadPdfButton';
+import { PainAssessmentInput } from '../painAssessment/PainAssessmentInput';
 
 export const LivePreview: React.FC = () => {
   const { form, setPreviewMode } = useFormStore();
@@ -32,6 +33,8 @@ export const LivePreview: React.FC = () => {
           f.tableConfig?.defaultRows && f.tableConfig.defaultRows.length > 0
             ? JSON.parse(JSON.stringify(f.tableConfig.defaultRows))
             : [{}];
+      } else if (f.type === 'pain_assessment') {
+        initial[f.name] = f.defaultValue || { painPresent: '', location: '', score: null };
       } else {
         initial[f.name] = '';
       }
@@ -237,7 +240,15 @@ export const LivePreview: React.FC = () => {
 
     // Required check
     if (rules.required) {
-      if (
+      if (field.type === 'pain_assessment') {
+        const pVal = typeof value === 'object' && value !== null ? value : {};
+        const hasPresence = Boolean(pVal.painPresent);
+        const hasLoc = Boolean(pVal.location && String(pVal.location).trim());
+        const hasScore = pVal.score !== null && pVal.score !== undefined && pVal.score !== '';
+        if (!hasPresence && !hasLoc && !hasScore) {
+          return rules.customErrorMessage || `${field.label} is required.`;
+        }
+      } else if (
         value === undefined ||
         value === null ||
         value === '' ||
@@ -747,6 +758,22 @@ export const LivePreview: React.FC = () => {
                               );
                             }
 
+                            // Pain Assessment
+                            if (field.type === 'pain_assessment') {
+                              return (
+                                <div key={field.id} className="w-full">
+                                  <PainAssessmentInput
+                                    value={value}
+                                    onChange={(nextVal) => handleInputChange(field, nextVal)}
+                                    label={field.label}
+                                    helpText={field.helpText}
+                                    required={field.validation?.required}
+                                    error={error}
+                                  />
+                                </div>
+                              );
+                            }
+
                             const isPkField = Boolean(
                               effectivePrimaryEntity &&
                               (
@@ -938,57 +965,68 @@ export const LivePreview: React.FC = () => {
                                   />
                                 )}
 
+
                                 {field.type === 'time' && (() => {
-                                  // Parse stored value "HH:MM AM" → { hhmm, period }
+                                  // Parse stored value "HH:MM AM" or "HH:MM PM"
                                   const raw = (value as string) || '';
                                   const parts = raw.split(' ');
                                   const hhmm = parts[0] || '';
-                                  const period = (parts[1] === 'PM' ? 'PM' : 'AM') as 'AM' | 'PM';
+                                  const [hhStr, mmStr] = hhmm.split(':');
+                                  const hour = hhStr || '';
+                                  const minute = mmStr || '';
+                                  const period = (parts[1] === 'PM' ? 'PM' : parts[1] === 'AM' ? 'AM' : '') as 'AM' | 'PM' | '';
 
-                                  const handleTimePart = (newHhmm: string, newPeriod: 'AM' | 'PM') => {
-                                    handleInputChange(field, newHhmm ? `${newHhmm} ${newPeriod}` : '');
+                                  const buildValue = (h: string, m: string, p: string) => {
+                                    if (!h && !m && !p) return '';
+                                    return `${h.padStart(2, '0')}:${m.padStart(2, '0')} ${p || 'AM'}`;
                                   };
 
+                                  const selCls = `px-2 py-2 text-xs bg-slate-50 dark:bg-slate-950 border ${error ? 'border-rose-500' : 'border-slate-300 dark:border-slate-700/80 focus:border-blue-500'} ${radiusClass} text-slate-900 dark:text-white focus:outline-none transition-colors appearance-none cursor-pointer`;
+
+                                  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+                                  const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
                                   return (
-                                    <div className="flex items-center gap-2">
-                                      <div className="relative flex-1">
-                                        <input
-                                          type="time"
-                                          name={field.name}
-                                          value={hhmm}
-                                          onChange={(e) => handleTimePart(e.target.value, period)}
-                                          className={`w-full bg-slate-50 border ${error
-                                              ? 'border-rose-500 focus:ring-1 focus:ring-rose-500'
-                                              : 'border-slate-300 dark:border-slate-700/80 focus:border-blue-500'
-                                            } dark:bg-slate-950 ${radiusClass} px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none transition-colors`}
-                                        />
-                                      </div>
-                                      {/* AM / PM toggle */}
-                                      <div className="flex rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700/80 text-xs font-semibold shrink-0 shadow-xs">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleTimePart(hhmm, 'AM')}
-                                          className={`px-3 py-2 transition-colors ${period === 'AM'
-                                              ? 'bg-blue-500 text-white'
-                                              : 'bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900'
-                                            }`}
-                                        >
-                                          AM
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleTimePart(hhmm, 'PM')}
-                                          className={`px-3 py-2 transition-colors ${period === 'PM'
-                                              ? 'bg-blue-500 text-white'
-                                              : 'bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900'
-                                            }`}
-                                        >
-                                          PM
-                                        </button>
-                                      </div>
+                                    <div className="flex items-center gap-1.5">
+                                      {/* Hour */}
+                                      <select
+                                        name={field.name}
+                                        value={hour}
+                                        onChange={(e) => handleInputChange(field, buildValue(e.target.value, minute, period || 'AM'))}
+                                        className={`flex-1 ${selCls}`}
+                                      >
+                                        <option value="">HH</option>
+                                        {hours.map((h) => (
+                                          <option key={h} value={h}>{h}</option>
+                                        ))}
+                                      </select>
+                                      <span className="text-slate-400 font-bold text-sm select-none">:</span>
+                                      {/* Minute */}
+                                      <select
+                                        value={minute}
+                                        onChange={(e) => handleInputChange(field, buildValue(hour || '12', e.target.value, period || 'AM'))}
+                                        className={`flex-1 ${selCls}`}
+                                      >
+                                        <option value="">MM</option>
+                                        {minutes.map((m) => (
+                                          <option key={m} value={m}>{m}</option>
+                                        ))}
+                                      </select>
+                                      {/* AM / PM */}
+                                      <select
+                                        value={period}
+                                        onChange={(e) => handleInputChange(field, buildValue(hour || '12', minute || '00', e.target.value))}
+                                        className={`w-20 ${selCls}`}
+                                      >
+                                        <option value="">AM/PM</option>
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                      </select>
                                     </div>
                                   );
                                 })()}
+
+
 
 
                                 {field.type === 'select' && (() => {

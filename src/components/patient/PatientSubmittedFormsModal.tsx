@@ -24,6 +24,7 @@ import {
 } from '../../services/patientApi';
 import type { FormDefinition, FormField } from '../../types/schema';
 import { DownloadPdfButton } from '../common/DownloadPdfButton';
+import { PainFaceIcon, getPainScaleItem } from '../painAssessment/PainScaleData';
 
 interface PatientSubmittedFormsModalProps {
   isOpen: boolean;
@@ -281,6 +282,49 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
               ))}
             </tbody>
           </table>
+        </div>
+      );
+    }
+
+    if (field.type === 'pain_assessment') {
+      const pVal = typeof val === 'object' && val !== null ? val : {};
+      const score = typeof pVal.score === 'number' ? pVal.score : null;
+      const scaleItem = score !== null ? getPainScaleItem(score) : null;
+      const painPresent = pVal.painPresent === 'yes' ? 'Yes' : pVal.painPresent === 'no' ? 'No' : '—';
+      const location = pVal.location ? String(pVal.location).trim() : '—';
+
+      return (
+        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+            <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-750">
+              <span className="block text-[10px] uppercase font-bold text-slate-400">Pain Present?</span>
+              <span className={`font-bold ${painPresent === 'Yes' ? 'text-rose-600 dark:text-rose-400' : painPresent === 'No' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                {painPresent}
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-750">
+              <span className="block text-[10px] uppercase font-bold text-slate-400">Location</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block" title={location}>
+                {location}
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-750">
+              <span className="block text-[10px] uppercase font-bold text-slate-400">Score</span>
+              {score !== null ? (
+                <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                  <PainFaceIcon score={score} className="w-4 h-4 shrink-0" />
+                  <span>{score} / 10 &bull; {scaleItem?.label}</span>
+                </div>
+              ) : (
+                <span className="text-slate-400 italic">Not recorded</span>
+              )}
+            </div>
+          </div>
+          {scaleItem && (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 italic px-1">
+              Assessment note: {scaleItem.description}
+            </p>
+          )}
         </div>
       );
     }
@@ -645,13 +689,13 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
                                 return null;
                               }
 
-                              const isTable = field.type === 'table';
+                              const isFullWidth = field.type === 'table' || field.type === 'pain_assessment';
 
                               return (
                                 <div
                                   key={field.id}
                                   className={`p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-1 ${
-                                    isTable ? 'md:col-span-2' : ''
+                                    isFullWidth ? 'md:col-span-2' : ''
                                   }`}
                                 >
                                   <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -674,13 +718,13 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {Object.values(detailData.form.fields || {}).map((field) => {
                         if (field.type === 'heading' || field.type === 'divider') return null;
-                        const isTable = field.type === 'table';
+                        const isFullWidth = field.type === 'table' || field.type === 'pain_assessment';
 
                         return (
                           <div
                             key={field.id}
                             className={`p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-1 ${
-                              isTable ? 'md:col-span-2' : ''
+                              isFullWidth ? 'md:col-span-2' : ''
                             }`}
                           >
                             <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">

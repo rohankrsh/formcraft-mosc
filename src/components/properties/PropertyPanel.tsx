@@ -1340,7 +1340,7 @@ export const PropertyPanel: React.FC = () => {
           </div>
           <div>
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 capitalize">
-              {field.type} Field
+              {field.type.replace(/_/g, ' ')} Field
             </span>
             <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500">{field.id}</p>
           </div>

@@ -1,0 +1,40 @@
+{
+  "id": "anaesthesia_procedural_docket",
+  "name": "Anaesthesia Procedural Docket for Surgical / Invasive Procedures",
+  "slug": "anaesthesia-procedural-docket-for-surgical-invasive-procedures",
+  "status": "published",
+  "currentDraftVersion": 2,
+  "publishedVersion": 1,
+  "createdAt": "2026-10-19T11:46:08.568Z",
+  "updatedAt": "2026-10-21T03:55:37.548Z",
+  "publishedAt": "2026-10-19T11:46:08.575Z",
+  "primaryEntity": "PATIENT",
+  "departmentIds": [
+    "ALL"
+  ],
+  "departmentNames": [
+    "All Departments (Organization-wide)"
+  ],
+  "departmentId": "ALL",
+  "departmentName": "All Departments (Organization-wide)",
+  "serviceCenterId": null,
+  "serviceCenterName": null,
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

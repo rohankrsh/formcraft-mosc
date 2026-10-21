@@ -1,6 +1,7 @@
 import React from 'react';
 import type { FormField } from '../types/schema';
 import { RuntimeTable } from './RuntimeTable';
+import { PainAssessmentInput } from '../components/painAssessment/PainAssessmentInput';
 
 interface RuntimeFieldProps {
   field: FormField;
@@ -38,6 +39,23 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
   // Divider field
   if (field.type === 'divider') {
     return <hr className="my-3 border-slate-200 dark:border-slate-800" />;
+  }
+
+  // Pain Assessment field
+  if (field.type === 'pain_assessment') {
+    return (
+      <div className="w-full">
+        <PainAssessmentInput
+          value={value}
+          onChange={(newVal) => onChange(field, newVal)}
+          disabled={disabled}
+          label={field.label}
+          helpText={field.helpText}
+          required={isRequired}
+          error={error}
+        />
+      </div>
+    );
   }
 
   // Table field
@@ -140,19 +158,73 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
         />
       )}
 
-      {field.type === 'time' && (
-        <input
-          type="time"
-          disabled={disabled}
-          value={value ?? ''}
-          onChange={(e) => onChange(field, e.target.value)}
-          className={`w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border transition-all text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 ${
-            error
-              ? 'border-rose-400 dark:border-rose-600 focus:ring-rose-500/20'
-              : 'border-slate-300 dark:border-slate-700/80 focus:border-blue-500 focus:ring-blue-500/20'
-          }`}
-        />
-      )}
+      {field.type === 'time' && (() => {
+        // Parse stored value "HH:MM AM" or "HH:MM PM" → parts
+        const raw = (value as string) || '';
+        const parts = raw.split(' ');
+        const hhmm = parts[0] || '';
+        const [hhStr, mmStr] = hhmm.split(':');
+        const hour = hhStr || '';
+        const minute = mmStr || '';
+        const period = (parts[1] === 'PM' ? 'PM' : parts[1] === 'AM' ? 'AM' : '') as 'AM' | 'PM' | '';
+
+        const buildValue = (h: string, m: string, p: string) => {
+          if (!h && !m && !p) return '';
+          const hh = h.padStart(2, '0');
+          const mm = m.padStart(2, '0');
+          return `${hh}:${mm} ${p || 'AM'}`;
+        };
+
+        const selectCls = `px-2.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border transition-all text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 appearance-none cursor-pointer ${
+          error
+            ? 'border-rose-400 dark:border-rose-600 focus:ring-rose-500/20'
+            : 'border-slate-300 dark:border-slate-700/80 focus:border-blue-500 focus:ring-blue-500/20'
+        }`;
+
+        const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+        const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
+        return (
+          <div className="flex items-center gap-1.5">
+            {/* Hour */}
+            <select
+              disabled={disabled}
+              value={hour}
+              onChange={(e) => onChange(field, buildValue(e.target.value, minute, period || 'AM'))}
+              className={`flex-1 ${selectCls}`}
+            >
+              <option value="">HH</option>
+              {hours.map((h) => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+            <span className="text-slate-400 font-bold text-sm select-none">:</span>
+            {/* Minute */}
+            <select
+              disabled={disabled}
+              value={minute}
+              onChange={(e) => onChange(field, buildValue(hour || '12', e.target.value, period || 'AM'))}
+              className={`flex-1 ${selectCls}`}
+            >
+              <option value="">MM</option>
+              {minutes.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            {/* AM / PM */}
+            <select
+              disabled={disabled}
+              value={period}
+              onChange={(e) => onChange(field, buildValue(hour || '12', minute || '00', e.target.value))}
+              className={`w-20 ${selectCls}`}
+            >
+              <option value="">AM/PM</option>
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
+        );
+      })()}
 
       {field.type === 'select' && (
         <select

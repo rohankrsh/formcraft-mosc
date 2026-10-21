@@ -17,6 +17,7 @@ const SUPPORTED_FIELD_TYPES = new Set([
   'heading',
   'divider',
   'table',
+  'pain_assessment',
 ]);
 
 const DANGEROUS_SQL_PATTERNS = [

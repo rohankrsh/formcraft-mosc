@@ -1,0 +1,2598 @@
+{
+  "version": "1.0.0",
+  "id": "mosc_initial_nursing_assessment",
+  "title": "NEW MALANKARA ORTHODOX SYRIAN CHURCH MEDICAL COLLEGE HOSPITAL - INITIAL NURSING ASSESSMENT FORM",
+  "description": "Standardized inpatient adult initial nursing admission assessment covering triage demographics, vital signs, Morse fall risk, Braden pressure ulcer risk, full systems review, and reassessment logs.",
+  "settings": {
+    "submitButtonText": "Save Assessment",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Reset Form",
+    "theme": {
+      "primaryColor": "#1e3a8a",
+      "borderRadius": "md",
+      "fontFamily": "Inter, sans-serif"
+    },
+    "departmentIds": [
+      "ALL"
+    ],
+    "departmentNames": [
+      "All Departments (Organization-wide)"
+    ],
+    "departmentId": "ALL",
+    "departmentName": "All Departments (Organization-wide)"
+  },
+  "fields": {
+    "fld_doc_ref": {
+      "id": "fld_doc_ref",
+      "name": "doc_ref",
+      "type": "text",
+      "label": "Document Code",
+      "defaultValue": "MOSC/NSNG./001"
+    },
+    "fld_patient_name": {
+      "id": "fld_patient_name",
+      "name": "patient_name",
+      "type": "text",
+      "label": "Patient Name (Mr./Ms.)",
+      "placeholder": "Enter patient full name",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_age": {
+      "id": "fld_age",
+      "name": "age",
+      "type": "number",
+      "label": "Age",
+      "placeholder": "Age in years",
+      "validation": {
+        "required": true,
+        "min": 0,
+        "max": 130
+      }
+    },
+    "fld_sex": {
+      "id": "fld_sex",
+      "name": "sex",
+      "type": "select",
+      "label": "Sex",
+      "options": [
+        {
+          "label": "Male",
+          "value": "Male"
+        },
+        {
+          "label": "Female",
+          "value": "Female"
+        },
+        {
+          "label": "Other",
+          "value": "Other"
+        }
+      ],
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_hosp_no": {
+      "id": "fld_hosp_no",
+      "name": "hosp_no",
+      "type": "text",
+      "label": "Hosp. No.",
+      "placeholder": "Hospital Registration Number",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_consultant": {
+      "id": "fld_consultant",
+      "name": "consultant",
+      "type": "text",
+      "label": "Consultant",
+      "placeholder": "Attending Consultant Name"
+    },
+    "fld_unit": {
+      "id": "fld_unit",
+      "name": "unit",
+      "type": "text",
+      "label": "Unit",
+      "placeholder": "Clinical Unit"
+    },
+    "fld_ward": {
+      "id": "fld_ward",
+      "name": "ward",
+      "type": "text",
+      "label": "Ward",
+      "placeholder": "Ward / Bed No."
+    },
+    "fld_admission_from": {
+      "id": "fld_admission_from",
+      "name": "admission_from",
+      "type": "select",
+      "label": "Admission From",
+      "options": [
+        {
+          "label": "Out Patient",
+          "value": "Out Patient"
+        },
+        {
+          "label": "Emergency",
+          "value": "Emergency"
+        },
+        {
+          "label": "Labor Room",
+          "value": "Labor Room"
+        },
+        {
+          "label": "ICU",
+          "value": "ICU"
+        },
+        {
+          "label": "OT",
+          "value": "OT"
+        },
+        {
+          "label": "Others",
+          "value": "Others"
+        }
+      ]
+    },
+    "fld_admission_from_other": {
+      "id": "fld_admission_from_other",
+      "name": "admission_from_other",
+      "type": "text",
+      "label": "Admission From (If Others, Specify)",
+      "placeholder": "Specify department/location"
+    },
+    "fld_mode_of_arrival": {
+      "id": "fld_mode_of_arrival",
+      "name": "mode_of_arrival",
+      "type": "select",
+      "label": "Mode of Arrival",
+      "options": [
+        {
+          "label": "Ambulatory",
+          "value": "Ambulatory"
+        },
+        {
+          "label": "Wheel Chair",
+          "value": "Wheel Chair"
+        },
+        {
+          "label": "Trolley",
+          "value": "Trolley"
+        },
+        {
+          "label": "Carried in hand",
+          "value": "Carried in hand"
+        },
+        {
+          "label": "Others",
+          "value": "Others"
+        }
+      ]
+    },
+    "fld_mode_of_arrival_other": {
+      "id": "fld_mode_of_arrival_other",
+      "name": "mode_of_arrival_other",
+      "type": "text",
+      "label": "Mode of Arrival (If Others, Specify)",
+      "placeholder": "Specify mode"
+    },
+    "fld_presenting_complaints": {
+      "id": "fld_presenting_complaints",
+      "name": "presenting_complaints",
+      "type": "textarea",
+      "label": "Presenting Complaints / Symptoms / Provisional Diagnosis if any",
+      "placeholder": "Describe presenting complaints, symptoms, and provisional diagnosis..."
+    },
+    "fld_past_medical_history": {
+      "id": "fld_past_medical_history",
+      "name": "past_medical_history",
+      "type": "checkbox",
+      "label": "Past Medical / Surgical History",
+      "options": [
+        {
+          "label": "HTN",
+          "value": "HTN"
+        },
+        {
+          "label": "DM",
+          "value": "DM"
+        },
+        {
+          "label": "COPD",
+          "value": "COPD"
+        },
+        {
+          "label": "Seizures",
+          "value": "Seizures"
+        },
+        {
+          "label": "CKD/CLD",
+          "value": "CKD_CLD"
+        },
+        {
+          "label": "Mental Illness",
+          "value": "Mental_Illness"
+        },
+        {
+          "label": "CAD",
+          "value": "CAD"
+        },
+        {
+          "label": "Dialysis",
+          "value": "Dialysis"
+        },
+        {
+          "label": "CVA",
+          "value": "CVA"
+        }
+      ]
+    },
+    "fld_past_history_others": {
+      "id": "fld_past_history_others",
+      "name": "past_history_others",
+      "type": "text",
+      "label": "Other Medical/Surgical History",
+      "placeholder": "Specify other illnesses, prior surgeries, etc."
+    },
+    "fld_allergies": {
+      "id": "fld_allergies",
+      "name": "allergies",
+      "type": "text",
+      "label": "Allergies: Food / Drug / Others",
+      "placeholder": "If yes, specify allergy details (or 'None Known')"
+    },
+    "fld_vital_pulse": {
+      "id": "fld_vital_pulse",
+      "name": "vital_pulse",
+      "type": "number",
+      "label": "Pulse (/mt)",
+      "placeholder": "bpm"
+    },
+    "fld_vital_temp": {
+      "id": "fld_vital_temp",
+      "name": "vital_temp",
+      "type": "number",
+      "label": "Temp (°F)",
+      "placeholder": "°F"
+    },
+    "fld_vital_bp": {
+      "id": "fld_vital_bp",
+      "name": "vital_bp",
+      "type": "text",
+      "label": "BP (mm of Hg)",
+      "placeholder": "e.g., 120/80"
+    },
+    "fld_vital_spo2": {
+      "id": "fld_vital_spo2",
+      "name": "vital_spo2",
+      "type": "number",
+      "label": "SPO2 (%)",
+      "placeholder": "%"
+    },
+    "fld_vital_rr": {
+      "id": "fld_vital_rr",
+      "name": "vital_rr",
+      "type": "number",
+      "label": "R.R. (/mt)",
+      "placeholder": "breaths/min"
+    },
+    "fld_vital_grbs": {
+      "id": "fld_vital_grbs",
+      "name": "vital_grbs",
+      "type": "number",
+      "label": "GRBS (Mg/dl)",
+      "placeholder": "mg/dL"
+    },
+    "fld_pain_assessment": {
+      "id": "fld_pain_assessment",
+      "name": "pain_assessment",
+      "type": "pain_assessment",
+      "label": "PAIN ASSESSMENT",
+      "helpText": "Record pain presence, location, and severity using a 0–10 facial scale",
+      "defaultValue": {
+        "painPresent": "",
+        "location": "",
+        "score": null
+      }
+    },
+    "fld_mfs_falls_history": {
+      "id": "fld_mfs_falls_history",
+      "name": "mfs_falls_history",
+      "type": "select",
+      "label": "History of Falls immediate or within 3 months",
+      "options": [
+        {
+          "label": "No (0)",
+          "value": "0"
+        },
+        {
+          "label": "Yes (25)",
+          "value": "25"
+        }
+      ]
+    },
+    "fld_mfs_secondary_diag": {
+      "id": "fld_mfs_secondary_diag",
+      "name": "mfs_secondary_diag",
+      "type": "select",
+      "label": "Secondary Diagnosis",
+      "options": [
+        {
+          "label": "No (0)",
+          "value": "0"
+        },
+        {
+          "label": "Yes (15)",
+          "value": "15"
+        }
+      ]
+    },
+    "fld_mfs_ambulatory_aid": {
+      "id": "fld_mfs_ambulatory_aid",
+      "name": "mfs_ambulatory_aid",
+      "type": "select",
+      "label": "Ambulatory Aid",
+      "options": [
+        {
+          "label": "Bed rest / Nurse assist (0)",
+          "value": "0"
+        },
+        {
+          "label": "Crutches / Cane / Walker (15)",
+          "value": "15"
+        },
+        {
+          "label": "Furniture (30)",
+          "value": "30"
+        }
+      ]
+    },
+    "fld_mfs_iv_lock": {
+      "id": "fld_mfs_iv_lock",
+      "name": "mfs_iv_lock",
+      "type": "select",
+      "label": "IV / Heparin Lock",
+      "options": [
+        {
+          "label": "No (0)",
+          "value": "0"
+        },
+        {
+          "label": "Yes (20)",
+          "value": "20"
+        }
+      ]
+    },
+    "fld_mfs_gait": {
+      "id": "fld_mfs_gait",
+      "name": "mfs_gait",
+      "type": "select",
+      "label": "Gait",
+      "options": [
+        {
+          "label": "Normal / Bed rest / Immobile (0)",
+          "value": "0"
+        },
+        {
+          "label": "Weak (10)",
+          "value": "10"
+        },
+        {
+          "label": "Impaired (20)",
+          "value": "20"
+        }
+      ]
+    },
+    "fld_mfs_mental_status": {
+      "id": "fld_mfs_mental_status",
+      "name": "mfs_mental_status",
+      "type": "select",
+      "label": "Mental Status",
+      "options": [
+        {
+          "label": "Oriented to own ability (0)",
+          "value": "0"
+        },
+        {
+          "label": "Forgets limitations (15)",
+          "value": "15"
+        }
+      ]
+    },
+    "fld_mfs_total_score": {
+      "id": "fld_mfs_total_score",
+      "name": "mfs_total_score",
+      "type": "number",
+      "label": "TOTAL PATIENTS SCORE",
+      "placeholder": "Sum of Morse Fall Risk items"
+    },
+    "fld_mfs_risk_level": {
+      "id": "fld_mfs_risk_level",
+      "name": "mfs_risk_level",
+      "type": "radio",
+      "label": "Morse Fall Risk Level & Action",
+      "options": [
+        {
+          "label": "No Risk (0 - 24): Good Basic Nursing Care",
+          "value": "no_risk"
+        },
+        {
+          "label": "Low Risk (25 - 50): Standard Fall Prevention Interventions",
+          "value": "low_risk"
+        },
+        {
+          "label": "High Risk (> 51): High Risk Fall Prevention Interventions",
+          "value": "high_risk"
+        }
+      ]
+    },
+    "fld_gen_appearance": {
+      "id": "fld_gen_appearance",
+      "name": "gen_appearance",
+      "type": "select",
+      "label": "Appearance",
+      "options": [
+        {
+          "label": "Mal nourished",
+          "value": "Mal nourished"
+        },
+        {
+          "label": "Well nourished",
+          "value": "Well nourished"
+        },
+        {
+          "label": "Obese",
+          "value": "Obese"
+        }
+      ]
+    },
+    "fld_gen_height": {
+      "id": "fld_gen_height",
+      "name": "gen_height",
+      "type": "number",
+      "label": "Ht (cm)",
+      "placeholder": "cm"
+    },
+    "fld_gen_weight": {
+      "id": "fld_gen_weight",
+      "name": "gen_weight",
+      "type": "number",
+      "label": "Wt (kg)",
+      "placeholder": "kg"
+    },
+    "fld_gen_sleep": {
+      "id": "fld_gen_sleep",
+      "name": "gen_sleep",
+      "type": "select",
+      "label": "Sleep Pattern",
+      "options": [
+        {
+          "label": "Normal",
+          "value": "Normal"
+        },
+        {
+          "label": "Insomnia",
+          "value": "Insomnia"
+        }
+      ]
+    },
+    "fld_gen_others": {
+      "id": "fld_gen_others",
+      "name": "gen_others",
+      "type": "text",
+      "label": "General Others",
+      "placeholder": "Other general assessment notes"
+    },
+    "fld_cv_chest_pain": {
+      "id": "fld_cv_chest_pain",
+      "name": "cv_chest_pain",
+      "type": "radio",
+      "label": "Chest Pain",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_cv_palpitation": {
+      "id": "fld_cv_palpitation",
+      "name": "cv_palpitation",
+      "type": "radio",
+      "label": "Palpitation",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_cv_orthopnea": {
+      "id": "fld_cv_orthopnea",
+      "name": "cv_orthopnea",
+      "type": "radio",
+      "label": "Orthopnea",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_cv_pnd": {
+      "id": "fld_cv_pnd",
+      "name": "cv_pnd",
+      "type": "radio",
+      "label": "Paroxysmal nocturnal dyspnoea (PND)",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_cv_odema": {
+      "id": "fld_cv_odema",
+      "name": "cv_odema",
+      "type": "radio",
+      "label": "Odema",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_cv_odema_location": {
+      "id": "fld_cv_odema_location",
+      "name": "cv_odema_location",
+      "type": "text",
+      "label": "Odema Location",
+      "placeholder": "Specify location of oedema"
+    },
+    "fld_cv_others": {
+      "id": "fld_cv_others",
+      "name": "cv_others",
+      "type": "text",
+      "label": "Cardiovascular Others",
+      "placeholder": "Other cardiovascular findings"
+    },
+    "fld_neuro_loc": {
+      "id": "fld_neuro_loc",
+      "name": "neuro_loc",
+      "type": "select",
+      "label": "LOC (Level of Consciousness)",
+      "options": [
+        {
+          "label": "Conscious & oriented",
+          "value": "Conscious & oriented"
+        },
+        {
+          "label": "Disoriented",
+          "value": "Disoriented"
+        },
+        {
+          "label": "Unresponsive",
+          "value": "Unresponsive"
+        },
+        {
+          "label": "Confused",
+          "value": "Confused"
+        },
+        {
+          "label": "Respond to pain",
+          "value": "Respond to pain"
+        }
+      ]
+    },
+    "fld_neuro_oriented": {
+      "id": "fld_neuro_oriented",
+      "name": "neuro_oriented",
+      "type": "checkbox",
+      "label": "Oriented to",
+      "options": [
+        {
+          "label": "Place",
+          "value": "Place"
+        },
+        {
+          "label": "Time",
+          "value": "Time"
+        },
+        {
+          "label": "Person",
+          "value": "Person"
+        }
+      ]
+    },
+    "fld_neuro_behavior": {
+      "id": "fld_neuro_behavior",
+      "name": "neuro_behavior",
+      "type": "select",
+      "label": "Behavior",
+      "options": [
+        {
+          "label": "Calm",
+          "value": "Calm"
+        },
+        {
+          "label": "Restless",
+          "value": "Restless"
+        },
+        {
+          "label": "Agitated",
+          "value": "Agitated"
+        },
+        {
+          "label": "Withdrawal",
+          "value": "Withdrawal"
+        }
+      ]
+    },
+    "fld_neuro_pupillary": {
+      "id": "fld_neuro_pupillary",
+      "name": "neuro_pupillary",
+      "type": "text",
+      "label": "Pupillary Response",
+      "placeholder": "Equally reacting to light, if not specify"
+    },
+    "fld_neuro_others": {
+      "id": "fld_neuro_others",
+      "name": "neuro_others",
+      "type": "text",
+      "label": "Neurological Others",
+      "placeholder": "Other neurological findings"
+    },
+    "fld_resp_breath_pattern": {
+      "id": "fld_resp_breath_pattern",
+      "name": "resp_breath_pattern",
+      "type": "select",
+      "label": "Breath pattern",
+      "options": [
+        {
+          "label": "Regular",
+          "value": "Regular"
+        },
+        {
+          "label": "Irregular",
+          "value": "Irregular"
+        },
+        {
+          "label": "Laboured",
+          "value": "Laboured"
+        },
+        {
+          "label": "Dyspnoea",
+          "value": "Dyspnoea"
+        }
+      ]
+    },
+    "fld_resp_cough": {
+      "id": "fld_resp_cough",
+      "name": "resp_cough",
+      "type": "select",
+      "label": "Cough",
+      "options": [
+        {
+          "label": "Dry",
+          "value": "Dry"
+        },
+        {
+          "label": "Absent",
+          "value": "Absent"
+        },
+        {
+          "label": "Productive",
+          "value": "Productive"
+        }
+      ]
+    },
+    "fld_resp_cough_color": {
+      "id": "fld_resp_cough_color",
+      "name": "resp_cough_color",
+      "type": "text",
+      "label": "Cough Sputum Color",
+      "placeholder": "Color if productive"
+    },
+    "fld_resp_chest_appearance": {
+      "id": "fld_resp_chest_appearance",
+      "name": "resp_chest_appearance",
+      "type": "select",
+      "label": "Chest Appearance",
+      "options": [
+        {
+          "label": "Symmetrical",
+          "value": "Symmetrical"
+        },
+        {
+          "label": "Asymmetrical",
+          "value": "Asymmetrical"
+        }
+      ]
+    },
+    "fld_resp_o2_therapy": {
+      "id": "fld_resp_o2_therapy",
+      "name": "resp_o2_therapy",
+      "type": "text",
+      "label": "Oxygen Therapy",
+      "placeholder": "None / O2 @ ... L/mt via ..."
+    },
+    "fld_resp_cyanosis": {
+      "id": "fld_resp_cyanosis",
+      "name": "resp_cyanosis",
+      "type": "select",
+      "label": "Cyanosis",
+      "options": [
+        {
+          "label": "Absent",
+          "value": "Absent"
+        },
+        {
+          "label": "Peripheral",
+          "value": "Peripheral"
+        },
+        {
+          "label": "Central",
+          "value": "Central"
+        }
+      ]
+    },
+    "fld_resp_others": {
+      "id": "fld_resp_others",
+      "name": "resp_others",
+      "type": "text",
+      "label": "Respiratory Others",
+      "placeholder": "Other respiratory findings"
+    },
+    "fld_gi_diet": {
+      "id": "fld_gi_diet",
+      "name": "gi_diet",
+      "type": "text",
+      "label": "Diet",
+      "placeholder": "Oral / NPO from... / Others"
+    },
+    "fld_gi_appetite": {
+      "id": "fld_gi_appetite",
+      "name": "gi_appetite",
+      "type": "select",
+      "label": "Appetite",
+      "options": [
+        {
+          "label": "Good",
+          "value": "Good"
+        },
+        {
+          "label": "Poor",
+          "value": "Poor"
+        },
+        {
+          "label": "Nausea",
+          "value": "Nausea"
+        },
+        {
+          "label": "Emesis",
+          "value": "Emesis"
+        }
+      ]
+    },
+    "fld_gi_abdomen": {
+      "id": "fld_gi_abdomen",
+      "name": "gi_abdomen",
+      "type": "select",
+      "label": "Abdomen",
+      "options": [
+        {
+          "label": "Soft",
+          "value": "Soft"
+        },
+        {
+          "label": "Tender",
+          "value": "Tender"
+        },
+        {
+          "label": "Distended",
+          "value": "Distended"
+        }
+      ]
+    },
+    "fld_gi_abd_girth": {
+      "id": "fld_gi_abd_girth",
+      "name": "gi_abd_girth",
+      "type": "text",
+      "label": "If abnormal Abdominal Girth",
+      "placeholder": "e.g. 85 cm"
+    },
+    "fld_gi_bowel": {
+      "id": "fld_gi_bowel",
+      "name": "gi_bowel",
+      "type": "select",
+      "label": "Bowel Movements",
+      "options": [
+        {
+          "label": "Normal",
+          "value": "Normal"
+        },
+        {
+          "label": "Constipation",
+          "value": "Constipation"
+        },
+        {
+          "label": "Diarrhea",
+          "value": "Diarrhea"
+        },
+        {
+          "label": "Malena",
+          "value": "Malena"
+        }
+      ]
+    },
+    "fld_gi_others": {
+      "id": "fld_gi_others",
+      "name": "gi_others",
+      "type": "text",
+      "label": "Gastrointestinal Others",
+      "placeholder": "Other GI findings"
+    },
+    "fld_ms_mobility": {
+      "id": "fld_ms_mobility",
+      "name": "ms_mobility",
+      "type": "select",
+      "label": "Mobility",
+      "options": [
+        {
+          "label": "Independent",
+          "value": "Independent"
+        },
+        {
+          "label": "Dependent",
+          "value": "Dependent"
+        },
+        {
+          "label": "Aids",
+          "value": "Aids"
+        }
+      ]
+    },
+    "fld_ms_joints": {
+      "id": "fld_ms_joints",
+      "name": "ms_joints",
+      "type": "select",
+      "label": "Joints",
+      "options": [
+        {
+          "label": "ROM",
+          "value": "ROM"
+        },
+        {
+          "label": "Redness",
+          "value": "Redness"
+        },
+        {
+          "label": "Edema",
+          "value": "Edema"
+        },
+        {
+          "label": "Stiffness",
+          "value": "Stiffness"
+        },
+        {
+          "label": "Spasm",
+          "value": "Spasm"
+        }
+      ]
+    },
+    "fld_ms_grips": {
+      "id": "fld_ms_grips",
+      "name": "ms_grips",
+      "type": "checkbox",
+      "label": "Muscle Strength - Grips",
+      "options": [
+        {
+          "label": "Right (normal)",
+          "value": "Right (normal)"
+        },
+        {
+          "label": "Left (normal)",
+          "value": "Left (normal)"
+        }
+      ]
+    },
+    "fld_ms_pushes": {
+      "id": "fld_ms_pushes",
+      "name": "ms_pushes",
+      "type": "checkbox",
+      "label": "Muscle Strength - Pushes",
+      "options": [
+        {
+          "label": "Right (normal)",
+          "value": "Right (normal)"
+        },
+        {
+          "label": "Left (normal)",
+          "value": "Left (normal)"
+        }
+      ]
+    },
+    "fld_ms_abnormal_specify": {
+      "id": "fld_ms_abnormal_specify",
+      "name": "ms_abnormal_specify",
+      "type": "text",
+      "label": "If abnormal specify (Muscle/Joint)",
+      "placeholder": "Specify weakness or limitation"
+    },
+    "fld_ms_others": {
+      "id": "fld_ms_others",
+      "name": "ms_others",
+      "type": "text",
+      "label": "Musculoskeletal Others",
+      "placeholder": "Other musculoskeletal findings"
+    },
+    "fld_integ_temp": {
+      "id": "fld_integ_temp",
+      "name": "integ_temp",
+      "type": "select",
+      "label": "Skin Temperature",
+      "options": [
+        {
+          "label": "Warm",
+          "value": "Warm"
+        },
+        {
+          "label": "Hot",
+          "value": "Hot"
+        },
+        {
+          "label": "Cold",
+          "value": "Cold"
+        },
+        {
+          "label": "Dry",
+          "value": "Dry"
+        },
+        {
+          "label": "Diaphoresis",
+          "value": "Diaphoresis"
+        }
+      ]
+    },
+    "fld_integ_color": {
+      "id": "fld_integ_color",
+      "name": "integ_color",
+      "type": "select",
+      "label": "Skin Color",
+      "options": [
+        {
+          "label": "Normal",
+          "value": "Normal"
+        },
+        {
+          "label": "Pale",
+          "value": "Pale"
+        },
+        {
+          "label": "Flushed",
+          "value": "Flushed"
+        },
+        {
+          "label": "Jaundiced",
+          "value": "Jaundiced"
+        },
+        {
+          "label": "Cyanosed",
+          "value": "Cyanosed"
+        }
+      ]
+    },
+    "fld_integ_turgor": {
+      "id": "fld_integ_turgor",
+      "name": "integ_turgor",
+      "type": "select",
+      "label": "Skin Turgor",
+      "options": [
+        {
+          "label": "Good",
+          "value": "Good"
+        },
+        {
+          "label": "Poor",
+          "value": "Poor"
+        }
+      ]
+    },
+    "fld_integ_integrity": {
+      "id": "fld_integ_integrity",
+      "name": "integ_integrity",
+      "type": "select",
+      "label": "Skin Integrity",
+      "options": [
+        {
+          "label": "Intact",
+          "value": "Intact"
+        },
+        {
+          "label": "Nonintact",
+          "value": "Nonintact"
+        }
+      ]
+    },
+    "fld_integ_others": {
+      "id": "fld_integ_others",
+      "name": "integ_others",
+      "type": "text",
+      "label": "Integumentary Others",
+      "placeholder": "Rashes, lesions, breakdown notes"
+    },
+    "fld_braden_sensory": {
+      "id": "fld_braden_sensory",
+      "name": "braden_sensory",
+      "type": "select",
+      "label": "Sensory Perception",
+      "options": [
+        {
+          "label": "Completely limited (1)",
+          "value": "1"
+        },
+        {
+          "label": "Very limited (2)",
+          "value": "2"
+        },
+        {
+          "label": "Slightly limited (3)",
+          "value": "3"
+        },
+        {
+          "label": "No impairment (4)",
+          "value": "4"
+        }
+      ]
+    },
+    "fld_braden_moisture": {
+      "id": "fld_braden_moisture",
+      "name": "braden_moisture",
+      "type": "select",
+      "label": "Moisture",
+      "options": [
+        {
+          "label": "Constantly moist (1)",
+          "value": "1"
+        },
+        {
+          "label": "Often moist (2)",
+          "value": "2"
+        },
+        {
+          "label": "Occasionally moist (3)",
+          "value": "3"
+        },
+        {
+          "label": "Rarely moist (4)",
+          "value": "4"
+        }
+      ]
+    },
+    "fld_braden_activity": {
+      "id": "fld_braden_activity",
+      "name": "braden_activity",
+      "type": "select",
+      "label": "Activity",
+      "options": [
+        {
+          "label": "Bed fast (1)",
+          "value": "1"
+        },
+        {
+          "label": "Chair Fast (2)",
+          "value": "2"
+        },
+        {
+          "label": "Walks Occasionally (3)",
+          "value": "3"
+        },
+        {
+          "label": "Walks Frequently (4)",
+          "value": "4"
+        }
+      ]
+    },
+    "fld_braden_mobility": {
+      "id": "fld_braden_mobility",
+      "name": "braden_mobility",
+      "type": "select",
+      "label": "Mobility",
+      "options": [
+        {
+          "label": "Completely Immobile (1)",
+          "value": "1"
+        },
+        {
+          "label": "Very Limited (2)",
+          "value": "2"
+        },
+        {
+          "label": "Slightly Limited (3)",
+          "value": "3"
+        },
+        {
+          "label": "No Limitation (4)",
+          "value": "4"
+        }
+      ]
+    },
+    "fld_braden_nutrition": {
+      "id": "fld_braden_nutrition",
+      "name": "braden_nutrition",
+      "type": "select",
+      "label": "Nutrition",
+      "options": [
+        {
+          "label": "Very Poor (1)",
+          "value": "1"
+        },
+        {
+          "label": "Probably Inadequate (2)",
+          "value": "2"
+        },
+        {
+          "label": "Adequate (3)",
+          "value": "3"
+        },
+        {
+          "label": "Excellent (4)",
+          "value": "4"
+        }
+      ]
+    },
+    "fld_braden_friction": {
+      "id": "fld_braden_friction",
+      "name": "braden_friction",
+      "type": "select",
+      "label": "Friction / Shear",
+      "options": [
+        {
+          "label": "Problem (1)",
+          "value": "1"
+        },
+        {
+          "label": "Potential Problem (2)",
+          "value": "2"
+        },
+        {
+          "label": "No Apparent Problem (3)",
+          "value": "3"
+        }
+      ]
+    },
+    "fld_braden_total_score": {
+      "id": "fld_braden_total_score",
+      "name": "braden_total_score",
+      "type": "number",
+      "label": "TOTAL PATIENTS SCORE",
+      "placeholder": "Sum of Braden factors (6 - 23)"
+    },
+    "fld_braden_risk_category": {
+      "id": "fld_braden_risk_category",
+      "name": "braden_risk_category",
+      "type": "radio",
+      "label": "Braden Risk Category",
+      "options": [
+        {
+          "label": "Mild risk (15-18)",
+          "value": "mild_risk"
+        },
+        {
+          "label": "Moderate risk (13-14)",
+          "value": "moderate_risk"
+        },
+        {
+          "label": "High risk (10-12)",
+          "value": "high_risk"
+        },
+        {
+          "label": "Severe risk (<= 9)",
+          "value": "severe_risk"
+        }
+      ]
+    },
+    "fld_renal_voiding": {
+      "id": "fld_renal_voiding",
+      "name": "renal_voiding",
+      "type": "select",
+      "label": "Voiding",
+      "options": [
+        {
+          "label": "Normal",
+          "value": "Normal"
+        },
+        {
+          "label": "Incontinence",
+          "value": "Incontinence"
+        },
+        {
+          "label": "Frequency",
+          "value": "Frequency"
+        },
+        {
+          "label": "Burning",
+          "value": "Burning"
+        },
+        {
+          "label": "Nocturia",
+          "value": "Nocturia"
+        },
+        {
+          "label": "Dysuria",
+          "value": "Dysuria"
+        }
+      ]
+    },
+    "fld_renal_color": {
+      "id": "fld_renal_color",
+      "name": "renal_color",
+      "type": "select",
+      "label": "Urine Color",
+      "options": [
+        {
+          "label": "Normal",
+          "value": "Normal"
+        },
+        {
+          "label": "Abnormal",
+          "value": "Abnormal"
+        }
+      ]
+    },
+    "fld_renal_color_abnormal": {
+      "id": "fld_renal_color_abnormal",
+      "name": "renal_color_abnormal",
+      "type": "text",
+      "label": "If abnormal Specify",
+      "placeholder": "Color, turbidity, hematuria..."
+    },
+    "fld_renal_others": {
+      "id": "fld_renal_others",
+      "name": "renal_others",
+      "type": "text",
+      "label": "Renal Others",
+      "placeholder": "Catheter type, size, output remarks"
+    },
+    "fld_obs_lmp": {
+      "id": "fld_obs_lmp",
+      "name": "obs_lmp",
+      "type": "text",
+      "label": "LMP",
+      "placeholder": "DD/MM/YYYY"
+    },
+    "fld_obs_edc": {
+      "id": "fld_obs_edc",
+      "name": "obs_edc",
+      "type": "text",
+      "label": "EDC",
+      "placeholder": "DD/MM/YYYY"
+    },
+    "fld_obs_gravida": {
+      "id": "fld_obs_gravida",
+      "name": "obs_gravida",
+      "type": "text",
+      "label": "Gravida",
+      "placeholder": "G"
+    },
+    "fld_obs_para": {
+      "id": "fld_obs_para",
+      "name": "obs_para",
+      "type": "text",
+      "label": "Para",
+      "placeholder": "P"
+    },
+    "fld_obs_lactating": {
+      "id": "fld_obs_lactating",
+      "name": "obs_lactating",
+      "type": "radio",
+      "label": "Lactating",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_obs_boh": {
+      "id": "fld_obs_boh",
+      "name": "obs_boh",
+      "type": "text",
+      "label": "BOH",
+      "placeholder": "Bad Obstetric History"
+    },
+    "fld_obs_fhs": {
+      "id": "fld_obs_fhs",
+      "name": "obs_fhs",
+      "type": "text",
+      "label": "FHS",
+      "placeholder": "Fetal Heart Sound (bpm)"
+    },
+    "fld_obs_menstrual_history": {
+      "id": "fld_obs_menstrual_history",
+      "name": "obs_menstrual_history",
+      "type": "select",
+      "label": "Menstrual History",
+      "options": [
+        {
+          "label": "Regular",
+          "value": "Regular"
+        },
+        {
+          "label": "Irregular",
+          "value": "Irregular"
+        },
+        {
+          "label": "Others",
+          "value": "Others"
+        }
+      ]
+    },
+    "fld_obs_menstrual_others": {
+      "id": "fld_obs_menstrual_others",
+      "name": "obs_menstrual_others",
+      "type": "text",
+      "label": "Menstrual Others",
+      "placeholder": "Specify details if irregular/menopause/other"
+    },
+    "fld_drain_iv_cannula": {
+      "id": "fld_drain_iv_cannula",
+      "name": "drain_iv_cannula",
+      "type": "radio",
+      "label": "IV cannula",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_drain_ryles_tube": {
+      "id": "fld_drain_ryles_tube",
+      "name": "drain_ryles_tube",
+      "type": "radio",
+      "label": "Ryles tube",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_drain_central_line": {
+      "id": "fld_drain_central_line",
+      "name": "drain_central_line",
+      "type": "radio",
+      "label": "Central line",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_drain_et_tube": {
+      "id": "fld_drain_et_tube",
+      "name": "drain_et_tube",
+      "type": "radio",
+      "label": "ET tube",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_drain_chest_tube": {
+      "id": "fld_drain_chest_tube",
+      "name": "drain_chest_tube",
+      "type": "radio",
+      "label": "Chest tube",
+      "options": [
+        {
+          "label": "YES",
+          "value": "YES"
+        },
+        {
+          "label": "NO",
+          "value": "NO"
+        }
+      ]
+    },
+    "fld_other_findings_remarks": {
+      "id": "fld_other_findings_remarks",
+      "name": "other_findings_remarks",
+      "type": "textarea",
+      "label": "ANY OTHER FINDINGS/REMARKS",
+      "placeholder": "Additional nursing notes, special observations, communication barriers, or patient needs..."
+    },
+    "fld_nurse_name": {
+      "id": "fld_nurse_name",
+      "name": "nurse_name",
+      "type": "text",
+      "label": "Assessment Completed by Staff Nurse (Name)",
+      "placeholder": "Full staff nurse name",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_nurse_sign": {
+      "id": "fld_nurse_sign",
+      "name": "nurse_sign",
+      "type": "text",
+      "label": "Sign",
+      "placeholder": "Staff initials / ID"
+    },
+    "fld_nurse_date": {
+      "id": "fld_nurse_date",
+      "name": "nurse_date",
+      "type": "date",
+      "label": "Date",
+      "validation": {
+        "required": true
+      }
+    },
+    "fld_nurse_time": {
+      "id": "fld_nurse_time",
+      "name": "nurse_time",
+      "type": "text",
+      "label": "Time",
+      "placeholder": "HH:MM"
+    },
+    "fld_morse_reassessment_table": {
+      "id": "fld_morse_reassessment_table",
+      "name": "morse_reassessment_table",
+      "type": "table",
+      "label": "MORSE FALL RISK REASSESSMENT RECORD",
+      "helpText": "Track ongoing Morse Fall Risk scores, causes, interventions, and staff signatures throughout hospitalization.",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "col_datetime",
+            "label": "Date & Time",
+            "type": "text",
+            "placeholder": "DD/MM HH:MM"
+          },
+          {
+            "id": "col_score",
+            "label": "Score",
+            "type": "number",
+            "placeholder": "MFS"
+          },
+          {
+            "id": "col_reason",
+            "label": "Reason",
+            "type": "text",
+            "placeholder": "Reason for reassessment"
+          },
+          {
+            "id": "col_action",
+            "label": "Action taken",
+            "type": "text",
+            "placeholder": "Interventions implemented"
+          },
+          {
+            "id": "col_staff",
+            "label": "Staff Name & Sign",
+            "type": "text",
+            "placeholder": "Nurse name & signature"
+          }
+        ],
+        "minRows": 2,
+        "allowAddRows": true,
+        "defaultRows": []
+      }
+    },
+    "fld_1792557223496_kdwf1": {
+      "id": "fld_1792557223496_kdwf1",
+      "name": "date_ufsm",
+      "type": "date",
+      "label": "Date of Patient Arrival at bed",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1792557259665_4bjxn": {
+      "id": "fld_1792557259665_4bjxn",
+      "name": "time_nile",
+      "type": "time",
+      "label": "Time of Nursing Assessment",
+      "placeholder": "HH:MM",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1792557329000_d3dop": {
+      "id": "fld_1792557329000_d3dop",
+      "name": "time_do5p",
+      "type": "time",
+      "label": "Time of Nursing Assessment",
+      "placeholder": "HH:MM",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_hospital_header",
+      "title": "Hospital Header & Patient Information",
+      "description": "Patient Identification & Admission Details (Page 1)",
+      "rows": [
+        {
+          "id": "row_doc_code",
+          "columns": [
+            {
+              "id": "col_doc_code",
+              "width": 12,
+              "fieldIds": [
+                "fld_doc_ref"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_patient_demog_1",
+          "columns": [
+            {
+              "id": "col_patient_name",
+              "width": 6,
+              "fieldIds": [
+                "fld_patient_name"
+              ]
+            },
+            {
+              "id": "col_age",
+              "width": 3,
+              "fieldIds": [
+                "fld_age"
+              ]
+            },
+            {
+              "id": "col_sex",
+              "width": 3,
+              "fieldIds": [
+                "fld_sex"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_patient_demog_2",
+          "columns": [
+            {
+              "id": "col_hosp_no",
+              "width": 4,
+              "fieldIds": [
+                "fld_hosp_no"
+              ]
+            },
+            {
+              "id": "col_consultant",
+              "width": 4,
+              "fieldIds": [
+                "fld_consultant"
+              ]
+            },
+            {
+              "id": "col_unit",
+              "width": 2,
+              "fieldIds": [
+                "fld_unit"
+              ]
+            },
+            {
+              "id": "col_ward",
+              "width": 2,
+              "fieldIds": [
+                "fld_ward"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_patient_arrival",
+          "columns": [
+            {
+              "id": "col_arrival_dt",
+              "width": 6,
+              "fieldIds": [
+                "fld_1792557223496_kdwf1"
+              ]
+            },
+            {
+              "id": "col_assessment_t",
+              "width": 6,
+              "fieldIds": [
+                "fld_1792557259665_4bjxn"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_1792557313120_m75",
+          "columns": [
+            {
+              "id": "col_1792557319247_0",
+              "width": 6,
+              "fieldIds": [
+                "fld_1792557329000_d3dop"
+              ]
+            },
+            {
+              "id": "col_1792557319247_1",
+              "width": 6,
+              "fieldIds": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_admission_arrival",
+      "title": "Admission & Mode of Arrival",
+      "rows": [
+        {
+          "id": "row_admission_mode",
+          "columns": [
+            {
+              "id": "col_admission_from",
+              "width": 3,
+              "fieldIds": [
+                "fld_admission_from"
+              ]
+            },
+            {
+              "id": "col_admission_from_other",
+              "width": 3,
+              "fieldIds": [
+                "fld_admission_from_other"
+              ]
+            },
+            {
+              "id": "col_mode_of_arrival",
+              "width": 3,
+              "fieldIds": [
+                "fld_mode_of_arrival"
+              ]
+            },
+            {
+              "id": "col_mode_of_arrival_other",
+              "width": 3,
+              "fieldIds": [
+                "fld_mode_of_arrival_other"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_complaints_history",
+      "title": "Presenting Complaints & History",
+      "rows": [
+        {
+          "id": "row_complaints",
+          "columns": [
+            {
+              "id": "col_complaints",
+              "width": 12,
+              "fieldIds": [
+                "fld_presenting_complaints"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pmh",
+          "columns": [
+            {
+              "id": "col_pmh_checks",
+              "width": 8,
+              "fieldIds": [
+                "fld_past_medical_history"
+              ]
+            },
+            {
+              "id": "col_pmh_others",
+              "width": 4,
+              "fieldIds": [
+                "fld_past_history_others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_allergies",
+          "columns": [
+            {
+              "id": "col_allergies",
+              "width": 12,
+              "fieldIds": [
+                "fld_allergies"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_vital_signs",
+      "title": "Vital Signs",
+      "rows": [
+        {
+          "id": "row_vitals",
+          "columns": [
+            {
+              "id": "col_pulse",
+              "width": 2,
+              "fieldIds": [
+                "fld_vital_pulse"
+              ]
+            },
+            {
+              "id": "col_temp",
+              "width": 2,
+              "fieldIds": [
+                "fld_vital_temp"
+              ]
+            },
+            {
+              "id": "col_bp",
+              "width": 2,
+              "fieldIds": [
+                "fld_vital_bp"
+              ]
+            },
+            {
+              "id": "col_spo2",
+              "width": 2,
+              "fieldIds": [
+                "fld_vital_spo2"
+              ]
+            },
+            {
+              "id": "col_rr",
+              "width": 2,
+              "fieldIds": [
+                "fld_vital_rr"
+              ]
+            },
+            {
+              "id": "col_grbs",
+              "width": 2,
+              "fieldIds": [
+                "fld_vital_grbs"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_pain_assessment",
+      "title": "Pain Assessment",
+      "rows": [
+        {
+          "id": "row_pain_comp",
+          "columns": [
+            {
+              "id": "col_pain_comp",
+              "width": 12,
+              "fieldIds": [
+                "fld_pain_assessment"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_morse_fall_risk",
+      "title": "Morse Fall Risk Assessment",
+      "description": "Standard Morse Fall Risk Scale & Action Plan",
+      "rows": [
+        {
+          "id": "row_mfs_1",
+          "columns": [
+            {
+              "id": "col_mfs_falls",
+              "width": 6,
+              "fieldIds": [
+                "fld_mfs_falls_history"
+              ]
+            },
+            {
+              "id": "col_mfs_gait",
+              "width": 6,
+              "fieldIds": [
+                "fld_mfs_gait"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_mfs_2",
+          "columns": [
+            {
+              "id": "col_mfs_sec_diag",
+              "width": 6,
+              "fieldIds": [
+                "fld_mfs_secondary_diag"
+              ]
+            },
+            {
+              "id": "col_mfs_mental",
+              "width": 6,
+              "fieldIds": [
+                "fld_mfs_mental_status"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_mfs_3",
+          "columns": [
+            {
+              "id": "col_mfs_aid",
+              "width": 6,
+              "fieldIds": [
+                "fld_mfs_ambulatory_aid"
+              ]
+            },
+            {
+              "id": "col_mfs_iv",
+              "width": 6,
+              "fieldIds": [
+                "fld_mfs_iv_lock"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_mfs_total",
+          "columns": [
+            {
+              "id": "col_mfs_total",
+              "width": 4,
+              "fieldIds": [
+                "fld_mfs_total_score"
+              ]
+            },
+            {
+              "id": "col_mfs_risk",
+              "width": 8,
+              "fieldIds": [
+                "fld_mfs_risk_level"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_systems_general_cv",
+      "title": "Systems Review - General & Cardiovascular",
+      "rows": [
+        {
+          "id": "row_general_params",
+          "columns": [
+            {
+              "id": "col_gen_app",
+              "width": 3,
+              "fieldIds": [
+                "fld_gen_appearance"
+              ]
+            },
+            {
+              "id": "col_gen_ht",
+              "width": 2,
+              "fieldIds": [
+                "fld_gen_height"
+              ]
+            },
+            {
+              "id": "col_gen_wt",
+              "width": 2,
+              "fieldIds": [
+                "fld_gen_weight"
+              ]
+            },
+            {
+              "id": "col_gen_sleep",
+              "width": 2,
+              "fieldIds": [
+                "fld_gen_sleep"
+              ]
+            },
+            {
+              "id": "col_gen_oth",
+              "width": 3,
+              "fieldIds": [
+                "fld_gen_others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_cv_symptoms_1",
+          "columns": [
+            {
+              "id": "col_cv_cp",
+              "width": 3,
+              "fieldIds": [
+                "fld_cv_chest_pain"
+              ]
+            },
+            {
+              "id": "col_cv_palp",
+              "width": 3,
+              "fieldIds": [
+                "fld_cv_palpitation"
+              ]
+            },
+            {
+              "id": "col_cv_ortho",
+              "width": 3,
+              "fieldIds": [
+                "fld_cv_orthopnea"
+              ]
+            },
+            {
+              "id": "col_cv_pnd_item",
+              "width": 3,
+              "fieldIds": [
+                "fld_cv_pnd"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_cv_symptoms_2",
+          "columns": [
+            {
+              "id": "col_cv_odema_flag",
+              "width": 3,
+              "fieldIds": [
+                "fld_cv_odema"
+              ]
+            },
+            {
+              "id": "col_cv_odema_loc",
+              "width": 4,
+              "fieldIds": [
+                "fld_cv_odema_location"
+              ]
+            },
+            {
+              "id": "col_cv_oth",
+              "width": 5,
+              "fieldIds": [
+                "fld_cv_others"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_systems_neuro_resp",
+      "title": "Systems Review - Neurological & Respiratory",
+      "description": "Page 2 Systems Review",
+      "rows": [
+        {
+          "id": "row_neuro_1",
+          "columns": [
+            {
+              "id": "col_neuro_loc",
+              "width": 4,
+              "fieldIds": [
+                "fld_neuro_loc"
+              ]
+            },
+            {
+              "id": "col_neuro_orient",
+              "width": 4,
+              "fieldIds": [
+                "fld_neuro_oriented"
+              ]
+            },
+            {
+              "id": "col_neuro_behav",
+              "width": 4,
+              "fieldIds": [
+                "fld_neuro_behavior"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_neuro_2",
+          "columns": [
+            {
+              "id": "col_neuro_pupil",
+              "width": 6,
+              "fieldIds": [
+                "fld_neuro_pupillary"
+              ]
+            },
+            {
+              "id": "col_neuro_oth",
+              "width": 6,
+              "fieldIds": [
+                "fld_neuro_others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_resp_1",
+          "columns": [
+            {
+              "id": "col_resp_breath",
+              "width": 3,
+              "fieldIds": [
+                "fld_resp_breath_pattern"
+              ]
+            },
+            {
+              "id": "col_resp_cough_val",
+              "width": 3,
+              "fieldIds": [
+                "fld_resp_cough"
+              ]
+            },
+            {
+              "id": "col_resp_cough_col",
+              "width": 3,
+              "fieldIds": [
+                "fld_resp_cough_color"
+              ]
+            },
+            {
+              "id": "col_resp_chest_app",
+              "width": 3,
+              "fieldIds": [
+                "fld_resp_chest_appearance"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_resp_2",
+          "columns": [
+            {
+              "id": "col_resp_o2",
+              "width": 4,
+              "fieldIds": [
+                "fld_resp_o2_therapy"
+              ]
+            },
+            {
+              "id": "col_resp_cyan",
+              "width": 4,
+              "fieldIds": [
+                "fld_resp_cyanosis"
+              ]
+            },
+            {
+              "id": "col_resp_oth",
+              "width": 4,
+              "fieldIds": [
+                "fld_resp_others"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_systems_gi_ms_integ",
+      "title": "Systems Review - Gastrointestinal, Musculoskeletal & Integumentary",
+      "rows": [
+        {
+          "id": "row_gi_1",
+          "columns": [
+            {
+              "id": "col_gi_diet_val",
+              "width": 4,
+              "fieldIds": [
+                "fld_gi_diet"
+              ]
+            },
+            {
+              "id": "col_gi_app",
+              "width": 4,
+              "fieldIds": [
+                "fld_gi_appetite"
+              ]
+            },
+            {
+              "id": "col_gi_abd",
+              "width": 4,
+              "fieldIds": [
+                "fld_gi_abdomen"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_gi_2",
+          "columns": [
+            {
+              "id": "col_gi_girth",
+              "width": 4,
+              "fieldIds": [
+                "fld_gi_abd_girth"
+              ]
+            },
+            {
+              "id": "col_gi_bowel_val",
+              "width": 4,
+              "fieldIds": [
+                "fld_gi_bowel"
+              ]
+            },
+            {
+              "id": "col_gi_oth",
+              "width": 4,
+              "fieldIds": [
+                "fld_gi_others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_ms_1",
+          "columns": [
+            {
+              "id": "col_ms_mob",
+              "width": 3,
+              "fieldIds": [
+                "fld_ms_mobility"
+              ]
+            },
+            {
+              "id": "col_ms_jnt",
+              "width": 3,
+              "fieldIds": [
+                "fld_ms_joints"
+              ]
+            },
+            {
+              "id": "col_ms_grp",
+              "width": 3,
+              "fieldIds": [
+                "fld_ms_grips"
+              ]
+            },
+            {
+              "id": "col_ms_psh",
+              "width": 3,
+              "fieldIds": [
+                "fld_ms_pushes"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_ms_2",
+          "columns": [
+            {
+              "id": "col_ms_abn",
+              "width": 6,
+              "fieldIds": [
+                "fld_ms_abnormal_specify"
+              ]
+            },
+            {
+              "id": "col_ms_oth",
+              "width": 6,
+              "fieldIds": [
+                "fld_ms_others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_integ_1",
+          "columns": [
+            {
+              "id": "col_integ_t",
+              "width": 3,
+              "fieldIds": [
+                "fld_integ_temp"
+              ]
+            },
+            {
+              "id": "col_integ_c",
+              "width": 3,
+              "fieldIds": [
+                "fld_integ_color"
+              ]
+            },
+            {
+              "id": "col_integ_tur",
+              "width": 3,
+              "fieldIds": [
+                "fld_integ_turgor"
+              ]
+            },
+            {
+              "id": "col_integ_int",
+              "width": 3,
+              "fieldIds": [
+                "fld_integ_integrity"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_integ_2",
+          "columns": [
+            {
+              "id": "col_integ_oth",
+              "width": 12,
+              "fieldIds": [
+                "fld_integ_others"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_braden_scale",
+      "title": "Braden Scale for Predicting Pressure Sore Risk",
+      "rows": [
+        {
+          "id": "row_braden_1",
+          "columns": [
+            {
+              "id": "col_brd_sens",
+              "width": 4,
+              "fieldIds": [
+                "fld_braden_sensory"
+              ]
+            },
+            {
+              "id": "col_brd_moist",
+              "width": 4,
+              "fieldIds": [
+                "fld_braden_moisture"
+              ]
+            },
+            {
+              "id": "col_brd_act",
+              "width": 4,
+              "fieldIds": [
+                "fld_braden_activity"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_braden_2",
+          "columns": [
+            {
+              "id": "col_brd_mob",
+              "width": 4,
+              "fieldIds": [
+                "fld_braden_mobility"
+              ]
+            },
+            {
+              "id": "col_brd_nutr",
+              "width": 4,
+              "fieldIds": [
+                "fld_braden_nutrition"
+              ]
+            },
+            {
+              "id": "col_brd_fric",
+              "width": 4,
+              "fieldIds": [
+                "fld_braden_friction"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_braden_total",
+          "columns": [
+            {
+              "id": "col_brd_tot",
+              "width": 4,
+              "fieldIds": [
+                "fld_braden_total_score"
+              ]
+            },
+            {
+              "id": "col_brd_cat",
+              "width": 8,
+              "fieldIds": [
+                "fld_braden_risk_category"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_systems_renal_obsgyn",
+      "title": "Systems Review - Renal & OBS/GYN",
+      "rows": [
+        {
+          "id": "row_renal_1",
+          "columns": [
+            {
+              "id": "col_ren_void",
+              "width": 4,
+              "fieldIds": [
+                "fld_renal_voiding"
+              ]
+            },
+            {
+              "id": "col_ren_col",
+              "width": 3,
+              "fieldIds": [
+                "fld_renal_color"
+              ]
+            },
+            {
+              "id": "col_ren_abn",
+              "width": 5,
+              "fieldIds": [
+                "fld_renal_color_abnormal"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_renal_2",
+          "columns": [
+            {
+              "id": "col_ren_oth",
+              "width": 12,
+              "fieldIds": [
+                "fld_renal_others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_obs_1",
+          "columns": [
+            {
+              "id": "col_obs_lmp_val",
+              "width": 3,
+              "fieldIds": [
+                "fld_obs_lmp"
+              ]
+            },
+            {
+              "id": "col_obs_edc_val",
+              "width": 3,
+              "fieldIds": [
+                "fld_obs_edc"
+              ]
+            },
+            {
+              "id": "col_obs_grav",
+              "width": 2,
+              "fieldIds": [
+                "fld_obs_gravida"
+              ]
+            },
+            {
+              "id": "col_obs_pr",
+              "width": 2,
+              "fieldIds": [
+                "fld_obs_para"
+              ]
+            },
+            {
+              "id": "col_obs_lact",
+              "width": 2,
+              "fieldIds": [
+                "fld_obs_lactating"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_obs_2",
+          "columns": [
+            {
+              "id": "col_obs_boh_val",
+              "width": 3,
+              "fieldIds": [
+                "fld_obs_boh"
+              ]
+            },
+            {
+              "id": "col_obs_fhs_val",
+              "width": 3,
+              "fieldIds": [
+                "fld_obs_fhs"
+              ]
+            },
+            {
+              "id": "col_obs_menst",
+              "width": 3,
+              "fieldIds": [
+                "fld_obs_menstrual_history"
+              ]
+            },
+            {
+              "id": "col_obs_oth",
+              "width": 3,
+              "fieldIds": [
+                "fld_obs_menstrual_others"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_drains_findings_signoff",
+      "title": "Drains & Tubes, Remarks & Assessment Sign-Off",
+      "description": "Page 3 Drains & Sign-off",
+      "rows": [
+        {
+          "id": "row_drains",
+          "columns": [
+            {
+              "id": "col_dr_iv",
+              "width": 2,
+              "fieldIds": [
+                "fld_drain_iv_cannula"
+              ]
+            },
+            {
+              "id": "col_dr_ryles",
+              "width": 2,
+              "fieldIds": [
+                "fld_drain_ryles_tube"
+              ]
+            },
+            {
+              "id": "col_dr_cent",
+              "width": 3,
+              "fieldIds": [
+                "fld_drain_central_line"
+              ]
+            },
+            {
+              "id": "col_dr_et",
+              "width": 2,
+              "fieldIds": [
+                "fld_drain_et_tube"
+              ]
+            },
+            {
+              "id": "col_dr_chest",
+              "width": 3,
+              "fieldIds": [
+                "fld_drain_chest_tube"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_findings",
+          "columns": [
+            {
+              "id": "col_findings",
+              "width": 12,
+              "fieldIds": [
+                "fld_other_findings_remarks"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_signoff",
+          "columns": [
+            {
+              "id": "col_n_name",
+              "width": 4,
+              "fieldIds": [
+                "fld_nurse_name"
+              ]
+            },
+            {
+              "id": "col_n_sign",
+              "width": 3,
+              "fieldIds": [
+                "fld_nurse_sign"
+              ]
+            },
+            {
+              "id": "col_n_date",
+              "width": 3,
+              "fieldIds": [
+                "fld_nurse_date"
+              ]
+            },
+            {
+              "id": "col_n_time",
+              "width": 2,
+              "fieldIds": [
+                "fld_nurse_time"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_reassessment_record",
+      "title": "Morse Fall Risk Reassessment Record",
+      "description": "Pages 3 & 4 Ongoing Dynamic Fall Risk Reassessment Log",
+      "rows": [
+        {
+          "id": "row_reassessment_table",
+          "columns": [
+            {
+              "id": "col_reassess_table",
+              "width": 12,
+              "fieldIds": [
+                "fld_morse_reassessment_table"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

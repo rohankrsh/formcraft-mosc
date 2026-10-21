@@ -87,7 +87,16 @@ export function validateFormData(form, submittedData) {
 
     // Required check
     if (rules.required) {
-      if (
+      if (field.type === 'pain_assessment') {
+        const pVal = typeof val === 'object' && val !== null ? val : {};
+        const hasPresence = Boolean(pVal.painPresent);
+        const hasLoc = Boolean(pVal.location && String(pVal.location).trim());
+        const hasScore = pVal.score !== null && pVal.score !== undefined && pVal.score !== '';
+        if (!hasPresence && !hasLoc && !hasScore) {
+          errors[field.name || field.id] = rules.customErrorMessage || `${field.label} is required.`;
+          continue;
+        }
+      } else if (
         val === undefined ||
         val === null ||
         val === '' ||
@@ -99,6 +108,20 @@ export function validateFormData(form, submittedData) {
     }
 
     if (val === undefined || val === null || val === '') continue;
+
+    // Pain Assessment check
+    if (field.type === 'pain_assessment') {
+      const pVal = typeof val === 'object' && val !== null ? val : {};
+      if (pVal.score !== null && pVal.score !== undefined && pVal.score !== '') {
+        const num = Number(pVal.score);
+        if (isNaN(num) || num < 0 || num > 10 || !Number.isInteger(num)) {
+          errors[field.name || field.id] = 'Pain score must be an integer between 0 and 10.';
+        }
+      }
+      if (pVal.painPresent && !['yes', 'no', ''].includes(pVal.painPresent)) {
+        errors[field.name || field.id] = 'Pain presence must be Yes or No.';
+      }
+    }
 
     // Number check
     if (field.type === 'number') {

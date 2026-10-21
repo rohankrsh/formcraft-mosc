@@ -22,12 +22,32 @@ export async function generateFormFromPdf(pdfBuffer, apiKey, options = {}) {
   const fileName = options.fileName || 'Uploaded Document';
 
   const systemInstruction = `
-You are an expert Enterprise Form Designer and Document Layout Analyst.
+You are an expert Enterprise Clinical Form Designer and Document Layout Analyst for FormCraft.
 Your task is to visually inspect the provided PDF document and convert it into a precision "FormDefinition" JSON object that matches the exact platform schema.
+
+CRITICAL MULTI-PAGE COMPLETENESS MANDATE:
+1. The uploaded PDF may contain MULTIPLE PAGES (Pages 1, 2, 3, 4, etc.).
+2. You MUST convert EVERY SINGLE PAGE, EVERY SECTION, EVERY CHECKLIST, EVERY VITAL SIGN, and EVERY ASSESSMENT TABLE from the PDF.
+3. DO NOT summarize. DO NOT omit or stop halfway. DO NOT skip any sections between the top and the bottom!
+4. Process each page sequentially: Page 1, Page 2, Page 3, Page 4. Every section in the document must be represented in the "layout" array and all input fields in the "fields" object.
+
+SPECIAL COMPONENT: PAIN ASSESSMENT
+Whenever you encounter the "PAIN ASSESSMENT" section with Pain Present? (YES/NO), Location, and the 0 to 10 facial expression scale (No Pain, Slight, Mild, Moderate, Severe, Worst Pain):
+Use the dedicated platform type: "pain_assessment"!
+Field definition:
+{
+  "id": "fld_pain_assessment",
+  "name": "pain_assessment",
+  "type": "pain_assessment",
+  "label": "PAIN ASSESSMENT",
+  "helpText": "Record pain presence, location, and severity using a 0–10 facial scale",
+  "defaultValue": { "painPresent": "", "location": "", "score": null }
+}
+Place it in a row with width 12.
 
 TARGET TYPESCRIPT SCHEMA:
 \`\`\`typescript
-type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'radio' | 'checkbox' | 'heading' | 'divider' | 'table';
+type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'radio' | 'checkbox' | 'heading' | 'divider' | 'table' | 'pain_assessment';
 
 interface FieldOption { label: string; value: string; }
 
@@ -59,12 +79,13 @@ interface FormField {
   type: FieldType;
   label: string;
   placeholder?: string;
-  defaultValue?: string | number | boolean | string[];
+  helpText?: string;
+  defaultValue?: any;
   options?: FieldOption[]; // Required for select/radio
   tableConfig?: TableConfig; // Required for type: 'table'
   validation?: ValidationRules;
-  _needsReview?: boolean; // Set true if field is ambiguous or inferred
-  _reviewReason?: string; // Explain why manual review is suggested
+  _needsReview?: boolean;
+  _reviewReason?: string;
 }
 
 interface LayoutColumn {
@@ -111,61 +132,49 @@ interface FormDefinition {
 
 CRITICAL DESIGN RULES:
 1. SECTIONS:
-   - Identify main section banners, headers, or groupings (e.g. "Patient Information", "Medical History", "Insurance", "Signature & Consent").
+   - Identify every main section banner, header, or clinical grouping across all pages (e.g. "Hospital Header & Patient Information", "Admission & Mode of Arrival", "Medical/Surgical History & Allergies", "Vital Signs", "Pain Assessment", "Morse Fall Risk Assessment", "Systems Review - General & Cardiovascular", "Systems Review - Neurological & Respiratory", "Systems Review - Gastrointestinal, Musculoskeletal & Integumentary", "Braden Scale", "Systems Review - Renal & OBS/GYN", "Drains & Tubes", "Assessment Sign-Off", "Morse Fall Risk Reassessment Record").
    - Group related fields under their corresponding section.
 
 2. FIELDS & LABELS:
    - Identify labels and their associated input controls, lines, boxes, or fill-in areas.
    - Detect required fields (* or "required" text) and set \`validation.required: true\`.
    - Accurately categorize field types:
-     - 'date': Date of Birth, Today's Date, Appointment Date.
-     - 'number': Age, Phone, SSN/ID numbers, Postal codes, Quantities.
-     - 'select' / 'radio': Choices where user selects one option.
-     - 'checkbox': Checkbox squares (☐/☑), Yes/No, or confirmation statements.
-     - 'textarea': Multi-line paragraphs, comments, explanation boxes, address.
-     - 'text': Standard single-line text inputs.
+     - 'pain_assessment': ONLY for the 0-10 facial pain assessment tool.
+     - 'date': Dates of arrival, assessment, LMP, EDC, etc.
+     - 'number': Age, Pulse, BP, SPO2, R.R., GRBS, Ht, Wt, scores.
+     - 'select' / 'radio': Choices where user selects one option (e.g. Yes/No, Normal/Insomnia).
+     - 'checkbox': Checkbox lists, multiple selections, conditions (HTN, DM, COPD, etc.).
+     - 'textarea': Multi-line paragraphs, comments, provisional diagnosis, remarks.
+     - 'text': Standard single-line text inputs (e.g. Patient Name, Consultant, Hosp No).
 
 3. 12-COLUMN RESPONSIVE LAYOUT (MANDATORY):
    - In every \`LayoutRow\`, the sum of \`column.width\` across all columns in that row MUST EQUAL 12.
      - Full-width field: 1 column with width 12.
-     - Two side-by-side fields (e.g. First Name + Last Name): 2 columns, each with width 6.
-     - Three side-by-side fields (e.g. City + State + Zip): 3 columns, each with width 4.
+     - Two side-by-side fields: 2 columns, each with width 6.
+     - Three side-by-side fields: 3 columns, each with width 4.
      - Four side-by-side fields: 4 columns, each with width 3.
 
 4. TABLES & DATA GRIDS (CRITICAL):
-   - Whenever you see any table structure (rows & columns with headers, e.g., "Medication | Dosage | Frequency", "Item | Qty | Price | Total", "Dependent Name | Relation | DOB"):
-     DO NOT generate separate individual input fields!
-     INSTEAD, create a SINGLE FormField of type 'table' with:
-     - 'label': Table Title
-     - 'tableConfig': {
-         'columns': [
-           { 'id': 'col_1', 'label': 'Column 1 Header', 'type': 'text' },
-           { 'id': 'col_2', 'label': 'Column 2 Header', 'type': 'text' | 'number' | 'date' | 'select' },
-           ...
-         ],
-         'defaultRows': [
-           // Any populated rows or sample entries seen in the PDF table
-         ],
-         'allowAddRows': true
-       }
-     - Place this table in a row with width 12.
+   - Whenever you see any recurring row table structure (e.g. "Date & Time | Score | Reason | Action taken | Staff Name & Sign"):
+     Create a FormField of type 'table' with appropriate 'columns' and 'allowAddRows: true'.
+     Place this table in a row with width 12.
 
 5. OUTPUT:
    - Return ONLY the valid JSON object conforming to \`FormDefinition\`. No markdown formatting outside JSON.
 `;
 
   const userPrompt = `
-Please inspect this attached PDF document ("${fileName}") thoroughly.
-Analyze its visual layout, section headers, form fields, checkboxes, and any table/data-grid structures.
-Generate the complete and accurate FormDefinition JSON according to the platform schema.
+Please inspect this attached PDF document ("${fileName}") thoroughly across ALL pages (Page 1 to final page).
+Analyze its visual layout, section headers, form fields, checkboxes, vital signs, pain assessment, clinical scales, and any table structures.
+Generate the complete and accurate FormDefinition JSON according to the platform schema covering ALL elements from EVERY page without omissions.
 `;
 
   // Candidate model cascade prioritized by stability, capacity, and current availability
   const candidateModels = [
-    'gemini-3.6-flash',
-    'gemini-3.5-flash',
-    'gemini-3.7-flash',
     'gemini-3.8-flash',
+    'gemini-flash-latest',
+    'gemini-3-flash-preview',
+    'gemini-3.5-flash',
     'gemini-3.1-flash-lite-preview',
   ];
 
@@ -192,6 +201,7 @@ Generate the complete and accurate FormDefinition JSON according to the platform
     generationConfig: {
       temperature: 0.1,
       responseMimeType: 'application/json',
+      maxOutputTokens: 65536,
     },
   };
 
@@ -206,7 +216,7 @@ Generate the complete and accurate FormDefinition JSON according to the platform
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 35000);
+        const timeoutId = setTimeout(() => controller.abort(), 150000); // 2.5 minutes for full multi-page analysis
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -221,8 +231,8 @@ Generate the complete and accurate FormDefinition JSON according to the platform
           console.warn(`[pdfParser] ${model} attempt ${attempt} returned HTTP ${response.status}: ${errText.substring(0, 150)}`);
           lastError = new Error(`HTTP ${response.status}: ${errText}`);
           if (response.status === 503 && attempt < 2) {
-            console.log(`[pdfParser] ${model} is experiencing a temporary spike. Waiting 1.5s before retry...`);
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            console.log(`[pdfParser] ${model} is experiencing a temporary spike. Waiting 2s before retry...`);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             continue;
           }
           break; // Move to next candidate model

@@ -293,6 +293,7 @@ export function validateAndNormalizeForm(rawJson, sheetName) {
     'heading',
     'divider',
     'table',
+    'pain_assessment',
   ]);
 
   const existingFieldIds = new Set(Object.keys(form.fields));
@@ -306,6 +307,14 @@ export function validateAndNormalizeForm(rawJson, sheetName) {
       field.type = 'text';
     }
     if (!field.label) field.label = 'Field';
+    if (field.type === 'pain_assessment') {
+      const def = typeof field.defaultValue === 'object' && field.defaultValue !== null ? field.defaultValue : {};
+      const rawPresent = String(def.painPresent || '').toLowerCase().trim();
+      const painPresent = rawPresent === 'yes' ? 'yes' : rawPresent === 'no' ? 'no' : '';
+      const location = typeof def.location === 'string' ? def.location : '';
+      const score = typeof def.score === 'number' && def.score >= 0 && def.score <= 10 ? def.score : null;
+      field.defaultValue = { painPresent, location, score };
+    }
     if (field.type === 'select' || field.type === 'radio') {
       if (!Array.isArray(field.options) || field.options.length === 0) {
         field.options = [

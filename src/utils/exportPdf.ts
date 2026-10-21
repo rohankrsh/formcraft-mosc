@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import type { FormDefinition, FormField } from '../types/schema';
+import { getPainScaleItem } from '../components/painAssessment/PainScaleData';
 
 export interface ExportPdfOptions {
   fileName?: string;
@@ -88,6 +89,13 @@ function isFieldEmpty(field: FormField, formData: Record<string, any>): boolean 
         return cellVal !== undefined && cellVal !== null && String(cellVal).trim() !== '';
       })
     );
+  }
+  if (field.type === 'pain_assessment') {
+    if (!val || typeof val !== 'object') return true;
+    const hasPresence = Boolean(val.painPresent);
+    const hasLoc = Boolean(val.location && String(val.location).trim());
+    const hasScore = val.score !== null && val.score !== undefined && val.score !== '';
+    return !hasPresence && !hasLoc && !hasScore;
   }
   return String(val).trim() === '';
 }
@@ -534,6 +542,92 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
               }
               tableEl.appendChild(tbody);
               fieldEl.appendChild(tableEl);
+            } else if (field.type === 'pain_assessment') {
+              // Dedicated Pain Assessment Card in PDF
+              const val = getFieldValue(field, formData);
+              const pVal = typeof val === 'object' && val !== null ? val : {};
+              const score = typeof pVal.score === 'number' ? pVal.score : null;
+              const painPresent = pVal.painPresent === 'yes' ? 'Yes' : pVal.painPresent === 'no' ? 'No' : '—';
+              const location = pVal.location ? String(pVal.location).trim() : '—';
+
+              const card = document.createElement('div');
+              card.style.width = '100%';
+              card.style.border = '1px solid #cbd5e1';
+              card.style.borderRadius = '6px';
+              card.style.padding = '8px 10px';
+              card.style.background = '#f8fafc';
+              card.style.boxSizing = 'border-box';
+              card.style.marginBottom = '6px';
+
+              // Header
+              const cardTitle = document.createElement('div');
+              cardTitle.style.fontSize = '9.5px';
+              cardTitle.style.fontWeight = '700';
+              cardTitle.style.color = '#1e3a8a';
+              cardTitle.style.textTransform = 'uppercase';
+              cardTitle.style.letterSpacing = '0.02em';
+              cardTitle.style.marginBottom = '6px';
+              cardTitle.innerHTML = `${escapeHtml(field.label || 'PAIN ASSESSMENT')}${
+                field.validation?.required ? ' <span style="color: #e11d48;">*</span>' : ''
+              }`;
+              card.appendChild(cardTitle);
+
+              // 3-column metric row
+              const row = document.createElement('div');
+              row.style.display = 'flex';
+              row.style.gap = '8px';
+              row.style.marginBottom = '6px';
+
+              // 1. Pain Present
+              const b1 = document.createElement('div');
+              b1.style.flex = '1';
+              b1.style.background = '#ffffff';
+              b1.style.border = '1px solid #e2e8f0';
+              b1.style.borderRadius = '4px';
+              b1.style.padding = '5px 8px';
+              b1.innerHTML = `<div style="font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase;">PAIN PRESENT?</div>
+                <div style="font-size: 10px; font-weight: 700; color: ${painPresent === 'Yes' ? '#e11d48' : painPresent === 'No' ? '#059669' : '#64748b'}; margin-top: 2px;">${painPresent}</div>`;
+              row.appendChild(b1);
+
+              // 2. Location
+              const b2 = document.createElement('div');
+              b2.style.flex = '2';
+              b2.style.background = '#ffffff';
+              b2.style.border = '1px solid #e2e8f0';
+              b2.style.borderRadius = '4px';
+              b2.style.padding = '5px 8px';
+              b2.innerHTML = `<div style="font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase;">LOCATION</div>
+                <div style="font-size: 10px; font-weight: 600; color: #0f172a; margin-top: 2px;">${escapeHtml(location)}</div>`;
+              row.appendChild(b2);
+
+              // 3. Score
+              const b3 = document.createElement('div');
+              b3.style.flex = '2';
+              b3.style.background = '#ffffff';
+              b3.style.border = '1px solid #e2e8f0';
+              b3.style.borderRadius = '4px';
+              b3.style.padding = '5px 8px';
+              const scaleItem = score !== null ? getPainScaleItem(score) : null;
+              const scoreText = score !== null ? `${score} / 10 — ${escapeHtml(scaleItem?.label || '')}` : 'Not recorded';
+              b3.innerHTML = `<div style="font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase;">SCORE (0–10 SCALE)</div>
+                <div style="font-size: 10px; font-weight: 700; color: ${score !== null ? '#1e3a8a' : '#94a3b8'}; margin-top: 2px;">${scoreText}</div>`;
+              row.appendChild(b3);
+
+              card.appendChild(row);
+
+              // Scale reference legend
+              const scaleSummary = document.createElement('div');
+              scaleSummary.style.fontSize = '8px';
+              scaleSummary.style.color = '#64748b';
+              scaleSummary.style.padding = '3px 6px';
+              scaleSummary.style.background = '#f1f5f9';
+              scaleSummary.style.borderRadius = '3px';
+              scaleSummary.style.display = 'flex';
+              scaleSummary.style.justifyContent = 'space-between';
+              scaleSummary.innerHTML = `<span>0: No Pain</span><span>1–3: Slight</span><span>4–5: Mild</span><span>6: Moderate</span><span>7–9: Severe</span><span>10: Worst Pain</span>`;
+              card.appendChild(scaleSummary);
+
+              fieldEl.appendChild(card);
             } else {
               // Standard field rendering
               const labelEl = document.createElement('div');

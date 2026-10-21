@@ -9,7 +9,14 @@ export type FieldType =
   | 'checkbox'
   | 'heading'
   | 'divider'
-  | 'table';
+  | 'table'
+  | 'pain_assessment';
+
+export interface PainAssessmentValue {
+  painPresent?: 'yes' | 'no' | '';
+  location?: string;
+  score?: number | null;
+}
 
 export interface FieldOption {
   label: string;
@@ -70,7 +77,7 @@ export interface FormField {
   label: string;
   placeholder?: string;
   helpText?: string;
-  defaultValue?: string | number | boolean | string[];
+  defaultValue?: string | number | boolean | string[] | PainAssessmentValue | Record<string, any>;
   options?: FieldOption[];
   tableConfig?: TableConfig;
   validation?: ValidationRules;
