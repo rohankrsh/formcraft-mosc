@@ -31,19 +31,12 @@ CRITICAL MULTI-PAGE COMPLETENESS MANDATE:
 3. DO NOT summarize. DO NOT omit or stop halfway. DO NOT skip any sections between the top and the bottom!
 4. Process each page sequentially: Page 1, Page 2, Page 3, Page 4. Every section in the document must be represented in the "layout" array and all input fields in the "fields" object.
 
-SPECIAL COMPONENT: PAIN ASSESSMENT
-Whenever you encounter the "PAIN ASSESSMENT" section with Pain Present? (YES/NO), Location, and the 0 to 10 facial expression scale (No Pain, Slight, Mild, Moderate, Severe, Worst Pain):
-Use the dedicated platform type: "pain_assessment"!
-Field definition:
-{
-  "id": "fld_pain_assessment",
-  "name": "pain_assessment",
-  "type": "pain_assessment",
-  "label": "PAIN ASSESSMENT",
-  "helpText": "Record pain presence, location, and severity using a 0–10 facial scale",
-  "defaultValue": { "painPresent": "", "location": "", "score": null }
-}
-Place it in a row with width 12.
+CRITICAL FIDELITY AND ZERO-HALLUCINATION MANDATE:
+1. Extract ONLY what is VISIBLY PRINTED on the provided PDF document.
+2. DO NOT invent, assume, or inject sections, clinical tools, or fields that are not in the document!
+   - NEVER add a "Pain Assessment", "Morse Fall Risk", "Braden Scale", or any other specialized section or assessment widget unless that exact section title and content is visibly printed on the document.
+   - If the document contains a rating scale, VAS score, score checklist item, or severity scale (e.g. "VAS score", "Score 0-10", pain rating faces), model it as a standard 'select', 'radio', 'number', or 'checkbox' field matching the exact words on the page.
+   - The field type 'pain_assessment' is a specialized compound component (with Pain Present? Yes/No, anatomical location, and 0-10 faces) and MUST ONLY be used if the document explicitly contains a dedicated section specifically titled "PAIN ASSESSMENT" that has both "Pain Present" and "Location" fields. DO NOT use 'pain_assessment' for simple VAS scores, discharge criteria, or general pain ratings!
 
 TARGET TYPESCRIPT SCHEMA:
 \`\`\`typescript
@@ -132,19 +125,20 @@ interface FormDefinition {
 
 CRITICAL DESIGN RULES:
 1. SECTIONS:
-   - Identify every main section banner, header, or clinical grouping across all pages (e.g. "Hospital Header & Patient Information", "Admission & Mode of Arrival", "Medical/Surgical History & Allergies", "Vital Signs", "Pain Assessment", "Morse Fall Risk Assessment", "Systems Review - General & Cardiovascular", "Systems Review - Neurological & Respiratory", "Systems Review - Gastrointestinal, Musculoskeletal & Integumentary", "Braden Scale", "Systems Review - Renal & OBS/GYN", "Drains & Tubes", "Assessment Sign-Off", "Morse Fall Risk Reassessment Record").
-   - Group related fields under their corresponding section.
+   - Identify every main section banner, header, or clinical grouping across all pages using the EXACT title text visibly printed on the document (e.g. based strictly on the headings printed in the uploaded PDF).
+   - DO NOT invent generic section names. DO NOT copy or assume sections from other clinical forms.
+   - Group related fields under their corresponding visible section.
 
 2. FIELDS & LABELS:
-   - Identify labels and their associated input controls, lines, boxes, or fill-in areas.
+   - Identify labels and their associated input controls, lines, boxes, or fill-in areas exactly as written.
    - Detect required fields (* or "required" text) and set \`validation.required: true\`.
    - Accurately categorize field types:
-     - 'pain_assessment': ONLY for the 0-10 facial pain assessment tool.
-     - 'date': Dates of arrival, assessment, LMP, EDC, etc.
+     - 'pain_assessment': STRICTLY RESERVED ONLY for an explicit dedicated "PAIN ASSESSMENT" section that specifically includes "Pain Present" and "Location" questions. For all other rating scales, VAS scores, or facial score indicators, use 'select', 'radio', 'number', or 'checkbox' with appropriate options.
+     - 'date': Dates of arrival, assessment, procedure, LMP, etc.
      - 'number': Age, Pulse, BP, SPO2, R.R., GRBS, Ht, Wt, scores.
-     - 'select' / 'radio': Choices where user selects one option (e.g. Yes/No, Normal/Insomnia).
-     - 'checkbox': Checkbox lists, multiple selections, conditions (HTN, DM, COPD, etc.).
-     - 'textarea': Multi-line paragraphs, comments, provisional diagnosis, remarks.
+     - 'select' / 'radio': Choices where user selects one option (e.g. Yes/No, Normal/Abnormal, Score choices).
+     - 'checkbox': Checkbox lists, multiple selections, conditions, symptom checklists.
+     - 'textarea': Multi-line paragraphs, comments, provisional diagnosis, remarks, orders.
      - 'text': Standard single-line text inputs (e.g. Patient Name, Consultant, Hosp No).
 
 3. 12-COLUMN RESPONSIVE LAYOUT (MANDATORY):
@@ -155,7 +149,7 @@ CRITICAL DESIGN RULES:
      - Four side-by-side fields: 4 columns, each with width 3.
 
 4. TABLES & DATA GRIDS (CRITICAL):
-   - Whenever you see any recurring row table structure (e.g. "Date & Time | Score | Reason | Action taken | Staff Name & Sign"):
+   - Whenever you see any recurring row table structure (e.g. "Criteria | Points | Recovery Log | At Discharge" or monitoring logs):
      Create a FormField of type 'table' with appropriate 'columns' and 'allowAddRows: true'.
      Place this table in a row with width 12.
 
@@ -165,17 +159,17 @@ CRITICAL DESIGN RULES:
 
   const userPrompt = `
 Please inspect this attached PDF document ("${fileName}") thoroughly across ALL pages (Page 1 to final page).
-Analyze its visual layout, section headers, form fields, checkboxes, vital signs, pain assessment, clinical scales, and any table structures.
-Generate the complete and accurate FormDefinition JSON according to the platform schema covering ALL elements from EVERY page without omissions.
+Analyze its visual layout, section headers, form fields, checkboxes, vital signs, clinical scales, and any table structures strictly based on the content visibly printed on the document.
+Generate the complete and accurate FormDefinition JSON according to the platform schema covering ALL elements from EVERY page without omissions and without inventing any unprinted sections.
 `;
 
-  // Candidate model cascade prioritized by stability, capacity, and current availability
+  // Candidate model cascade prioritized by stability, visual fidelity, and multi-page capacity
   const candidateModels = [
-    'gemini-3.8-flash',
+    'gemini-2.5-flash',
     'gemini-flash-latest',
-    'gemini-3-flash-preview',
+    'gemini-2.5-pro',
     'gemini-3.5-flash',
-    'gemini-3.1-flash-lite-preview',
+    'gemini-3-flash-preview',
   ];
 
   const requestBody = {
@@ -216,7 +210,7 @@ Generate the complete and accurate FormDefinition JSON according to the platform
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 150000); // 2.5 minutes for full multi-page analysis
+        const timeoutId = setTimeout(() => controller.abort(), 240000); // 4 minutes for comprehensive multi-page clinical analysis
 
         const response = await fetch(endpoint, {
           method: 'POST',

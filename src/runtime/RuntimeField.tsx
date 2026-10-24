@@ -2,14 +2,17 @@ import React from 'react';
 import type { FormField } from '../types/schema';
 import { RuntimeTable } from './RuntimeTable';
 import { PainAssessmentInput } from '../components/painAssessment/PainAssessmentInput';
+import type { StaffDetailsResponse } from '../services/userApi';
 
 interface RuntimeFieldProps {
   field: FormField;
   value: any;
   onChange: (field: FormField, value: any) => void;
   error?: string;
+  errors?: Record<string, string>;
   dynamicOptions?: { label: string; value: string }[];
   disabled?: boolean;
+  staffContext?: StaffDetailsResponse | null;
 }
 
 export const RuntimeField: React.FC<RuntimeFieldProps> = ({
@@ -17,15 +20,22 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
   value,
   onChange,
   error,
+  errors,
   dynamicOptions,
   disabled = false,
+  staffContext,
 }) => {
   const isRequired = field.validation?.required;
 
   // Heading field
   if (field.type === 'heading') {
     return (
-      <div className="py-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div
+        id={`field-container-${field.id}`}
+        data-field-id={field.id}
+        data-field-name={field.name}
+        className="py-2 border-b border-slate-200/80 dark:border-slate-800 scroll-mt-24"
+      >
         <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
           {field.label}
         </h3>
@@ -44,7 +54,12 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
   // Pain Assessment field
   if (field.type === 'pain_assessment') {
     return (
-      <div className="w-full">
+      <div
+        id={`field-container-${field.id}`}
+        data-field-id={field.id}
+        data-field-name={field.name}
+        className="w-full scroll-mt-24"
+      >
         <PainAssessmentInput
           value={value}
           onChange={(newVal) => onChange(field, newVal)}
@@ -54,6 +69,11 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
           required={isRequired}
           error={error}
         />
+        {error && (
+          <p id={`error-message-${field.id}`} className="text-xs text-rose-500 mt-1.5 font-medium">
+            {error}
+          </p>
+        )}
       </div>
     );
   }
@@ -61,7 +81,12 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
   // Table field
   if (field.type === 'table') {
     return (
-      <div className="space-y-1.5 w-full">
+      <div
+        id={`field-container-${field.id}`}
+        data-field-id={field.id}
+        data-field-name={field.name}
+        className="space-y-1.5 w-full scroll-mt-24"
+      >
         {field.label && (
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
             {field.label}
@@ -76,8 +101,14 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
           value={Array.isArray(value) ? value : []}
           onChange={(newRows) => onChange(field, newRows)}
           disabled={disabled}
+          errors={errors}
+          staffContext={staffContext}
         />
-        {error && <p className="text-xs text-rose-500 mt-1 font-medium">{error}</p>}
+        {error && (
+          <p id={`error-message-${field.id}`} className="text-xs text-rose-500 mt-1 font-medium">
+            {error}
+          </p>
+        )}
       </div>
     );
   }
@@ -89,7 +120,12 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
   ];
 
   return (
-    <div className="space-y-1.5 w-full">
+    <div
+      id={`field-container-${field.id}`}
+      data-field-id={field.id}
+      data-field-name={field.name}
+      className="space-y-1.5 w-full scroll-mt-24"
+    >
       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
         {field.label}
         {isRequired && <span className="text-rose-500 ml-1 font-bold">*</span>}
@@ -98,6 +134,8 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
       {/* Field Input Control */}
       {field.type === 'text' && (
         <input
+          id={`input-${field.id}`}
+          name={field.name || field.id}
           type="text"
           disabled={disabled}
           value={value ?? ''}
@@ -113,6 +151,8 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
 
       {field.type === 'textarea' && (
         <textarea
+          id={`input-${field.id}`}
+          name={field.name || field.id}
           disabled={disabled}
           rows={3}
           value={value ?? ''}
@@ -128,6 +168,8 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
 
       {field.type === 'number' && (
         <input
+          id={`input-${field.id}`}
+          name={field.name || field.id}
           type="number"
           disabled={disabled}
           value={value ?? ''}
@@ -146,6 +188,8 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
 
       {field.type === 'date' && (
         <input
+          id={`input-${field.id}`}
+          name={field.name || field.id}
           type="date"
           disabled={disabled}
           value={value ?? ''}
@@ -188,6 +232,8 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
           <div className="flex items-center gap-1.5">
             {/* Hour */}
             <select
+              id={`input-${field.id}`}
+              name={field.name || field.id}
               disabled={disabled}
               value={hour}
               onChange={(e) => onChange(field, buildValue(e.target.value, minute, period || 'AM'))}
@@ -228,6 +274,8 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
 
       {field.type === 'select' && (
         <select
+          id={`input-${field.id}`}
+          name={field.name || field.id}
           disabled={disabled}
           value={value ?? ''}
           onChange={(e) => onChange(field, e.target.value)}
@@ -247,7 +295,7 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
       )}
 
       {field.type === 'radio' && (
-        <div className="space-y-2 pt-1">
+        <div id={`input-${field.id}`} className="space-y-2 pt-1">
           {combinedOptions.map((opt, idx) => (
             <label
               key={idx}
@@ -256,7 +304,7 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
               <input
                 type="radio"
                 disabled={disabled}
-                name={field.id}
+                name={field.name || field.id}
                 value={opt.value}
                 checked={String(value) === String(opt.value)}
                 onChange={() => onChange(field, opt.value)}
@@ -317,7 +365,11 @@ export const RuntimeField: React.FC<RuntimeFieldProps> = ({
         <p className="text-[11px] text-slate-500 dark:text-slate-400">{field.helpText}</p>
       )}
 
-      {error && <p className="text-xs text-rose-500 font-medium">{error}</p>}
+      {error && (
+        <p id={`error-message-${field.id}`} className="text-xs text-rose-500 font-medium">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

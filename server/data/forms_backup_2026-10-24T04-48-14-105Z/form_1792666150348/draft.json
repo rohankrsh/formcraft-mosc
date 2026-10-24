@@ -1,0 +1,134 @@
+{
+  "version": "1.0.0",
+  "id": "form_1792666150348",
+  "title": "Untitled Form",
+  "description": "",
+  "settings": {
+    "submitButtonText": "Submit Form",
+    "submitAction": "download_json",
+    "showResetButton": true,
+    "resetButtonText": "Clear Form",
+    "patientFormMode": "NEW_RECORD",
+    "departmentIds": [
+      "ALL"
+    ],
+    "departmentNames": [
+      "All Departments (Organization-wide)"
+    ],
+    "departmentId": "ALL",
+    "departmentName": "All Departments (Organization-wide)",
+    "theme": {
+      "primaryColor": "#3b82f6",
+      "borderRadius": "md",
+      "fontFamily": "Inter, system-ui, sans-serif"
+    },
+    "primaryKeyColumn": "PATIENT_ID"
+  },
+  "fields": {
+    "fld_1792666157432_sx9ms": {
+      "id": "fld_1792666157432_sx9ms",
+      "name": "table_uc8c",
+      "type": "table",
+      "label": "Data Table",
+      "helpText": "Editable multi-row table grid",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "col_1",
+            "label": "Item / Description",
+            "type": "date"
+          },
+          {
+            "id": "col_2",
+            "label": "Category",
+            "type": "time"
+          },
+          {
+            "id": "col_3",
+            "label": "Quantity / Value",
+            "type": "text"
+          }
+        ],
+        "allowAddRows": true,
+        "minRows": 1,
+        "defaultRows": [
+          {
+            "col_1": "Sample Entry 1",
+            "col_2": "Standard",
+            "col_3": "1"
+          },
+          {
+            "col_1": "Sample Entry 2",
+            "col_2": "Priority",
+            "col_3": "2"
+          }
+        ],
+        "cellFields": {
+          "0_col_1": {
+            "id": "fld_1792666178090_vuysy",
+            "name": "date_xeos",
+            "type": "date",
+            "label": "Date Picker",
+            "validation": {
+              "required": false
+            },
+            "dataBinding": null
+          },
+          "0_col_2": {
+            "id": "fld_1792666185700_xfied",
+            "name": "time_lo7v",
+            "type": "time",
+            "label": "Time Picker",
+            "placeholder": "HH:MM",
+            "validation": {
+              "required": false
+            },
+            "dataBinding": null
+          }
+        }
+      }
+    },
+    "fld_1792666178090_vuysy": {
+      "id": "fld_1792666178090_vuysy",
+      "name": "date_xeos",
+      "type": "date",
+      "label": "Date Picker",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1792666185700_xfied": {
+      "id": "fld_1792666185700_xfied",
+      "name": "time_lo7v",
+      "type": "time",
+      "label": "Time Picker",
+      "placeholder": "HH:MM",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_1792666153162",
+      "title": "General Information",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_1792666153162",
+          "columns": [
+            {
+              "id": "col_1792666153162",
+              "width": 12,
+              "fieldIds": [
+                "fld_1792666157432_sx9ms"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -17,6 +17,8 @@ interface DownloadPdfButtonProps {
     department?: string;
     serviceCenter?: string;
     recordId?: string | number | null;
+    submittedAt?: string;
+    submittedBy?: string;
   };
 }
 

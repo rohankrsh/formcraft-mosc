@@ -1,0 +1,2393 @@
+{
+  "version": "1.0.0",
+  "id": "anaesthesia_procedural_docket",
+  "title": "Anaesthesia Procedural Docket for Surgical / Invasive Procedures",
+  "description": "Department of Anaesthesiology - Malankara Orthodox Syrian Church Medical College Hospital",
+  "settings": {
+    "submitButtonText": "Save & Finalize Docket",
+    "submitAction": "print",
+    "showResetButton": true,
+    "resetButtonText": "Reset Form",
+    "theme": {
+      "primaryColor": "#8b1538",
+      "borderRadius": "md",
+      "fontFamily": "Inter, sans-serif"
+    },
+    "departmentIds": [
+      "ALL"
+    ],
+    "departmentNames": [
+      "All Departments (Organization-wide)"
+    ],
+    "departmentId": "ALL",
+    "departmentName": "All Departments (Organization-wide)",
+    "primaryEntity": "PATIENT",
+    "primaryKeyColumn": "PATIENT_ID",
+    "enableFetchRecord": true,
+    "patientFormMode": "CONTINUE_EXISTING"
+  },
+  "fields": {
+    "patient_name": {
+      "id": "patient_name",
+      "name": "patient_name",
+      "type": "text",
+      "label": "Name of Patient",
+      "placeholder": "Enter full patient name",
+      "validation": {
+        "required": true
+      }
+    },
+    "age": {
+      "id": "age",
+      "name": "age",
+      "type": "number",
+      "label": "Age",
+      "placeholder": "Years",
+      "validation": {
+        "required": true,
+        "min": 0,
+        "max": 130
+      }
+    },
+    "sex": {
+      "id": "sex",
+      "name": "sex",
+      "type": "radio",
+      "label": "Sex",
+      "options": [
+        {
+          "label": "Male",
+          "value": "M"
+        },
+        {
+          "label": "Female",
+          "value": "F"
+        },
+        {
+          "label": "Other",
+          "value": "O"
+        }
+      ],
+      "validation": {
+        "required": true
+      }
+    },
+    "dept_unit": {
+      "id": "dept_unit",
+      "name": "dept_unit",
+      "type": "text",
+      "label": "Dept & Unit",
+      "placeholder": "e.g., General Surgery Unit 1"
+    },
+    "hospital_no": {
+      "id": "hospital_no",
+      "name": "hospital_no",
+      "type": "text",
+      "label": "Hospital Number (UHID/IP No)",
+      "placeholder": "Hospital No",
+      "validation": {
+        "required": true
+      }
+    },
+    "ward": {
+      "id": "ward",
+      "name": "ward",
+      "type": "text",
+      "label": "Ward / Bed",
+      "placeholder": "Ward & Bed No"
+    },
+    "diagnosis": {
+      "id": "diagnosis",
+      "name": "diagnosis",
+      "type": "textarea",
+      "label": "Diagnosis / Provisional Diagnosis",
+      "placeholder": "Clinical diagnosis"
+    },
+    "procedure_name": {
+      "id": "procedure_name",
+      "name": "procedure_name",
+      "type": "textarea",
+      "label": "Name of Procedure / Surgery",
+      "placeholder": "Proposed operative procedure"
+    },
+    "allergic_to": {
+      "id": "allergic_to",
+      "name": "allergic_to",
+      "type": "textarea",
+      "label": "ALLERGIC TO",
+      "placeholder": "Known drug/food allergies"
+    },
+    "pac_procedure": {
+      "id": "pac_procedure",
+      "name": "pac_procedure",
+      "type": "text",
+      "label": "Procedure",
+      "placeholder": "Procedure name"
+    },
+    "pac_case_type": {
+      "id": "pac_case_type",
+      "name": "pac_case_type",
+      "type": "radio",
+      "label": "Case Type",
+      "options": [
+        {
+          "label": "Elective",
+          "value": "elective"
+        },
+        {
+          "label": "Emergency",
+          "value": "emergency"
+        }
+      ]
+    },
+    "pac_date": {
+      "id": "pac_date",
+      "name": "pac_date",
+      "type": "date",
+      "label": "Date of PAC"
+    },
+    "pac_surgeon": {
+      "id": "pac_surgeon",
+      "name": "pac_surgeon",
+      "type": "text",
+      "label": "Surgeon",
+      "placeholder": "Name of primary surgeon"
+    },
+    "pac_informant": {
+      "id": "pac_informant",
+      "name": "pac_informant",
+      "type": "text",
+      "label": "Informant",
+      "placeholder": "Self / Family member"
+    },
+    "pac_asa_score": {
+      "id": "pac_asa_score",
+      "name": "pac_asa_score",
+      "type": "select",
+      "label": "ASA Score",
+      "options": [
+        {
+          "label": "ASA I - Normal healthy patient",
+          "value": "ASA_1"
+        },
+        {
+          "label": "ASA II - Mild systemic disease",
+          "value": "ASA_2"
+        },
+        {
+          "label": "ASA III - Severe systemic disease",
+          "value": "ASA_3"
+        },
+        {
+          "label": "ASA IV - Severe systemic disease that is a constant threat to life",
+          "value": "ASA_4"
+        },
+        {
+          "label": "ASA V - Moribund patient not expected to survive without operation",
+          "value": "ASA_5"
+        },
+        {
+          "label": "ASA E - Emergency",
+          "value": "ASA_E"
+        }
+      ]
+    },
+    "pac_weight": {
+      "id": "pac_weight",
+      "name": "pac_weight",
+      "type": "number",
+      "label": "Weight (kg)",
+      "placeholder": "kg"
+    },
+    "pac_height": {
+      "id": "pac_height",
+      "name": "pac_height",
+      "type": "number",
+      "label": "Height (cm)",
+      "placeholder": "cm"
+    },
+    "prev_anaesthesia_history": {
+      "id": "prev_anaesthesia_history",
+      "name": "prev_anaesthesia_history",
+      "type": "textarea",
+      "label": "Previous Anaesthesia / Surgery / ICU Admission Details",
+      "placeholder": "Prior operations, general/spinal anaesthesia tolerance, ICU stay details"
+    },
+    "anaesthesia_problems": {
+      "id": "anaesthesia_problems",
+      "name": "anaesthesia_problems",
+      "type": "checkbox",
+      "label": "Problems (if any)",
+      "options": [
+        {
+          "label": "Difficult IV access",
+          "value": "difficult_iv"
+        },
+        {
+          "label": "Awareness",
+          "value": "awareness"
+        },
+        {
+          "label": "Difficult airway",
+          "value": "difficult_airway"
+        },
+        {
+          "label": "Difficult regional",
+          "value": "difficult_regional"
+        },
+        {
+          "label": "Adverse drug reactions",
+          "value": "adverse_reactions"
+        },
+        {
+          "label": "Hemodynamic instability",
+          "value": "hemodynamic_instability"
+        },
+        {
+          "label": "Delayed recovery",
+          "value": "delayed_recovery"
+        }
+      ]
+    },
+    "pac_family_history": {
+      "id": "pac_family_history",
+      "name": "pac_family_history",
+      "type": "text",
+      "label": "Family History",
+      "placeholder": "Malignant hyperthermia, pseudocholinesterase deficiency, etc."
+    },
+    "ongoing_medications": {
+      "id": "ongoing_medications",
+      "name": "ongoing_medications",
+      "type": "checkbox",
+      "label": "Ongoing Medications",
+      "options": [
+        {
+          "label": "Antidiabetic-OHA/Insulin",
+          "value": "antidiabetic"
+        },
+        {
+          "label": "Antihypertensive",
+          "value": "antihypertensive"
+        },
+        {
+          "label": "Antiplatelet",
+          "value": "antiplatelet"
+        },
+        {
+          "label": "Anticoagulants",
+          "value": "anticoagulants"
+        },
+        {
+          "label": "Antianginal",
+          "value": "antianginal"
+        },
+        {
+          "label": "Bronchodilators",
+          "value": "bronchodilators"
+        },
+        {
+          "label": "Steroids",
+          "value": "steroids"
+        },
+        {
+          "label": "Antiepileptics",
+          "value": "antiepileptics"
+        },
+        {
+          "label": "Antidepressants/Antipsychotics",
+          "value": "psychotropics"
+        },
+        {
+          "label": "Antibiotics",
+          "value": "antibiotics"
+        },
+        {
+          "label": "OCP/HRT",
+          "value": "ocp_hrt"
+        },
+        {
+          "label": "Others",
+          "value": "others"
+        }
+      ]
+    },
+    "ongoing_medications_others": {
+      "id": "ongoing_medications_others",
+      "name": "ongoing_medications_others",
+      "type": "textarea",
+      "label": "Medication Names & Dosages / Food & Drug Allergies",
+      "placeholder": "Specify drug names, dose, schedule, and allergy details"
+    },
+    "hist_cardiovascular": {
+      "id": "hist_cardiovascular",
+      "name": "hist_cardiovascular",
+      "type": "checkbox",
+      "label": "Cardiovascular Diseases",
+      "options": [
+        {
+          "label": "Hypertension",
+          "value": "htn"
+        },
+        {
+          "label": "Ischemic heart disease",
+          "value": "ihd"
+        },
+        {
+          "label": "Arrhythmias",
+          "value": "arrhythmias"
+        },
+        {
+          "label": "Pacemaker/Defibrillator",
+          "value": "pacemaker"
+        },
+        {
+          "label": "Peripheral vascular disease",
+          "value": "pvd"
+        },
+        {
+          "label": "DVT/PE",
+          "value": "dvt_pe"
+        },
+        {
+          "label": "Dyslipidemia",
+          "value": "dyslipidemia"
+        },
+        {
+          "label": "NYHA Grading recorded",
+          "value": "nyha"
+        }
+      ]
+    },
+    "hist_respiratory": {
+      "id": "hist_respiratory",
+      "name": "hist_respiratory",
+      "type": "checkbox",
+      "label": "Respiratory Diseases",
+      "options": [
+        {
+          "label": "Smoking",
+          "value": "smoking"
+        },
+        {
+          "label": "Asthma",
+          "value": "asthma"
+        },
+        {
+          "label": "COPD/Emphysema/Bronchitis",
+          "value": "copd"
+        },
+        {
+          "label": "Upper/LRI in last 2 weeks",
+          "value": "uri_lri"
+        },
+        {
+          "label": "Sleep apnoea/Snoring",
+          "value": "osa_snoring"
+        },
+        {
+          "label": "Use CPAP",
+          "value": "cpap"
+        }
+      ]
+    },
+    "hist_neurological": {
+      "id": "hist_neurological",
+      "name": "hist_neurological",
+      "type": "checkbox",
+      "label": "Neurological Disorders",
+      "options": [
+        {
+          "label": "CVA/TIA",
+          "value": "cva_tia"
+        },
+        {
+          "label": "Seizures",
+          "value": "seizures"
+        },
+        {
+          "label": "Spine deformity",
+          "value": "spine_deformity"
+        },
+        {
+          "label": "Nerve/Spinal cord injury",
+          "value": "cord_injury"
+        },
+        {
+          "label": "Neuropathy",
+          "value": "neuropathy"
+        },
+        {
+          "label": "Dementia",
+          "value": "dementia"
+        },
+        {
+          "label": "Learning disabilities",
+          "value": "learning_disabilities"
+        },
+        {
+          "label": "Developmental delay",
+          "value": "developmental_delay"
+        }
+      ]
+    },
+    "hist_blood": {
+      "id": "hist_blood",
+      "name": "hist_blood",
+      "type": "checkbox",
+      "label": "Blood Disorders",
+      "options": [
+        {
+          "label": "Bleeding/Clotting disorders",
+          "value": "coagulopathy"
+        },
+        {
+          "label": "Blood transfusions in past",
+          "value": "transfusion"
+        },
+        {
+          "label": "Religious/Other objection for blood transfusion",
+          "value": "transfusion_objection"
+        }
+      ]
+    },
+    "hist_gi": {
+      "id": "hist_gi",
+      "name": "hist_gi",
+      "type": "checkbox",
+      "label": "Gastrointestinal Diseases",
+      "options": [
+        {
+          "label": "Liver disease",
+          "value": "liver_disease"
+        },
+        {
+          "label": "Hiatus hernia / Heart burn / GERD",
+          "value": "gerd"
+        }
+      ]
+    },
+    "hist_social_drugs": {
+      "id": "hist_social_drugs",
+      "name": "hist_social_drugs",
+      "type": "checkbox",
+      "label": "Alcohol, Drugs & Specific History",
+      "options": [
+        {
+          "label": "Chronic alcohol use / or within past 24 hours",
+          "value": "alcohol"
+        },
+        {
+          "label": "Drug abuse",
+          "value": "drug_abuse"
+        },
+        {
+          "label": "Use of steroids in the past",
+          "value": "steroid_use"
+        },
+        {
+          "label": "Vaccination status verified",
+          "value": "vaccination"
+        }
+      ]
+    },
+    "hist_infectious_endocrine": {
+      "id": "hist_infectious_endocrine",
+      "name": "hist_infectious_endocrine",
+      "type": "checkbox",
+      "label": "Infectious & Endocrine Disorders",
+      "options": [
+        {
+          "label": "HIV",
+          "value": "hiv"
+        },
+        {
+          "label": "TB",
+          "value": "tb"
+        },
+        {
+          "label": "Hepatitis B/C",
+          "value": "hepb_c"
+        },
+        {
+          "label": "Diabetes mellitus",
+          "value": "dm"
+        },
+        {
+          "label": "Hypothyroidism / Hyperthyroidism",
+          "value": "thyroid"
+        },
+        {
+          "label": "Previous dialysis",
+          "value": "dialysis"
+        },
+        {
+          "label": "AV fistula",
+          "value": "av_fistula"
+        }
+      ]
+    },
+    "hist_women": {
+      "id": "hist_women",
+      "name": "hist_women",
+      "type": "text",
+      "label": "For Women: Pregnancy, Parity, LMP & Gestational Age",
+      "placeholder": "Pregnancy possibility / Parity / LMP / GA"
+    },
+    "hist_ent_cancer_comments": {
+      "id": "hist_ent_cancer_comments",
+      "name": "hist_ent_cancer_comments",
+      "type": "textarea",
+      "label": "Eye/Ear/Nose/Throat, Cancer/Chemo/Radiotherapy/Psychiatric Disorders & Comments",
+      "placeholder": "Enter clinical findings, oncology, ENT, or psychiatric history and comments"
+    },
+    "pe_general": {
+      "id": "pe_general",
+      "name": "pe_general",
+      "type": "checkbox",
+      "label": "General Examination Signs",
+      "options": [
+        {
+          "label": "Pallor",
+          "value": "pallor"
+        },
+        {
+          "label": "Icterus",
+          "value": "icterus"
+        },
+        {
+          "label": "Clubbing",
+          "value": "clubbing"
+        },
+        {
+          "label": "Cyanosis",
+          "value": "cyanosis"
+        },
+        {
+          "label": "Lymphadenopathy",
+          "value": "lymphadenopathy"
+        },
+        {
+          "label": "Pedal oedema",
+          "value": "pedal_oedema"
+        }
+      ]
+    },
+    "pe_temp": {
+      "id": "pe_temp",
+      "name": "pe_temp",
+      "type": "text",
+      "label": "Temperature",
+      "placeholder": "°F / °C"
+    },
+    "pe_urine_output": {
+      "id": "pe_urine_output",
+      "name": "pe_urine_output",
+      "type": "text",
+      "label": "Urine Output",
+      "placeholder": "e.g., Adequate / ml/hr"
+    },
+    "pe_pulse": {
+      "id": "pe_pulse",
+      "name": "pe_pulse",
+      "type": "number",
+      "label": "Pulse Rate (/min)",
+      "placeholder": "bpm"
+    },
+    "pe_bp": {
+      "id": "pe_bp",
+      "name": "pe_bp",
+      "type": "text",
+      "label": "Blood Pressure (mmHg)",
+      "placeholder": "120/80"
+    },
+    "pe_jvp_heart": {
+      "id": "pe_jvp_heart",
+      "name": "pe_jvp_heart",
+      "type": "text",
+      "label": "JVP & Heart Sounds / METS",
+      "placeholder": "JVP, S1 S2 Murmurs, Effort tolerance (METS)"
+    },
+    "pe_rr": {
+      "id": "pe_rr",
+      "name": "pe_rr",
+      "type": "number",
+      "label": "Respiratory Rate (/min)",
+      "placeholder": "breaths/min"
+    },
+    "pe_spo2": {
+      "id": "pe_spo2",
+      "name": "pe_spo2",
+      "type": "number",
+      "label": "SpO2 (%)",
+      "placeholder": "%"
+    },
+    "pe_lungs_ventilator": {
+      "id": "pe_lungs_ventilator",
+      "name": "pe_lungs_ventilator",
+      "type": "text",
+      "label": "Lungs / Ventilator Settings",
+      "placeholder": "Breath sounds, wheeze, crackles, vent settings"
+    },
+    "airway_mp_grade": {
+      "id": "airway_mp_grade",
+      "name": "airway_mp_grade",
+      "type": "select",
+      "label": "Mallampati (MP) Grade",
+      "options": [
+        {
+          "label": "Class I",
+          "value": "1"
+        },
+        {
+          "label": "Class II",
+          "value": "2"
+        },
+        {
+          "label": "Class III",
+          "value": "3"
+        },
+        {
+          "label": "Class IV",
+          "value": "4"
+        }
+      ]
+    },
+    "airway_features": {
+      "id": "airway_features",
+      "name": "airway_features",
+      "type": "checkbox",
+      "label": "Airway Assessment Checklist",
+      "options": [
+        {
+          "label": "Adequate Mouth opening",
+          "value": "adequate_mo"
+        },
+        {
+          "label": "Dentures",
+          "value": "dentures"
+        },
+        {
+          "label": "Caps/Crowns",
+          "value": "caps_crowns"
+        },
+        {
+          "label": "Overbite",
+          "value": "overbite"
+        },
+        {
+          "label": "Loose teeth",
+          "value": "loose_teeth"
+        },
+        {
+          "label": "Buck teeth",
+          "value": "buck_teeth"
+        }
+      ]
+    },
+    "airway_measurements": {
+      "id": "airway_measurements",
+      "name": "airway_measurements",
+      "type": "text",
+      "label": "Incisor Gap / TMD / Neck Exam",
+      "placeholder": "Incisor gap (1F/2F/3F), TMD (1F/2F/3F), Neck flexion/extension"
+    },
+    "pe_cns_gi_msk": {
+      "id": "pe_cns_gi_msk",
+      "name": "pe_cns_gi_msk",
+      "type": "textarea",
+      "label": "CNS/PNS, GI & Musculoskeletal Exam",
+      "placeholder": "GCS, Pupils, Sensory, Motor, Ascites, CLD stigmata, Spine/Limbs, NOP status"
+    },
+    "anticipated_risks": {
+      "id": "anticipated_risks",
+      "name": "anticipated_risks",
+      "type": "checkbox",
+      "label": "Identified / Anticipated Risks",
+      "options": [
+        {
+          "label": "Difficult IV access",
+          "value": "diff_iv"
+        },
+        {
+          "label": "Dental damage",
+          "value": "dental_damage"
+        },
+        {
+          "label": "Tracheostomy",
+          "value": "tracheostomy"
+        },
+        {
+          "label": "Blood transfusion",
+          "value": "blood_transfusion"
+        },
+        {
+          "label": "Drug allergy",
+          "value": "drug_allergy"
+        },
+        {
+          "label": "Nausea/Vomiting",
+          "value": "ponv"
+        },
+        {
+          "label": "Perioperative MI/CVA",
+          "value": "periop_mi_cva"
+        },
+        {
+          "label": "Bleeding",
+          "value": "bleeding"
+        },
+        {
+          "label": "Sore throat",
+          "value": "sore_throat"
+        },
+        {
+          "label": "Difficult airway",
+          "value": "diff_airway"
+        },
+        {
+          "label": "Pulmonary aspiration",
+          "value": "aspiration"
+        },
+        {
+          "label": "Invasive lines",
+          "value": "invasive_lines"
+        },
+        {
+          "label": "Post-operative ICU admission",
+          "value": "icu_admission"
+        },
+        {
+          "label": "Post-operative ventilation",
+          "value": "postop_vent"
+        },
+        {
+          "label": "Difficult/failed regional techniques",
+          "value": "failed_regional"
+        },
+        {
+          "label": "Others",
+          "value": "others"
+        }
+      ]
+    },
+    "anaesthesia_plan": {
+      "id": "anaesthesia_plan",
+      "name": "anaesthesia_plan",
+      "type": "checkbox",
+      "label": "Planned Anaesthetic Technique",
+      "options": [
+        {
+          "label": "General Anaesthesia (GA)",
+          "value": "GA"
+        },
+        {
+          "label": "Regional Anaesthesia",
+          "value": "Regional"
+        },
+        {
+          "label": "IV Sedation",
+          "value": "IV_sedation"
+        },
+        {
+          "label": "Total Intravenous Anaesthesia (TIVA)",
+          "value": "TIVA"
+        },
+        {
+          "label": "Monitored Anaesthesia Care (MAC)",
+          "value": "MAC"
+        }
+      ]
+    },
+    "plan_counseling_confirmed": {
+      "id": "plan_counseling_confirmed",
+      "name": "plan_counseling_confirmed",
+      "type": "checkbox",
+      "label": "Counseling Confirmation",
+      "options": [
+        {
+          "label": "The risks, benefits and alternatives to GA, regional and local sedation have been discussed and questions answered",
+          "value": "discussed"
+        }
+      ]
+    },
+    "investigations_checklist": {
+      "id": "investigations_checklist",
+      "name": "investigations_checklist",
+      "type": "checkbox",
+      "label": "Preoperative Investigations Completed",
+      "options": [
+        {
+          "label": "Hb / WBC / Platelet",
+          "value": "cbc"
+        },
+        {
+          "label": "RBS / FBS / HbA1c",
+          "value": "glycaemic"
+        },
+        {
+          "label": "Blood Urea / S. Creatinine / Electrolytes (Na, K)",
+          "value": "rft_lytes"
+        },
+        {
+          "label": "PT / INR / APTT",
+          "value": "coagulation"
+        },
+        {
+          "label": "Blood Group & Crossmatch",
+          "value": "blood_group"
+        },
+        {
+          "label": "UPT (Urine Pregnancy Test)",
+          "value": "upt"
+        },
+        {
+          "label": "ABG / LFT / Viral Serology",
+          "value": "abg_lft_serology"
+        },
+        {
+          "label": "PFT / TFT",
+          "value": "pft_tft"
+        },
+        {
+          "label": "ECG / Stress Test / ECHO",
+          "value": "cardiac_workup"
+        },
+        {
+          "label": "CXR / CT / MRI / USS",
+          "value": "radiology"
+        }
+      ]
+    },
+    "investigation_values": {
+      "id": "investigation_values",
+      "name": "investigation_values",
+      "type": "textarea",
+      "label": "Investigation Values / Reports Summary",
+      "placeholder": "Hb: __, Plt: __, Creat: __, Na/K: __/__, PT/INR: __, ECG: __, ECHO: __, Blood Group: __"
+    },
+    "consultation_opinion": {
+      "id": "consultation_opinion",
+      "name": "consultation_opinion",
+      "type": "textarea",
+      "label": "Consultation Required / Reason If Not Optimized",
+      "placeholder": "Specialty consults (Cardiology, Pulmonology, etc.) or reasons why patient is not yet optimized"
+    },
+    "preop_instructions": {
+      "id": "preop_instructions",
+      "name": "preop_instructions",
+      "type": "textarea",
+      "label": "Preoperative Instructions & Orders",
+      "placeholder": "NPO for solids/clear liquids, premedications, medications to continue/stop, blood arrange orders"
+    },
+    "pac_anaesthesiologist_sign": {
+      "id": "pac_anaesthesiologist_sign",
+      "name": "pac_anaesthesiologist_sign",
+      "type": "text",
+      "label": "Anaesthesiologist Name & Date/Time (PAC Sign-off)",
+      "placeholder": "Dr. Name, Date, Time"
+    },
+    "re_eval_status": {
+      "id": "re_eval_status",
+      "name": "re_eval_status",
+      "type": "radio",
+      "label": "Immediate Preoperative Re-evaluation Status",
+      "options": [
+        {
+          "label": "Optimized for the planned anaesthesia",
+          "value": "optimized"
+        },
+        {
+          "label": "Not Optimized for the planned anaesthesia",
+          "value": "not_optimized"
+        }
+      ]
+    },
+    "re_eval_plan_revision": {
+      "id": "re_eval_plan_revision",
+      "name": "re_eval_plan_revision",
+      "type": "textarea",
+      "label": "Plan Revision & Reason (if any)",
+      "placeholder": "Plan revised to... Reason: ..."
+    },
+    "re_eval_sign": {
+      "id": "re_eval_sign",
+      "name": "re_eval_sign",
+      "type": "text",
+      "label": "Re-evaluation Anaesthesiologist Name & Signature with Date/Time",
+      "placeholder": "Dr. Name, Date, Time"
+    },
+    "consent_surgeon_name": {
+      "id": "consent_surgeon_name",
+      "name": "consent_surgeon_name",
+      "type": "text",
+      "label": "Operating Surgeon",
+      "placeholder": "Surgeon name"
+    },
+    "consent_proc_category": {
+      "id": "consent_proc_category",
+      "name": "consent_proc_category",
+      "type": "radio",
+      "label": "Category of Surgical Procedure",
+      "options": [
+        {
+          "label": "Emergency",
+          "value": "emergency"
+        },
+        {
+          "label": "Elective",
+          "value": "elective"
+        }
+      ]
+    },
+    "consent_type": {
+      "id": "consent_type",
+      "name": "consent_type",
+      "type": "radio",
+      "label": "Type of Consent",
+      "options": [
+        {
+          "label": "Normal Risk",
+          "value": "normal"
+        },
+        {
+          "label": "High Risk",
+          "value": "high_risk"
+        }
+      ]
+    },
+    "consent_giver": {
+      "id": "consent_giver",
+      "name": "consent_giver",
+      "type": "radio",
+      "label": "Person Giving Consent",
+      "options": [
+        {
+          "label": "Patient",
+          "value": "patient"
+        },
+        {
+          "label": "Relative / Bystander",
+          "value": "bystander"
+        }
+      ]
+    },
+    "consent_giver_relationship": {
+      "id": "consent_giver_relationship",
+      "name": "consent_giver_relationship",
+      "type": "text",
+      "label": "Relationship with Patient (if bystander)",
+      "placeholder": "e.g., Spouse, Parent, Son"
+    },
+    "consent_substitute_reason": {
+      "id": "consent_substitute_reason",
+      "name": "consent_substitute_reason",
+      "type": "select",
+      "label": "Reason for Obtaining Consent from Anyone Other than Patient",
+      "options": [
+        {
+          "label": "Not Applicable (Patient consenting)",
+          "value": "na"
+        },
+        {
+          "label": "Patient is Minor",
+          "value": "minor"
+        },
+        {
+          "label": "Unconscious",
+          "value": "unconscious"
+        },
+        {
+          "label": "Disoriented",
+          "value": "disoriented"
+        },
+        {
+          "label": "Mentally Challenged",
+          "value": "mentally_challenged"
+        },
+        {
+          "label": "Physically Unfit",
+          "value": "physically_unfit"
+        },
+        {
+          "label": "Clinically Unfit",
+          "value": "clinically_unfit"
+        },
+        {
+          "label": "Others",
+          "value": "others"
+        }
+      ]
+    },
+    "consent_principal_anaesthetist": {
+      "id": "consent_principal_anaesthetist",
+      "name": "consent_principal_anaesthetist",
+      "type": "text",
+      "label": "Authorized Principal Anaesthesiologist",
+      "placeholder": "Dr. Name"
+    },
+    "consented_anaesthesia_types": {
+      "id": "consented_anaesthesia_types",
+      "name": "consented_anaesthesia_types",
+      "type": "checkbox",
+      "label": "Authorized Anaesthesia Technique(s)",
+      "options": [
+        {
+          "label": "General Anaesthesia",
+          "value": "GA"
+        },
+        {
+          "label": "Subarachnoid block (Spinal)",
+          "value": "SAB"
+        },
+        {
+          "label": "Epidural Anaesthesia",
+          "value": "epidural"
+        },
+        {
+          "label": "Epidural Analgesia",
+          "value": "epidural_analgesia"
+        },
+        {
+          "label": "Combined Spinal Epidural (CSE)",
+          "value": "CSE"
+        },
+        {
+          "label": "Monitored Anaesthesia Care (MAC)",
+          "value": "MAC"
+        },
+        {
+          "label": "Nerve Block",
+          "value": "nerve_block"
+        },
+        {
+          "label": "Total Intravenous Anaesthesia (TIVA)",
+          "value": "TIVA"
+        },
+        {
+          "label": "Other",
+          "value": "other"
+        }
+      ]
+    },
+    "consent_language": {
+      "id": "consent_language",
+      "name": "consent_language",
+      "type": "text",
+      "label": "Language in which Consent / Risks were Explained",
+      "placeholder": "e.g., Malayalam, English, Hindi"
+    },
+    "consent_signatory_name": {
+      "id": "consent_signatory_name",
+      "name": "consent_signatory_name",
+      "type": "text",
+      "label": "Name of Person Giving Consent",
+      "placeholder": "Full Name"
+    },
+    "consent_signatory_age_sex": {
+      "id": "consent_signatory_age_sex",
+      "name": "consent_signatory_age_sex",
+      "type": "text",
+      "label": "Signatory Age & Sex",
+      "placeholder": "Age / Sex"
+    },
+    "consent_signatory_address": {
+      "id": "consent_signatory_address",
+      "name": "consent_signatory_address",
+      "type": "textarea",
+      "label": "Address of Signatory",
+      "placeholder": "Residential address"
+    },
+    "witness_1_details": {
+      "id": "witness_1_details",
+      "name": "witness_1_details",
+      "type": "textarea",
+      "label": "Witness 1: Name, Address, Relationship & Sign",
+      "placeholder": "Name, Address, Relationship, Sign"
+    },
+    "witness_2_details": {
+      "id": "witness_2_details",
+      "name": "witness_2_details",
+      "type": "textarea",
+      "label": "Witness 2: Name, Address, Relationship & Sign",
+      "placeholder": "Name, Address, Relationship, Sign"
+    },
+    "consent_metadata": {
+      "id": "consent_metadata",
+      "name": "consent_metadata",
+      "type": "text",
+      "label": "Consent Date, Time & Place",
+      "placeholder": "DD/MM/YYYY, HH:MM, Kolenchery"
+    },
+    "intraop_premedication": {
+      "id": "intraop_premedication",
+      "name": "intraop_premedication",
+      "type": "text",
+      "label": "Premedication Administered",
+      "placeholder": "Drugs, dose, route, time"
+    },
+    "intraop_technique": {
+      "id": "intraop_technique",
+      "name": "intraop_technique",
+      "type": "text",
+      "label": "Anaesthesia Administered / Airway Device",
+      "placeholder": "e.g., ETT / LMA size, Spinal needle & level, local anaesthetic dose"
+    },
+    "intraop_monitoring_grid": {
+      "id": "intraop_monitoring_grid",
+      "name": "intraop_monitoring_grid",
+      "type": "table",
+      "label": "Intraoperative Vital Signs & Monitoring Log",
+      "helpText": "Record serial intraoperative parameters at regular time intervals",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "time",
+            "label": "Time",
+            "type": "text",
+            "placeholder": "HH:MM"
+          },
+          {
+            "id": "event",
+            "label": "Event (Induction/Incision/Closure)",
+            "type": "select",
+            "options": [
+              {
+                "label": "Induction",
+                "value": "induction"
+              },
+              {
+                "label": "Incision",
+                "value": "incision"
+              },
+              {
+                "label": "Maintenance",
+                "value": "maintenance"
+              },
+              {
+                "label": "Closure",
+                "value": "closure"
+              },
+              {
+                "label": "Extubation / Recovery",
+                "value": "recovery"
+              }
+            ]
+          },
+          {
+            "id": "bp_systolic",
+            "label": "BP Systolic",
+            "type": "number",
+            "placeholder": "mmHg"
+          },
+          {
+            "id": "bp_diastolic",
+            "label": "BP Diastolic",
+            "type": "number",
+            "placeholder": "mmHg"
+          },
+          {
+            "id": "pulse",
+            "label": "Pulse Rate",
+            "type": "number",
+            "placeholder": "bpm"
+          },
+          {
+            "id": "spo2",
+            "label": "SpO2 (%)",
+            "type": "number",
+            "placeholder": "%"
+          },
+          {
+            "id": "etco2",
+            "label": "EtCO2 (mmHg)",
+            "type": "number",
+            "placeholder": "mmHg"
+          },
+          {
+            "id": "temp",
+            "label": "Temp",
+            "type": "text",
+            "placeholder": "°C"
+          },
+          {
+            "id": "relaxants",
+            "label": "Muscle Relaxants",
+            "type": "text",
+            "placeholder": "Drug/Dose"
+          },
+          {
+            "id": "narcotics",
+            "label": "Narcotics / Analgesics",
+            "type": "text",
+            "placeholder": "Drug/Dose"
+          },
+          {
+            "id": "other_drugs",
+            "label": "Other Drugs Given",
+            "type": "text",
+            "placeholder": "Drug/Dose"
+          },
+          {
+            "id": "blood_loss",
+            "label": "Blood Loss (ml)",
+            "type": "number",
+            "placeholder": "ml"
+          },
+          {
+            "id": "urine_output",
+            "label": "Urine Output (ml)",
+            "type": "number",
+            "placeholder": "ml"
+          }
+        ],
+        "allowAddRows": true,
+        "minRows": 2,
+        "defaultRows": []
+      }
+    },
+    "intraop_fluids_transfusions": {
+      "id": "intraop_fluids_transfusions",
+      "name": "intraop_fluids_transfusions",
+      "type": "textarea",
+      "label": "Intravenous Fluids & Blood Transfusion Details",
+      "placeholder": "IV Fluids (Crystalloids/Colloids total ml) & Blood products transfused (PRBC/FFP/Platelets unit numbers)"
+    },
+    "intraop_recovery_sign": {
+      "id": "intraop_recovery_sign",
+      "name": "intraop_recovery_sign",
+      "type": "text",
+      "label": "Duration of Anaesthesia, Date & Anaesthesiologist Sign",
+      "placeholder": "Duration: __ hrs __ mins | Date: DD/MM/YYYY | Sign: Dr. Name"
+    },
+    "pacu_procedure_type": {
+      "id": "pacu_procedure_type",
+      "name": "pacu_procedure_type",
+      "type": "text",
+      "label": "Name of Procedure & Type of Anaesthesia",
+      "placeholder": "Procedure name and anaesthetic modality"
+    },
+    "aldrete_table": {
+      "id": "aldrete_table",
+      "name": "aldrete_table",
+      "type": "table",
+      "label": "Modified Aldrete Scoring Log (Recovery Room)",
+      "helpText": "Evaluate Consciousness, Oxygenation, Respiration, Circulation, and Activity",
+      "tableConfig": {
+        "columns": [
+          {
+            "id": "time",
+            "label": "Time Interval",
+            "type": "text",
+            "placeholder": "0 min / 15 min / 30 min / Discharge"
+          },
+          {
+            "id": "consciousness",
+            "label": "Consciousness (2=Awake, 1=Arousable, 0=None)",
+            "type": "select",
+            "options": [
+              {
+                "label": "2 - Fully awake",
+                "value": "2"
+              },
+              {
+                "label": "1 - Arousable on calling",
+                "value": "1"
+              },
+              {
+                "label": "0 - Not responsive",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "id": "oxygenation",
+            "label": "Oxygenation (2=>92% RA, 1=>90% O2, 0=<90% O2)",
+            "type": "select",
+            "options": [
+              {
+                "label": "2 - SpO2 >92% (on room air)",
+                "value": "2"
+              },
+              {
+                "label": "1 - SpO2 >90% (on oxygen)",
+                "value": "1"
+              },
+              {
+                "label": "0 - SpO2 <90% (on oxygen)",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "id": "respiration",
+            "label": "Respiration (2=Deep/cough, 1=Dyspnoeic, 0=Apnoea)",
+            "type": "select",
+            "options": [
+              {
+                "label": "2 - Breathes deeply & coughs freely",
+                "value": "2"
+              },
+              {
+                "label": "1 - Dyspnoeic, shallow/limited breathing",
+                "value": "1"
+              },
+              {
+                "label": "0 - Apnoea",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "id": "circulation",
+            "label": "Circulation (2=±20mmHg, 1=±20-50mmHg, 0=>±50mmHg)",
+            "type": "select",
+            "options": [
+              {
+                "label": "2 - BP ± 20 mmHg of normal",
+                "value": "2"
+              },
+              {
+                "label": "1 - BP ± 20-50 mmHg of normal",
+                "value": "1"
+              },
+              {
+                "label": "0 - BP > ± 50 mmHg of normal",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "id": "activity",
+            "label": "Activity (2=All extremities, 1=Two, 0=None)",
+            "type": "select",
+            "options": [
+              {
+                "label": "2 - Moves all extremities",
+                "value": "2"
+              },
+              {
+                "label": "1 - Moves two extremities",
+                "value": "1"
+              },
+              {
+                "label": "0 - No movement",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "id": "total_score",
+            "label": "Total Score (/10)",
+            "type": "number",
+            "placeholder": "Total"
+          }
+        ],
+        "allowAddRows": true,
+        "minRows": 2,
+        "defaultRows": []
+      }
+    },
+    "fld_pain_assessment": {
+      "id": "fld_pain_assessment",
+      "name": "pain_assessment",
+      "type": "pain_assessment",
+      "label": "PAIN ASSESSMENT (VAS / Faces Pain Scale)",
+      "helpText": "Record pain presence, location, and severity using a 0–10 facial scale",
+      "defaultValue": {
+        "painPresent": "",
+        "location": "",
+        "score": null
+      }
+    },
+    "discharge_criteria": {
+      "id": "discharge_criteria",
+      "name": "discharge_criteria",
+      "type": "checkbox",
+      "label": "PACU Discharge Criteria Checklist",
+      "options": [
+        {
+          "label": "Aldrete Score ≥ 9 / baseline",
+          "value": "aldrete_9"
+        },
+        {
+          "label": "Vital Signs similar to baseline",
+          "value": "vitals_stable"
+        },
+        {
+          "label": "Acceptable VAS / Pain score",
+          "value": "vas_acceptable"
+        },
+        {
+          "label": "No significant nausea and vomiting",
+          "value": "no_ponv"
+        },
+        {
+          "label": "No active bleeding",
+          "value": "no_bleeding"
+        },
+        {
+          "label": "Recovery of motor power (for neuraxial and nerve blocks)",
+          "value": "motor_recovery"
+        }
+      ]
+    },
+    "pacu_vitals_extra": {
+      "id": "pacu_vitals_extra",
+      "name": "pacu_vitals_extra",
+      "type": "text",
+      "label": "GRBS, Urine Output & Temperature at Discharge",
+      "placeholder": "GRBS: __ mg/dl | Urine: __ ml | Temp: __ °F"
+    },
+    "pacu_disposition": {
+      "id": "pacu_disposition",
+      "name": "pacu_disposition",
+      "type": "radio",
+      "label": "Discharged To",
+      "options": [
+        {
+          "label": "WARD",
+          "value": "ward"
+        },
+        {
+          "label": "HDU",
+          "value": "hdu"
+        },
+        {
+          "label": "ICU",
+          "value": "icu"
+        }
+      ]
+    },
+    "pacu_discharge_time": {
+      "id": "pacu_discharge_time",
+      "name": "pacu_discharge_time",
+      "type": "text",
+      "label": "Discharge Time",
+      "placeholder": "HH:MM"
+    },
+    "pacu_postop_orders": {
+      "id": "pacu_postop_orders",
+      "name": "pacu_postop_orders",
+      "type": "textarea",
+      "label": "Post Anaesthesia Orders",
+      "placeholder": "Oxygen therapy, analgesia, antiemetics, IV fluid rate, monitoring frequency"
+    },
+    "pacu_signoffs": {
+      "id": "pacu_signoffs",
+      "name": "pacu_signoffs",
+      "type": "text",
+      "label": "Staff Nurse & Anaesthesiologist Sign-off with Date & Time",
+      "placeholder": "Staff Nurse Name: __ | Anaesthesiologist Name: __ | Date & Time: __"
+    },
+    "additional_documentation": {
+      "id": "additional_documentation",
+      "name": "additional_documentation",
+      "type": "textarea",
+      "label": "Additional Space for Documentation / Communication (if any)",
+      "placeholder": "Write additional clinical notes, handover, critical events, or communication log here"
+    },
+    "additional_signoff": {
+      "id": "additional_signoff",
+      "name": "additional_signoff",
+      "type": "text",
+      "label": "Name & Signature of Anaesthesiologist & Date",
+      "placeholder": "Dr. Name, Signature, Date (put signature only if sheet is documented)"
+    }
+  },
+  "layout": [
+    {
+      "id": "sec_patient_demographics",
+      "title": "Hospital Header & Patient Information (Page 1)",
+      "description": "Department of Anaesthesiology - Anaesthesia Procedural Docket",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_p1_1",
+          "columns": [
+            {
+              "id": "col_p1_1",
+              "width": 8,
+              "fieldIds": [
+                "patient_name"
+              ]
+            },
+            {
+              "id": "col_p1_2",
+              "width": 4,
+              "fieldIds": [
+                "hospital_no"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_p1_2",
+          "columns": [
+            {
+              "id": "col_p1_3",
+              "width": 3,
+              "fieldIds": [
+                "age"
+              ]
+            },
+            {
+              "id": "col_p1_4",
+              "width": 3,
+              "fieldIds": [
+                "sex"
+              ]
+            },
+            {
+              "id": "col_p1_5",
+              "width": 3,
+              "fieldIds": [
+                "ward"
+              ]
+            },
+            {
+              "id": "col_p1_6",
+              "width": 3,
+              "fieldIds": [
+                "dept_unit"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_p1_3",
+          "columns": [
+            {
+              "id": "col_p1_7",
+              "width": 6,
+              "fieldIds": [
+                "diagnosis"
+              ]
+            },
+            {
+              "id": "col_p1_8",
+              "width": 6,
+              "fieldIds": [
+                "procedure_name"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_p1_4",
+          "columns": [
+            {
+              "id": "col_p1_9",
+              "width": 12,
+              "fieldIds": [
+                "allergic_to"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_pre_anaesthesia_evaluation",
+      "title": "Pre-Anaesthesia Evaluation (Page 2)",
+      "description": "Baseline PAC, Risk Stratification & Clinical History",
+      "collapsible": true,
+      "rows": [
+        {
+          "id": "row_pac_1",
+          "columns": [
+            {
+              "id": "col_pac_1",
+              "width": 5,
+              "fieldIds": [
+                "pac_procedure"
+              ]
+            },
+            {
+              "id": "col_pac_2",
+              "width": 4,
+              "fieldIds": [
+                "pac_case_type"
+              ]
+            },
+            {
+              "id": "col_pac_3",
+              "width": 3,
+              "fieldIds": [
+                "pac_date"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_2",
+          "columns": [
+            {
+              "id": "col_pac_4",
+              "width": 4,
+              "fieldIds": [
+                "pac_surgeon"
+              ]
+            },
+            {
+              "id": "col_pac_5",
+              "width": 4,
+              "fieldIds": [
+                "pac_informant"
+              ]
+            },
+            {
+              "id": "col_pac_6",
+              "width": 4,
+              "fieldIds": [
+                "pac_asa_score"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_3",
+          "columns": [
+            {
+              "id": "col_pac_7",
+              "width": 6,
+              "fieldIds": [
+                "pac_weight"
+              ]
+            },
+            {
+              "id": "col_pac_8",
+              "width": 6,
+              "fieldIds": [
+                "pac_height"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_4",
+          "columns": [
+            {
+              "id": "col_pac_9",
+              "width": 6,
+              "fieldIds": [
+                "prev_anaesthesia_history"
+              ]
+            },
+            {
+              "id": "col_pac_10",
+              "width": 6,
+              "fieldIds": [
+                "ongoing_medications"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_5",
+          "columns": [
+            {
+              "id": "col_pac_11",
+              "width": 6,
+              "fieldIds": [
+                "anaesthesia_problems"
+              ]
+            },
+            {
+              "id": "col_pac_12",
+              "width": 6,
+              "fieldIds": [
+                "ongoing_medications_others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_6",
+          "columns": [
+            {
+              "id": "col_pac_13",
+              "width": 12,
+              "fieldIds": [
+                "pac_family_history"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_7",
+          "columns": [
+            {
+              "id": "col_pac_14",
+              "width": 6,
+              "fieldIds": [
+                "hist_cardiovascular"
+              ]
+            },
+            {
+              "id": "col_pac_15",
+              "width": 6,
+              "fieldIds": [
+                "hist_respiratory"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_8",
+          "columns": [
+            {
+              "id": "col_pac_16",
+              "width": 6,
+              "fieldIds": [
+                "hist_neurological"
+              ]
+            },
+            {
+              "id": "col_pac_17",
+              "width": 6,
+              "fieldIds": [
+                "hist_blood"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_9",
+          "columns": [
+            {
+              "id": "col_pac_18",
+              "width": 6,
+              "fieldIds": [
+                "hist_gi"
+              ]
+            },
+            {
+              "id": "col_pac_19",
+              "width": 6,
+              "fieldIds": [
+                "hist_social_drugs"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_10",
+          "columns": [
+            {
+              "id": "col_pac_20",
+              "width": 6,
+              "fieldIds": [
+                "hist_infectious_endocrine"
+              ]
+            },
+            {
+              "id": "col_pac_21",
+              "width": 6,
+              "fieldIds": [
+                "hist_women"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pac_11",
+          "columns": [
+            {
+              "id": "col_pac_22",
+              "width": 12,
+              "fieldIds": [
+                "hist_ent_cancer_comments"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_preop_assessment_investigations",
+      "title": "Preop Assessment & Investigations (Page 3)",
+      "description": "Physical Examination, Investigations, Airway & Preoperative Optimization",
+      "collapsible": true,
+      "rows": [
+        {
+          "id": "row_pe_1",
+          "columns": [
+            {
+              "id": "col_pe_1",
+              "width": 6,
+              "fieldIds": [
+                "pe_general"
+              ]
+            },
+            {
+              "id": "col_pe_2",
+              "width": 3,
+              "fieldIds": [
+                "pe_temp"
+              ]
+            },
+            {
+              "id": "col_pe_3",
+              "width": 3,
+              "fieldIds": [
+                "pe_urine_output"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_2",
+          "columns": [
+            {
+              "id": "col_pe_4",
+              "width": 3,
+              "fieldIds": [
+                "pe_pulse"
+              ]
+            },
+            {
+              "id": "col_pe_5",
+              "width": 3,
+              "fieldIds": [
+                "pe_bp"
+              ]
+            },
+            {
+              "id": "col_pe_6",
+              "width": 6,
+              "fieldIds": [
+                "pe_jvp_heart"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_3",
+          "columns": [
+            {
+              "id": "col_pe_7",
+              "width": 3,
+              "fieldIds": [
+                "pe_rr"
+              ]
+            },
+            {
+              "id": "col_pe_8",
+              "width": 3,
+              "fieldIds": [
+                "pe_spo2"
+              ]
+            },
+            {
+              "id": "col_pe_9",
+              "width": 6,
+              "fieldIds": [
+                "pe_lungs_ventilator"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_4",
+          "columns": [
+            {
+              "id": "col_pe_10",
+              "width": 3,
+              "fieldIds": [
+                "airway_mp_grade"
+              ]
+            },
+            {
+              "id": "col_pe_11",
+              "width": 4,
+              "fieldIds": [
+                "airway_features"
+              ]
+            },
+            {
+              "id": "col_pe_12",
+              "width": 5,
+              "fieldIds": [
+                "airway_measurements"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_5",
+          "columns": [
+            {
+              "id": "col_pe_13",
+              "width": 12,
+              "fieldIds": [
+                "pe_cns_gi_msk"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_6",
+          "columns": [
+            {
+              "id": "col_pe_14",
+              "width": 6,
+              "fieldIds": [
+                "anticipated_risks"
+              ]
+            },
+            {
+              "id": "col_pe_15",
+              "width": 6,
+              "fieldIds": [
+                "investigations_checklist"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_7",
+          "columns": [
+            {
+              "id": "col_pe_16",
+              "width": 6,
+              "fieldIds": [
+                "anaesthesia_plan"
+              ]
+            },
+            {
+              "id": "col_pe_17",
+              "width": 6,
+              "fieldIds": [
+                "investigation_values"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_8",
+          "columns": [
+            {
+              "id": "col_pe_18",
+              "width": 12,
+              "fieldIds": [
+                "plan_counseling_confirmed"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_9",
+          "columns": [
+            {
+              "id": "col_pe_19",
+              "width": 6,
+              "fieldIds": [
+                "consultation_opinion"
+              ]
+            },
+            {
+              "id": "col_pe_20",
+              "width": 6,
+              "fieldIds": [
+                "preop_instructions"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_10",
+          "columns": [
+            {
+              "id": "col_pe_21",
+              "width": 12,
+              "fieldIds": [
+                "pac_anaesthesiologist_sign"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pe_11",
+          "columns": [
+            {
+              "id": "col_pe_22",
+              "width": 4,
+              "fieldIds": [
+                "re_eval_status"
+              ]
+            },
+            {
+              "id": "col_pe_23",
+              "width": 4,
+              "fieldIds": [
+                "re_eval_plan_revision"
+              ]
+            },
+            {
+              "id": "col_pe_24",
+              "width": 4,
+              "fieldIds": [
+                "re_eval_sign"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_informed_anaesthesia_consent",
+      "title": "Informed Anaesthesia Consent / Refusal (Pages 4–7)",
+      "description": "Witnessed Informed Consent for Operative & Invasive Anaesthesia (English & Vernacular)",
+      "collapsible": true,
+      "rows": [
+        {
+          "id": "row_con_1",
+          "columns": [
+            {
+              "id": "col_con_1",
+              "width": 4,
+              "fieldIds": [
+                "consent_surgeon_name"
+              ]
+            },
+            {
+              "id": "col_con_2",
+              "width": 4,
+              "fieldIds": [
+                "consent_proc_category"
+              ]
+            },
+            {
+              "id": "col_con_3",
+              "width": 4,
+              "fieldIds": [
+                "consent_type"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_con_2",
+          "columns": [
+            {
+              "id": "col_con_4",
+              "width": 4,
+              "fieldIds": [
+                "consent_giver"
+              ]
+            },
+            {
+              "id": "col_con_5",
+              "width": 4,
+              "fieldIds": [
+                "consent_giver_relationship"
+              ]
+            },
+            {
+              "id": "col_con_6",
+              "width": 4,
+              "fieldIds": [
+                "consent_substitute_reason"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_con_3",
+          "columns": [
+            {
+              "id": "col_con_7",
+              "width": 6,
+              "fieldIds": [
+                "consent_principal_anaesthetist"
+              ]
+            },
+            {
+              "id": "col_con_8",
+              "width": 6,
+              "fieldIds": [
+                "consent_language"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_con_4",
+          "columns": [
+            {
+              "id": "col_con_9",
+              "width": 12,
+              "fieldIds": [
+                "consented_anaesthesia_types"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_con_5",
+          "columns": [
+            {
+              "id": "col_con_10",
+              "width": 6,
+              "fieldIds": [
+                "consent_signatory_name"
+              ]
+            },
+            {
+              "id": "col_con_11",
+              "width": 6,
+              "fieldIds": [
+                "consent_signatory_age_sex"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_con_6",
+          "columns": [
+            {
+              "id": "col_con_12",
+              "width": 12,
+              "fieldIds": [
+                "consent_signatory_address"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_con_7",
+          "columns": [
+            {
+              "id": "col_con_13",
+              "width": 6,
+              "fieldIds": [
+                "witness_1_details"
+              ]
+            },
+            {
+              "id": "col_con_14",
+              "width": 6,
+              "fieldIds": [
+                "witness_2_details"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_con_8",
+          "columns": [
+            {
+              "id": "col_con_15",
+              "width": 12,
+              "fieldIds": [
+                "consent_metadata"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_intraoperative_anaesthesia_record",
+      "title": "Intraoperative Anaesthesia Record (Pages 8–10)",
+      "description": "Intraoperative Monitoring Grid, Medications & Fluid Balance",
+      "collapsible": false,
+      "rows": [
+        {
+          "id": "row_intra_1",
+          "columns": [
+            {
+              "id": "col_intra_1",
+              "width": 6,
+              "fieldIds": [
+                "intraop_premedication"
+              ]
+            },
+            {
+              "id": "col_intra_2",
+              "width": 6,
+              "fieldIds": [
+                "intraop_technique"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_intra_2",
+          "columns": [
+            {
+              "id": "col_intra_3",
+              "width": 12,
+              "fieldIds": [
+                "intraop_monitoring_grid"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_intra_3",
+          "columns": [
+            {
+              "id": "col_intra_4",
+              "width": 12,
+              "fieldIds": [
+                "intraop_fluids_transfusions"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_intra_4",
+          "columns": [
+            {
+              "id": "col_intra_5",
+              "width": 12,
+              "fieldIds": [
+                "intraop_recovery_sign"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_post_anaesthesia_record",
+      "title": "Post Anaesthesia Record & Aldrete Score (Page 11)",
+      "description": "Recovery Room Monitoring, Modified Aldrete Score, Pain Assessment & Discharge Decision",
+      "collapsible": true,
+      "rows": [
+        {
+          "id": "row_pacu_1",
+          "columns": [
+            {
+              "id": "col_pacu_1",
+              "width": 12,
+              "fieldIds": [
+                "pacu_procedure_type"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pacu_2",
+          "columns": [
+            {
+              "id": "col_pacu_2",
+              "width": 12,
+              "fieldIds": [
+                "aldrete_table"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pacu_3",
+          "columns": [
+            {
+              "id": "col_pacu_3",
+              "width": 12,
+              "fieldIds": [
+                "fld_pain_assessment"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pacu_4",
+          "columns": [
+            {
+              "id": "col_pacu_4",
+              "width": 7,
+              "fieldIds": [
+                "discharge_criteria"
+              ]
+            },
+            {
+              "id": "col_pacu_5",
+              "width": 5,
+              "fieldIds": [
+                "pacu_vitals_extra"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pacu_5",
+          "columns": [
+            {
+              "id": "col_pacu_6",
+              "width": 6,
+              "fieldIds": [
+                "pacu_disposition"
+              ]
+            },
+            {
+              "id": "col_pacu_7",
+              "width": 6,
+              "fieldIds": [
+                "pacu_discharge_time"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pacu_6",
+          "columns": [
+            {
+              "id": "col_pacu_8",
+              "width": 12,
+              "fieldIds": [
+                "pacu_postop_orders"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_pacu_7",
+          "columns": [
+            {
+              "id": "col_pacu_9",
+              "width": 12,
+              "fieldIds": [
+                "pacu_signoffs"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_additional_documentation",
+      "title": "Additional Documentation & Communication (Page 12)",
+      "description": "Clinical Handover, Additional Observations & Sign-off",
+      "collapsible": true,
+      "rows": [
+        {
+          "id": "row_add_1",
+          "columns": [
+            {
+              "id": "col_add_1",
+              "width": 12,
+              "fieldIds": [
+                "additional_documentation"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_add_2",
+          "columns": [
+            {
+              "id": "col_add_2",
+              "width": 12,
+              "fieldIds": [
+                "additional_signoff"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -22,7 +22,9 @@
     "departmentId": "ALL",
     "departmentName": "All Departments (Organization-wide)",
     "primaryEntity": "PATIENT",
-    "primaryKeyColumn": "PATIENT_ID"
+    "primaryKeyColumn": "PATIENT_ID",
+    "enableFetchRecord": true,
+    "patientFormMode": "CONTINUE_EXISTING"
   },
   "fields": {
     "fld_doc_ref": {
@@ -1286,20 +1288,6 @@
       "label": "Renal Others",
       "placeholder": "Catheter type, size, output remarks"
     },
-    "fld_obs_lmp": {
-      "id": "fld_obs_lmp",
-      "name": "obs_lmp",
-      "type": "text",
-      "label": "LMP",
-      "placeholder": "DD/MM/YYYY"
-    },
-    "fld_obs_edc": {
-      "id": "fld_obs_edc",
-      "name": "obs_edc",
-      "type": "text",
-      "label": "EDC",
-      "placeholder": "DD/MM/YYYY"
-    },
     "fld_obs_gravida": {
       "id": "fld_obs_gravida",
       "name": "obs_gravida",
@@ -1484,13 +1472,6 @@
         "required": true
       }
     },
-    "fld_nurse_time": {
-      "id": "fld_nurse_time",
-      "name": "nurse_time",
-      "type": "text",
-      "label": "Time",
-      "placeholder": "HH:MM"
-    },
     "fld_morse_reassessment_table": {
       "id": "fld_morse_reassessment_table",
       "name": "morse_reassessment_table",
@@ -1501,39 +1482,56 @@
         "columns": [
           {
             "id": "col_datetime",
-            "label": "Date & Time",
-            "type": "text",
+            "label": "Date ",
+            "type": "date",
             "placeholder": "DD/MM HH:MM"
           },
           {
             "id": "col_score",
-            "label": "Score",
-            "type": "number",
+            "label": "Time",
+            "type": "time",
             "placeholder": "MFS"
           },
           {
             "id": "col_reason",
-            "label": "Reason",
-            "type": "text",
+            "label": "Score",
+            "type": "number",
             "placeholder": "Reason for reassessment"
           },
           {
             "id": "col_action",
-            "label": "Action taken",
+            "label": "Reason",
             "type": "text",
             "placeholder": "Interventions implemented"
           },
           {
             "id": "col_staff",
-            "label": "Staff Name & Sign",
+            "label": "Action taken ",
             "type": "text",
             "placeholder": "Nurse name & signature"
+          },
+          {
+            "id": "col_b4it_6",
+            "key": "col_b4it_6",
+            "label": "Staff Name & Sign",
+            "type": "text"
           }
         ],
         "minRows": 2,
         "allowAddRows": true,
-        "defaultRows": []
-      }
+        "defaultRows": [
+          {
+            "col_datetime": "",
+            "col_score": "",
+            "col_reason": "",
+            "col_action": "",
+            "col_staff": "",
+            "col_b4it_6": ""
+          }
+        ],
+        "cellFields": {}
+      },
+      "validation": {}
     },
     "fld_1792557223496_kdwf1": {
       "id": "fld_1792557223496_kdwf1",
@@ -1561,6 +1559,37 @@
       "name": "time_do5p",
       "type": "time",
       "label": "Time of Nursing Assessment",
+      "placeholder": "HH:MM",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1792730681120_cgfy2": {
+      "id": "fld_1792730681120_cgfy2",
+      "name": "date_d84h",
+      "type": "date",
+      "label": "LMP",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1792730706209_g453b": {
+      "id": "fld_1792730706209_g453b",
+      "name": "date_5o8j",
+      "type": "date",
+      "label": "EDC",
+      "validation": {
+        "required": false
+      },
+      "dataBinding": null
+    },
+    "fld_1792737618420_z6rnl": {
+      "id": "fld_1792737618420_z6rnl",
+      "name": "time_gvg7",
+      "type": "time",
+      "label": "Time ",
       "placeholder": "HH:MM",
       "validation": {
         "required": false
@@ -1916,7 +1945,7 @@
             },
             {
               "id": "col_mfs_risk",
-              "width": 9,
+              "width": 8,
               "fieldIds": [
                 "fld_mfs_risk_level"
               ]
@@ -2422,14 +2451,14 @@
               "id": "col_obs_lmp_val",
               "width": 3,
               "fieldIds": [
-                "fld_obs_lmp"
+                "fld_1792730681120_cgfy2"
               ]
             },
             {
               "id": "col_obs_edc_val",
               "width": 3,
               "fieldIds": [
-                "fld_obs_edc"
+                "fld_1792730706209_g453b"
               ]
             },
             {
@@ -2575,7 +2604,7 @@
               "id": "col_n_time",
               "width": 2,
               "fieldIds": [
-                "fld_nurse_time"
+                "fld_1792737618420_z6rnl"
               ]
             }
           ]
@@ -2591,7 +2620,7 @@
           "id": "row_reassessment_table",
           "columns": [
             {
-              "id": "col_reassess_table",
+              "id": "col_1792668426744_0",
               "width": 12,
               "fieldIds": [
                 "fld_morse_reassessment_table"

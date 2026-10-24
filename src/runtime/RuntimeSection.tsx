@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import type { LayoutSection, FormField } from '../types/schema';
 import { RuntimeField } from './RuntimeField';
+import type { StaffDetailsResponse } from '../services/userApi';
 
 interface RuntimeSectionProps {
   section: LayoutSection;
@@ -12,6 +13,7 @@ interface RuntimeSectionProps {
   onChange: (field: FormField, value: any) => void;
   onFetchRecord?: (recordId: string) => Promise<void>;
   disabled?: boolean;
+  staffContext?: StaffDetailsResponse | null;
 }
 
 const WIDTH_CLASSES: Record<number, string> = {
@@ -38,6 +40,7 @@ export const RuntimeSection: React.FC<RuntimeSectionProps> = ({
   onChange,
   onFetchRecord,
   disabled = false,
+  staffContext,
 }) => {
   const [fetchInput, setFetchInput] = useState('');
   const [isFetching, setIsFetching] = useState(false);
@@ -126,8 +129,8 @@ export const RuntimeSection: React.FC<RuntimeSectionProps> = ({
                       }
                     }
 
-                    const val = values[field.name || field.id];
-                    const err = errors[field.name || field.id];
+                    const val = values[field.name || field.id] !== undefined ? values[field.name || field.id] : values[field.id];
+                    const err = errors[field.name || field.id] || errors[field.id] || (field.name ? errors[field.name] : undefined);
                     const fieldOptions = dynamicOptions[field.id];
 
                     return (
@@ -136,9 +139,11 @@ export const RuntimeSection: React.FC<RuntimeSectionProps> = ({
                         field={field}
                         value={val}
                         error={err}
+                        errors={errors}
                         dynamicOptions={fieldOptions}
                         onChange={onChange}
                         disabled={disabled}
+                        staffContext={staffContext}
                       />
                     );
                   })}

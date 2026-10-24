@@ -11,6 +11,7 @@ import {
   RefreshCw,
   AlertTriangle,
   HeartPulse,
+  User,
 } from 'lucide-react';
 import { PatientFilters } from '../components/patient/PatientFilters';
 import { PatientTable } from '../components/patient/PatientTable';
@@ -24,6 +25,7 @@ import {
   type ServiceCenter,
   type DeployedForm,
 } from '../services/patientApi';
+import { fetchStaffDetails, type StaffDetailsResponse } from '../services/userApi';
 import { PatientSubmittedFormsModal } from '../components/patient/PatientSubmittedFormsModal';
 
 export const PatientList: React.FC = () => {
@@ -50,8 +52,30 @@ export const PatientList: React.FC = () => {
   const urlDepartment = searchParams.get('department') || searchParams.get('departmentId') || '';
   const urlServiceCenter = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId') || '';
   const urlSearch = searchParams.get('search') || '';
+  const urlUserId = searchParams.get('user_id') || searchParams.get('userId') || '';
   const urlPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
   const urlLimit = Math.max(1, parseInt(searchParams.get('limit') || '25', 10) || 25);
+
+  // Logged-in Staff details from HIS user context
+  const [loggedInStaff, setLoggedInStaff] = useState<StaffDetailsResponse | null>(null);
+
+  useEffect(() => {
+    if (!urlUserId) {
+      setLoggedInStaff(null);
+      return;
+    }
+    let isCancelled = false;
+    fetchStaffDetails(urlUserId)
+      .then((staff) => {
+        if (!isCancelled) setLoggedInStaff(staff);
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch staff details in PatientList:', err);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [urlUserId]);
 
   // Local search query for debounced input
   const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
@@ -248,6 +272,8 @@ export const PatientList: React.FC = () => {
       (prev) => {
         const next = new URLSearchParams();
         if (prev.get('limit')) next.set('limit', prev.get('limit')!);
+        if (prev.get('user_id')) next.set('user_id', prev.get('user_id')!);
+        if (prev.get('userId')) next.set('userId', prev.get('userId')!);
         return next;
       },
       { replace: true }
@@ -315,8 +341,31 @@ export const PatientList: React.FC = () => {
           </nav>
         </div>
 
-        {/* Right Header Actions: Refresh & Theme */}
+        {/* Right Header Actions: Staff Context Badge, Refresh & Theme */}
         <div className="flex items-center gap-3">
+          {loggedInStaff && loggedInStaff.staff_name && (
+            <div
+              id="header-staff-context-badge"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200/70 dark:border-blue-800/60 text-xs text-blue-700 dark:text-blue-300 shadow-xs"
+              title={`Logged in as ${loggedInStaff.staff_name} (ID: ${loggedInStaff.user_id})`}
+            >
+              <div className="w-5 h-5 rounded-md bg-blue-600/10 dark:bg-blue-400/10 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex flex-col leading-none">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[140px] sm:max-w-[200px]">
+                    {loggedInStaff.staff_name}
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  ID: {loggedInStaff.user_id}
+                </span>
+              </div>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => {

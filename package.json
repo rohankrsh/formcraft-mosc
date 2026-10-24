@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite --host",
     "server": "node server.js",
+    "migrate": "node -e \"import('./server/database/migrationRunner.js').then(m => m.runMigrations()).then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); })\"",
+    "migrate:forms": "node scripts/migrate_forms_to_oracle.js",
+    "test:persistence": "node scripts/test_independence_suite.js",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -21,6 +24,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.5.2",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.42.0",
     "multer": "^2.3.0",

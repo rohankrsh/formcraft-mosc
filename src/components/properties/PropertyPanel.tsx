@@ -1541,6 +1541,11 @@ export const PropertyPanel: React.FC = () => {
                       <option value="text">Text Cell</option>
                       <option value="number">Number Cell</option>
                       <option value="date">Date Cell</option>
+                      <option value="time">Time Cell</option>
+                      <option value="textarea">Textarea Cell</option>
+                      <option value="select">Dropdown / Select</option>
+                      <option value="checkbox">Checkbox</option>
+                      <option value="radio">Radio Group</option>
                       <option value="heading">Heading / Fixed Label</option>
                     </select>
                     <label className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer">

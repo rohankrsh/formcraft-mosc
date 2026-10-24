@@ -46,6 +46,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
   const [searchParams] = useSearchParams();
   const urlDepartment = searchParams.get('department') || searchParams.get('departmentId') || '';
   const urlServiceCenter = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId') || '';
+  const urlUserId = searchParams.get('user_id') || searchParams.get('userId') || '';
 
   const buildRuntimeFormUrl = (slug: string, mrno: string) => {
     let url = `/forms/${encodeURIComponent(slug)}?mrno=${encodeURIComponent(mrno)}`;
@@ -54,6 +55,9 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     }
     if (urlServiceCenter) {
       url += `&serviceCenter=${encodeURIComponent(urlServiceCenter)}`;
+    }
+    if (urlUserId) {
+      url += `&user_id=${encodeURIComponent(urlUserId)}`;
     }
     return url;
   };

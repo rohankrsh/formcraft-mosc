@@ -1,6 +1,7 @@
-import type React from 'react';
+import React from 'react';
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
-  FolderTree,
   Trash2,
   Plus,
   ChevronDown,
@@ -8,9 +9,11 @@ import {
   AlertCircle,
   Settings,
   Database,
+  GripVertical,
 } from 'lucide-react';
 import type { LayoutSection } from '../../types/schema';
 import { CanvasRow } from './CanvasRow';
+import { RowDropZone, SectionEmptyDropZone } from './DropZones';
 import { useFormStore } from '../../store/useFormStore';
 
 interface CanvasSectionProps {
@@ -23,6 +26,28 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({ section, index }) 
 
   const isSelected = selectedId === section.id;
   const isCollapsed = Boolean(section.collapsible);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: section.id,
+    data: {
+      type: 'section',
+      sectionId: section.id,
+      index,
+      section,
+    },
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
 
   const handleSelect = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,9 +71,13 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({ section, index }) 
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       onClick={handleSelect}
       className={`rounded-2xl border transition-all duration-200 shadow-xs ${
-        section._needsReview
+        isDragging
+          ? 'opacity-30 border-2 border-dashed border-indigo-500 bg-indigo-50/20 dark:bg-slate-900/40'
+          : section._needsReview
           ? isSelected
             ? 'border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/30 shadow-md dark:bg-amber-950/30 dark:ring-amber-500/30'
             : 'border-amber-400/90 bg-amber-50/10 hover:border-amber-500 dark:border-amber-600/70 dark:bg-amber-950/20'
@@ -60,6 +89,18 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({ section, index }) 
       {/* Section Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between select-none">
         <div className="flex items-center gap-2.5">
+          {/* Dedicated Section Drag Handle */}
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors"
+            title="Drag to rearrange section position"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+
           <button
             type="button"
             onClick={toggleCollapse}
@@ -72,7 +113,7 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({ section, index }) 
             )}
           </button>
 
-          <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-500/20 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+          <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-500/20 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
             {index + 1}
           </div>
 
@@ -154,15 +195,22 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({ section, index }) 
 
       {/* Section Content: Rows & Optional Fetch Record Banner */}
       {!isCollapsed && (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-2">
           {/* Visual indicator when Fetch Record is enabled */}
           {section.enableFetchRecord && (
-            <div className="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-between text-xs text-indigo-900 dark:text-indigo-200">
+            <div className="mb-3 p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-between text-xs text-indigo-900 dark:text-indigo-200">
               <div className="flex items-center gap-2">
                 <Database className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <span className="font-bold">Fetch Record Button Enabled:</span>
                 <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                  Interactive Preview will render a search bar for <code className="font-bold text-indigo-600 dark:text-indigo-400">{section.fetchEntity || 'PATIENT'}</code> by <code className="font-bold text-indigo-600 dark:text-indigo-400">{section.fetchPrimaryKey || 'PATIENT_ID'}</code>.
+                  Interactive Preview will render a search bar for{' '}
+                  <code className="font-bold text-indigo-600 dark:text-indigo-400">
+                    {section.fetchEntity || 'PATIENT'}
+                  </code>{' '}
+                  by{' '}
+                  <code className="font-bold text-indigo-600 dark:text-indigo-400">
+                    {section.fetchPrimaryKey || 'PATIENT_ID'}
+                  </code>.
                 </span>
               </div>
               <button
@@ -174,23 +222,26 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({ section, index }) 
               </button>
             </div>
           )}
-          {section.rows.map((row) => (
-            <CanvasRow key={row.id} row={row} sectionId={section.id} />
-          ))}
+
+          {/* Sortable Row List with inter-row Drop Zones */}
+          <SortableContext
+            items={section.rows.map((r) => r.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {section.rows.length > 0 && (
+              <RowDropZone sectionId={section.id} targetIndex={0} />
+            )}
+
+            {section.rows.map((row, rowIdx) => (
+              <React.Fragment key={row.id}>
+                <CanvasRow row={row} sectionId={section.id} />
+                <RowDropZone sectionId={section.id} targetIndex={rowIdx + 1} />
+              </React.Fragment>
+            ))}
+          </SortableContext>
 
           {section.rows.length === 0 && (
-            <div className="p-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center bg-slate-50/50 dark:bg-transparent">
-              <FolderTree className="w-6 h-6 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">This section has no rows yet</p>
-              <button
-                type="button"
-                onClick={handleAddRow}
-                className="mt-3 text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium inline-flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Create first row</span>
-              </button>
-            </div>
+            <SectionEmptyDropZone sectionId={section.id} onAddRow={handleAddRow} />
           )}
         </div>
       )}

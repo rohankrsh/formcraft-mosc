@@ -13,8 +13,10 @@ import {
   Database,
   Layers,
   Loader2,
+  Wand2,
 } from 'lucide-react';
 import type { FormDefinition, PublishValidationResult } from '../types/schema';
+import { useFormStore } from '../store/useFormStore';
 
 interface PublishDialogProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ export const PublishDialog: React.FC<PublishDialogProps> = ({
   form,
   onPublished,
 }) => {
+  const { autoFixLayoutWidths } = useFormStore();
   const [isValidating, setIsValidating] = useState(false);
   const [validation, setValidation] = useState<PublishValidationResult | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -314,6 +317,23 @@ export const PublishDialog: React.FC<PublishDialogProps> = ({
                             <li key={idx}>{err.message}</li>
                           ))}
                         </ul>
+
+                        {errors.some(
+                          (err) =>
+                            err.message.includes('column widths total') ||
+                            err.message.includes('instead of exactly 12 columns')
+                        ) && (
+                          <div className="pt-2">
+                            <button
+                              type="button"
+                              onClick={() => autoFixLayoutWidths()}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                            >
+                              <Wand2 className="w-3.5 h-3.5" />
+                              <span>Auto-Fix All Column Widths (Balance to 12)</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 

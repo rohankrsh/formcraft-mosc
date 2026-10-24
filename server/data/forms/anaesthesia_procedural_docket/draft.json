@@ -23,7 +23,8 @@
     "departmentName": "All Departments (Organization-wide)",
     "primaryEntity": "PATIENT",
     "primaryKeyColumn": "PATIENT_ID",
-    "enableFetchRecord": true
+    "enableFetchRecord": true,
+    "patientFormMode": "CONTINUE_EXISTING"
   },
   "fields": {
     "patient_name": {
@@ -526,19 +527,13 @@
         }
       ]
     },
-    "hist_women": {
-      "id": "hist_women",
-      "name": "hist_women",
-      "type": "text",
-      "label": "For Women: Pregnancy, Parity, LMP & Gestational Age",
-      "placeholder": "Pregnancy possibility / Parity / LMP / GA"
-    },
     "hist_ent_cancer_comments": {
       "id": "hist_ent_cancer_comments",
       "name": "hist_ent_cancer_comments",
       "type": "textarea",
-      "label": "Eye/Ear/Nose/Throat, Cancer/Chemo/Radiotherapy/Psychiatric Disorders & Comments",
-      "placeholder": "Enter clinical findings, oncology, ENT, or psychiatric history and comments"
+      "label": "Eye/Ear/Nose/Throat  Disorders :",
+      "placeholder": "Enter clinical findings, oncology, ENT, or psychiatric history and comments",
+      "validation": {}
     },
     "pe_general": {
       "id": "pe_general",
@@ -1387,18 +1382,6 @@
         "defaultRows": []
       }
     },
-    "fld_pain_assessment": {
-      "id": "fld_pain_assessment",
-      "name": "pain_assessment",
-      "type": "pain_assessment",
-      "label": "PAIN ASSESSMENT (VAS / Faces Pain Scale)",
-      "helpText": "Record pain presence, location, and severity using a 0–10 facial scale",
-      "defaultValue": {
-        "painPresent": "",
-        "location": "",
-        "score": null
-      }
-    },
     "discharge_criteria": {
       "id": "discharge_criteria",
       "name": "discharge_criteria",
@@ -1492,6 +1475,86 @@
       "type": "text",
       "label": "Name & Signature of Anaesthesiologist & Date",
       "placeholder": "Dr. Name, Signature, Date (put signature only if sheet is documented)"
+    },
+    "fld_1792757825723_fjm0t": {
+      "id": "fld_1792757825723_fjm0t",
+      "name": "hist_infectious_endocrine_copy",
+      "type": "checkbox",
+      "label": "For Women",
+      "options": [
+        {
+          "label": " Pregnancy,",
+          "value": "hiv"
+        },
+        {
+          "label": "Parity",
+          "value": "tb"
+        },
+        {
+          "label": "LMP",
+          "value": "av_fistula"
+        },
+        {
+          "label": " Gestational Age",
+          "value": "option_4"
+        }
+      ],
+      "validation": {}
+    },
+    "fld_1792758008836_kwja5": {
+      "id": "fld_1792758008836_kwja5",
+      "name": "hist_ent_cancer_comments_copy",
+      "type": "textarea",
+      "label": " Cancer/Chemo/Radiotherapy/Psychiatric Disorders  :",
+      "placeholder": "Enter clinical findings, oncology, ENT, or psychiatric history and comments",
+      "validation": {}
+    },
+    "fld_1792758103493_gdt3u": {
+      "id": "fld_1792758103493_gdt3u",
+      "name": "textarea_dysx",
+      "type": "textarea",
+      "label": "COMMENTS :",
+      "placeholder": "Enter long description...",
+      "defaultValue": "",
+      "validation": {
+        "required": false,
+        "max": 1000
+      },
+      "dataBinding": null
+    },
+    "pacu_vas_score": {
+      "id": "pacu_vas_score",
+      "name": "pacu_vas_score",
+      "type": "select",
+      "label": "VAS Score (Faces Pain Rating Scale)",
+      "helpText": "0–10 Visual Analogue / Faces pain rating for discharge decision",
+      "defaultValue": "",
+      "options": [
+        {
+          "label": "0 - No Hurt",
+          "value": "0"
+        },
+        {
+          "label": "2 - Hurts Little Bit",
+          "value": "2"
+        },
+        {
+          "label": "4 - Hurts Little More",
+          "value": "4"
+        },
+        {
+          "label": "6 - Hurts Even More",
+          "value": "6"
+        },
+        {
+          "label": "8 - Hurts Whole Lot",
+          "value": "8"
+        },
+        {
+          "label": "10 - Hurts Worst",
+          "value": "10"
+        }
+      ]
     }
   },
   "layout": [
@@ -1590,7 +1653,7 @@
       "id": "sec_pre_anaesthesia_evaluation",
       "title": "Pre-Anaesthesia Evaluation (Page 2)",
       "description": "Baseline PAC, Risk Stratification & Clinical History",
-      "collapsible": true,
+      "collapsible": false,
       "rows": [
         {
           "id": "row_pac_1",
@@ -1784,7 +1847,7 @@
               "id": "col_pac_21",
               "width": 6,
               "fieldIds": [
-                "hist_women"
+                "fld_1792757825723_fjm0t"
               ]
             }
           ]
@@ -1796,7 +1859,20 @@
               "id": "col_pac_22",
               "width": 12,
               "fieldIds": [
-                "hist_ent_cancer_comments"
+                "hist_ent_cancer_comments",
+                "fld_1792758008836_kwja5"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_1792758092073_leh",
+          "columns": [
+            {
+              "id": "col_1792758092073_0",
+              "width": 12,
+              "fieldIds": [
+                "fld_1792758103493_gdt3u"
               ]
             }
           ]
@@ -1807,7 +1883,7 @@
       "id": "sec_preop_assessment_investigations",
       "title": "Preop Assessment & Investigations (Page 3)",
       "description": "Physical Examination, Investigations, Airway & Preoperative Optimization",
-      "collapsible": true,
+      "collapsible": false,
       "rows": [
         {
           "id": "row_pe_1",
@@ -2191,7 +2267,7 @@
       "id": "sec_intraoperative_anaesthesia_record",
       "title": "Intraoperative Anaesthesia Record (Pages 8–10)",
       "description": "Intraoperative Monitoring Grid, Medications & Fluid Balance",
-      "collapsible": true,
+      "collapsible": false,
       "rows": [
         {
           "id": "row_intra_1",
@@ -2281,32 +2357,20 @@
           ]
         },
         {
-          "id": "row_pacu_3",
-          "columns": [
-            {
-              "id": "col_pacu_3",
-              "width": 12,
-              "fieldIds": [
-                "fld_pain_assessment"
-              ]
-            }
-          ]
-        },
-        {
           "id": "row_pacu_4",
           "columns": [
             {
-              "id": "col_pacu_4",
+              "id": "col_discharge_criteria",
               "width": 7,
               "fieldIds": [
                 "discharge_criteria"
               ]
             },
             {
-              "id": "col_pacu_5",
+              "id": "col_pacu_vas_score",
               "width": 5,
               "fieldIds": [
-                "pacu_vitals_extra"
+                "pacu_vas_score"
               ]
             }
           ]
@@ -2315,15 +2379,22 @@
           "id": "row_pacu_5",
           "columns": [
             {
-              "id": "col_pacu_6",
+              "id": "col_pacu_vitals_extra",
               "width": 6,
+              "fieldIds": [
+                "pacu_vitals_extra"
+              ]
+            },
+            {
+              "id": "col_pacu_disposition",
+              "width": 3,
               "fieldIds": [
                 "pacu_disposition"
               ]
             },
             {
-              "id": "col_pacu_7",
-              "width": 6,
+              "id": "col_pacu_discharge_time",
+              "width": 3,
               "fieldIds": [
                 "pacu_discharge_time"
               ]

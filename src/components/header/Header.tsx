@@ -21,6 +21,9 @@ import {
   Rocket,
   LayoutGrid,
   Users,
+  Save,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { useFormStore } from '../../store/useFormStore';
 import { useTemporalStore } from '../../store/useTemporalStore';
@@ -56,6 +59,27 @@ export const Header: React.FC<HeaderProps> = ({ onOpenPublish }) => {
   );
 
   const [showExportWarning, setShowExportWarning] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSaveDraft = async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, status: 'draft' }),
+      });
+      if (res.ok) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2500);
+      }
+    } catch (err) {
+      console.error('Failed to save draft:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDownloadForm = () => {
     if (hasDbBinding) {
@@ -281,6 +305,29 @@ export const Header: React.FC<HeaderProps> = ({ onOpenPublish }) => {
         >
           <UploadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span className="hidden sm:inline">Upload Form</span>
+        </button>
+
+        {/* Save Draft Button */}
+        <button
+          type="button"
+          id="header-save-draft-btn"
+          onClick={handleSaveDraft}
+          disabled={isSaving}
+          title="Save current layout and form configuration as draft"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all active:scale-95 ${
+            saveSuccess
+              ? 'text-emerald-700 bg-emerald-50 border-emerald-300 dark:text-emerald-300 dark:bg-emerald-950/60 dark:border-emerald-700'
+              : 'text-slate-700 bg-slate-100 hover:bg-slate-200 border-slate-200 dark:text-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:border-slate-700/60'
+          }`}
+        >
+          {isSaving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+          ) : saveSuccess ? (
+            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          ) : (
+            <Save className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+          )}
+          <span>{isSaving ? 'Saving...' : saveSuccess ? 'Saved' : 'Save Draft'}</span>
         </button>
 
         {/* Publish Button */}

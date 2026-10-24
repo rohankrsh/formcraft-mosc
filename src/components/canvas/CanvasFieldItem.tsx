@@ -17,6 +17,7 @@ import {
 import type { FormField } from '../../types/schema';
 import { useFormStore } from '../../store/useFormStore';
 import { PainAssessmentInput } from '../painAssessment/PainAssessmentInput';
+import { CanvasTableField } from './CanvasTableField';
 
 interface CanvasFieldItemProps {
   field: FormField;
@@ -27,6 +28,9 @@ interface CanvasFieldItemProps {
 
 export const CanvasFieldItem: React.FC<CanvasFieldItemProps> = ({
   field,
+  sectionId,
+  rowId,
+  columnId,
 }) => {
   const { selectedId, setSelected, deleteField, duplicateField } = useFormStore();
 
@@ -48,7 +52,7 @@ export const CanvasFieldItem: React.FC<CanvasFieldItemProps> = ({
   });
 
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
   };
 
@@ -224,77 +228,15 @@ export const CanvasFieldItem: React.FC<CanvasFieldItemProps> = ({
           </div>
         );
 
-      case 'table': {
-        const columns = field.tableConfig?.columns || [
-          { id: 'col1', key: 'col1', label: 'Column 1', type: 'text' },
-          { id: 'col2', key: 'col2', label: 'Column 2', type: 'text' },
-        ];
-        const defaultRows = field.tableConfig?.defaultRows || [{}, {}];
-
+      case 'table':
         return (
-          <div className="w-full overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-900/40">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700/70 bg-slate-100/70 dark:bg-slate-800/60">
-                  {columns.map((col, cIdx) => (
-                    <th key={col.id || col.key || cIdx} className="px-3 py-2 font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                      {col.label}
-                      {col.required && <span className="text-red-500 ml-0.5">*</span>}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
-                {(defaultRows.length > 0 ? defaultRows : [{}]).slice(0, 10).map((row, rIdx) => {
-                  if (row._isHeader || row._rowType === 'heading') {
-                    const headerText = row._headerText || row[columns[0]?.key || columns[0]?.id] || 'Section Header';
-                    return (
-                      <tr key={rIdx} className="bg-blue-50/70 dark:bg-blue-950/40 border-y border-blue-200/70 dark:border-blue-800/70">
-                        <td colSpan={columns.length} className="px-3 py-1.5 text-xs text-blue-900 dark:text-blue-200 uppercase tracking-wider font-bold">
-                          {headerText}
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  return (
-                    <tr key={rIdx} className="hover:bg-slate-100/40 dark:hover:bg-slate-800/40">
-                      {columns.map((col, cIdx) => {
-                        const colKey = col.key || col.id || `col_${cIdx}`;
-                        const isCellHeader =
-                          (Array.isArray(row._headerCols) && row._headerCols.includes(colKey)) ||
-                          col.type === 'heading';
-                        const cellVal = row[colKey];
-                        const hasVal = cellVal !== undefined && cellVal !== '';
-
-                        return (
-                          <td key={colKey} className="px-3 py-1.5 text-slate-500 dark:text-slate-400">
-                            <div
-                              className={`min-h-6 px-2 py-1 flex items-center rounded text-[11px] ${
-                                isCellHeader
-                                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold border border-slate-300 dark:border-slate-700'
-                                  : hasVal
-                                  ? 'bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium'
-                                  : 'bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-slate-400 dark:text-slate-500'
-                              }`}
-                            >
-                              {hasVal ? cellVal : col.label}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            <div className="px-3 py-1.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900/50">
-              <span>{columns.length} columns &bull; {field.tableConfig?.allowAddRows !== false ? 'Dynamic rows' : 'Fixed rows'}</span>
-              <span className="text-blue-500 font-medium">+ Add Row</span>
-            </div>
-          </div>
+          <CanvasTableField
+            field={field}
+            sectionId={sectionId}
+            rowId={rowId}
+            columnId={columnId}
+          />
         );
-      }
 
       case 'pain_assessment': {
         return (

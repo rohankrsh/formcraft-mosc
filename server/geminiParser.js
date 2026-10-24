@@ -308,12 +308,36 @@ export function validateAndNormalizeForm(rawJson, sheetName) {
     }
     if (!field.label) field.label = 'Field';
     if (field.type === 'pain_assessment') {
-      const def = typeof field.defaultValue === 'object' && field.defaultValue !== null ? field.defaultValue : {};
-      const rawPresent = String(def.painPresent || '').toLowerCase().trim();
-      const painPresent = rawPresent === 'yes' ? 'yes' : rawPresent === 'no' ? 'no' : '';
-      const location = typeof def.location === 'string' ? def.location : '';
-      const score = typeof def.score === 'number' && def.score >= 0 && def.score <= 10 ? def.score : null;
-      field.defaultValue = { painPresent, location, score };
+      const labelLower = String(field.label || '').toLowerCase();
+      // If the field label mentions VAS, discharge, score, or does not strictly represent an explicit dedicated "PAIN ASSESSMENT" tool
+      const isVasOrScore = labelLower.includes('vas') || labelLower.includes('discharge') || labelLower.includes('rating') || labelLower.includes('aldrete');
+      const isExplicitNursingPain = labelLower.includes('pain assessment') && !isVasOrScore;
+
+      if (!isExplicitNursingPain) {
+        // Automatically safeguard: convert spurious pain_assessment to clean select dropdown with 0-10 scale options
+        field.type = 'select';
+        field.defaultValue = '';
+        if (!Array.isArray(field.options) || field.options.length < 2) {
+          field.options = [
+            { label: '0 - No Hurt', value: '0' },
+            { label: '2 - Hurts Little Bit', value: '2' },
+            { label: '4 - Hurts Little More', value: '4' },
+            { label: '6 - Hurts Even More', value: '6' },
+            { label: '8 - Hurts Whole Lot', value: '8' },
+            { label: '10 - Hurts Worst', value: '10' },
+          ];
+        }
+        if (labelLower.includes('pain') && labelLower.includes('vas')) {
+          field.label = 'VAS Score (Faces Pain Rating Scale 0–10)';
+        }
+      } else {
+        const def = typeof field.defaultValue === 'object' && field.defaultValue !== null ? field.defaultValue : {};
+        const rawPresent = String(def.painPresent || '').toLowerCase().trim();
+        const painPresent = rawPresent === 'yes' ? 'yes' : rawPresent === 'no' ? 'no' : '';
+        const location = typeof def.location === 'string' ? def.location : '';
+        const score = typeof def.score === 'number' && def.score >= 0 && def.score <= 10 ? def.score : null;
+        field.defaultValue = { painPresent, location, score };
+      }
     }
     if (field.type === 'select' || field.type === 'radio') {
       if (!Array.isArray(field.options) || field.options.length === 0) {

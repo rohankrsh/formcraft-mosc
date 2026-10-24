@@ -19,4 +19,8 @@ export default defineConfig({
       ignored: ['**/server/data/**'],
     },
   },
+
+  optimizeDeps: {
+    include: ['html2canvas-pro', 'jspdf'],
+  },
 })

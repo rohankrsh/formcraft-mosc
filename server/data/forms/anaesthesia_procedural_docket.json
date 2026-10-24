@@ -23,7 +23,8 @@
     "departmentName": "All Departments (Organization-wide)",
     "primaryEntity": "PATIENT",
     "primaryKeyColumn": "PATIENT_ID",
-    "enableFetchRecord": true
+    "enableFetchRecord": true,
+    "patientFormMode": "CONTINUE_EXISTING"
   },
   "fields": {
     "patient_name": {
@@ -526,19 +527,13 @@
         }
       ]
     },
-    "hist_women": {
-      "id": "hist_women",
-      "name": "hist_women",
-      "type": "text",
-      "label": "For Women: Pregnancy, Parity, LMP & Gestational Age",
-      "placeholder": "Pregnancy possibility / Parity / LMP / GA"
-    },
     "hist_ent_cancer_comments": {
       "id": "hist_ent_cancer_comments",
       "name": "hist_ent_cancer_comments",
       "type": "textarea",
-      "label": "Eye/Ear/Nose/Throat, Cancer/Chemo/Radiotherapy/Psychiatric Disorders & Comments",
-      "placeholder": "Enter clinical findings, oncology, ENT, or psychiatric history and comments"
+      "label": "Eye/Ear/Nose/Throat  Disorders :",
+      "placeholder": "Enter clinical findings, oncology, ENT, or psychiatric history and comments",
+      "validation": {}
     },
     "pe_general": {
       "id": "pe_general",
@@ -1492,6 +1487,52 @@
       "type": "text",
       "label": "Name & Signature of Anaesthesiologist & Date",
       "placeholder": "Dr. Name, Signature, Date (put signature only if sheet is documented)"
+    },
+    "fld_1792757825723_fjm0t": {
+      "id": "fld_1792757825723_fjm0t",
+      "name": "hist_infectious_endocrine_copy",
+      "type": "checkbox",
+      "label": "For Women",
+      "options": [
+        {
+          "label": " Pregnancy,",
+          "value": "hiv"
+        },
+        {
+          "label": "Parity",
+          "value": "tb"
+        },
+        {
+          "label": "LMP",
+          "value": "av_fistula"
+        },
+        {
+          "label": " Gestational Age",
+          "value": "option_4"
+        }
+      ],
+      "validation": {}
+    },
+    "fld_1792758008836_kwja5": {
+      "id": "fld_1792758008836_kwja5",
+      "name": "hist_ent_cancer_comments_copy",
+      "type": "textarea",
+      "label": " Cancer/Chemo/Radiotherapy/Psychiatric Disorders  :",
+      "placeholder": "Enter clinical findings, oncology, ENT, or psychiatric history and comments",
+      "validation": {}
+    },
+    "fld_1792758103493_gdt3u": {
+      "id": "fld_1792758103493_gdt3u",
+      "name": "textarea_dysx",
+      "type": "textarea",
+      "label": "COMMENTS :",
+      "placeholder": "Enter long description...",
+      "defaultValue": "",
+      "validation": {
+        "required": false,
+        "max": 1000
+      },
+      "dataBinding": null
     }
   },
   "layout": [
@@ -1590,7 +1631,7 @@
       "id": "sec_pre_anaesthesia_evaluation",
       "title": "Pre-Anaesthesia Evaluation (Page 2)",
       "description": "Baseline PAC, Risk Stratification & Clinical History",
-      "collapsible": true,
+      "collapsible": false,
       "rows": [
         {
           "id": "row_pac_1",
@@ -1784,7 +1825,7 @@
               "id": "col_pac_21",
               "width": 6,
               "fieldIds": [
-                "hist_women"
+                "fld_1792757825723_fjm0t"
               ]
             }
           ]
@@ -1796,7 +1837,20 @@
               "id": "col_pac_22",
               "width": 12,
               "fieldIds": [
-                "hist_ent_cancer_comments"
+                "hist_ent_cancer_comments",
+                "fld_1792758008836_kwja5"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "row_1792758092073_leh",
+          "columns": [
+            {
+              "id": "col_1792758092073_0",
+              "width": 12,
+              "fieldIds": [
+                "fld_1792758103493_gdt3u"
               ]
             }
           ]
@@ -1807,7 +1861,7 @@
       "id": "sec_preop_assessment_investigations",
       "title": "Preop Assessment & Investigations (Page 3)",
       "description": "Physical Examination, Investigations, Airway & Preoperative Optimization",
-      "collapsible": true,
+      "collapsible": false,
       "rows": [
         {
           "id": "row_pe_1",
@@ -2191,7 +2245,7 @@
       "id": "sec_intraoperative_anaesthesia_record",
       "title": "Intraoperative Anaesthesia Record (Pages 8–10)",
       "description": "Intraoperative Monitoring Grid, Medications & Fluid Balance",
-      "collapsible": true,
+      "collapsible": false,
       "rows": [
         {
           "id": "row_intra_1",

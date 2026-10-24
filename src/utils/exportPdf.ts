@@ -1,6 +1,6 @@
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
-import type { FormDefinition, FormField } from '../types/schema';
+import type { FormDefinition, FormField, FieldType, TableColumn } from '../types/schema';
 import { getPainScaleItem } from '../components/painAssessment/PainScaleData';
 
 export interface ExportPdfOptions {
@@ -15,22 +15,47 @@ export interface ExportPdfOptions {
     department?: string;
     serviceCenter?: string;
     recordId?: string | number | null;
+    submittedAt?: string;
+    submittedBy?: string;
   };
 }
+
+export interface ExportCoverageReport {
+  totalFields: number;
+  representedFields: number;
+  populatedFields: number;
+  emptyFields: number;
+  nestedTableFields: number;
+  unsupportedFieldTypes: string[];
+  renderingFailures: string[];
+}
+
+const SUPPORTED_FIELD_TYPES: FieldType[] = [
+  'text',
+  'textarea',
+  'number',
+  'date',
+  'time',
+  'select',
+  'radio',
+  'checkbox',
+  'heading',
+  'divider',
+  'table',
+  'pain_assessment',
+];
 
 /**
  * Generates a clean, professional, sanitized filename derived from the form title.
  * Examples:
  * - "MEDICAL TRUST" -> "Medical_Trust.pdf"
  * - "Doctor Initial Assessment" -> "Doctor_Initial_Assessment.pdf"
- * - "Nurses Initial Assessment - Paediatric" -> "Nurses_Initial_Assessment_Paediatric.pdf"
  */
 export function generatePdfFileName(formTitle?: string): string {
   if (!formTitle || !formTitle.trim()) {
     return 'Clinical_Form.pdf';
   }
 
-  // Remove unsafe filesystem characters and split words by spaces/underscores/hyphens
   const words = formTitle
     .trim()
     .replace(/[^\w-]/g, ' ')
@@ -49,7 +74,7 @@ export function generatePdfFileName(formTitle?: string): string {
   return `${formattedWords.join('_')}.pdf`;
 }
 
-function escapeHtml(str: string): string {
+export function escapeHtml(str: string): string {
   if (!str) return '';
   return String(str)
     .replace(/&/g, '&amp;')
@@ -59,54 +84,146 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
-function getFieldValue(field: FormField, formData: Record<string, any>): any {
-  if (formData[field.name] !== undefined) return formData[field.name];
-  if (formData[field.id] !== undefined) return formData[field.id];
-  if (field.name) {
-    const lower = field.name.toLowerCase();
-    for (const k of Object.keys(formData)) {
-      if (k.toLowerCase() === lower) return formData[k];
+/**
+ * Robustly retrieves the latest entered or configured value for a field.
+ * Avoids empty strings overriding actual values stored under alternate keys.
+ */
+export function getFieldValue(field: FormField, formData: Record<string, any> = {}): any {
+  if (!formData || typeof formData !== 'object') {
+    return field.defaultValue !== undefined ? field.defaultValue : undefined;
+  }
+
+  const candidateKeys = [
+    field.name,
+    field.id,
+    field.name ? field.name.toLowerCase() : '',
+    field.label,
+    field.dataBinding?.column,
+  ].filter(Boolean) as string[];
+
+  // 1. First pass: look for an explicit, non-empty, non-null value (including 0 and false)
+  for (const k of candidateKeys) {
+    const val = formData[k];
+    if (val !== undefined && val !== null && val !== '') {
+      return val;
     }
   }
-  if (field.defaultValue !== undefined) return field.defaultValue;
+
+  // 2. Second pass: case-insensitive match for non-empty value
+  for (const cand of candidateKeys) {
+    const lower = cand.toLowerCase();
+    for (const [k, v] of Object.entries(formData)) {
+      if (k.toLowerCase() === lower && v !== undefined && v !== null && v !== '') {
+        return v;
+      }
+    }
+  }
+
+  // 3. Third pass: check if any key exists explicitly (even if empty string)
+  for (const k of candidateKeys) {
+    if (formData[k] !== undefined && formData[k] !== null) {
+      return formData[k];
+    }
+  }
+
+  // 4. Default value fallback
+  if (field.defaultValue !== undefined && field.defaultValue !== null) {
+    return field.defaultValue;
+  }
+
   return undefined;
 }
 
-function isFieldEmpty(field: FormField, formData: Record<string, any>): boolean {
+/**
+ * Robustly checks whether a field has no entered or recorded value.
+ * Valid numbers (like 0) and boolean false are NOT considered empty.
+ */
+export function isFieldEmpty(field: FormField, formData: Record<string, any> = {}): boolean {
   if (field.type === 'heading' || field.type === 'divider') return false;
+
   const val = getFieldValue(field, formData);
   if (val === undefined || val === null) return true;
+
   if (field.type === 'checkbox') {
     if (Array.isArray(val)) return val.length === 0;
-    return val === false || val === 'false' || val === 0 || val === '0';
+    return val === false || val === 'false' || val === 0 || val === '0' || val === '';
   }
+
   if (field.type === 'table') {
     if (!Array.isArray(val) || val.length === 0) return true;
     const cols = field.tableConfig?.columns || [];
     return !val.some((r) =>
       cols.some((c) => {
-        const cellVal = r[c.id] ?? r[c.key ?? ''] ?? '';
+        const cellVal = getTableCellValue(r, c, 0);
         return cellVal !== undefined && cellVal !== null && String(cellVal).trim() !== '';
       })
     );
   }
+
   if (field.type === 'pain_assessment') {
     if (!val || typeof val !== 'object') return true;
-    const hasPresence = Boolean(val.painPresent);
+    const hasPresence = Boolean(val.painPresent && val.painPresent !== '');
     const hasLoc = Boolean(val.location && String(val.location).trim());
     const hasScore = val.score !== null && val.score !== undefined && val.score !== '';
     return !hasPresence && !hasLoc && !hasScore;
   }
+
   return String(val).trim() === '';
 }
 
-function resolveDisplayValue(
+/**
+ * Extracts a cell's value from a table row object using multiple key candidates.
+ */
+export function getTableCellValue(rowObj: Record<string, any>, col: TableColumn, colIdx: number): any {
+  if (!rowObj || typeof rowObj !== 'object') return '';
+
+  const colKey = col.key || col.id || `col_${colIdx}`;
+  const candidates = [
+    col.key,
+    col.id,
+    colKey,
+    `col_${colIdx}`,
+    col.label,
+  ].filter(Boolean) as string[];
+
+  // 1. Non-empty match first
+  for (const k of candidates) {
+    const val = rowObj[k];
+    if (val !== undefined && val !== null && val !== '') {
+      return val;
+    }
+  }
+
+  // 2. Case-insensitive non-empty match
+  for (const cand of candidates) {
+    const lower = cand.toLowerCase();
+    for (const [k, v] of Object.entries(rowObj)) {
+      if (k.toLowerCase() === lower && v !== undefined && v !== null && v !== '') {
+        return v;
+      }
+    }
+  }
+
+  // 3. Explicitly defined (including 0, false, '')
+  for (const k of candidates) {
+    if (rowObj[k] !== undefined && rowObj[k] !== null) {
+      return rowObj[k];
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Resolves a field's display value, mapping dropdowns, radios, dates, and checkboxes to readable labels.
+ */
+export function resolveDisplayValue(
   field: FormField,
   rawVal: any,
   dynamicOptions?: Record<string, { label: string; value: string }[]>
-): { text: string; isChecked?: boolean; isTable?: boolean; isMultiline?: boolean } {
-  if (rawVal === undefined || rawVal === null || rawVal === '') {
-    return { text: '' };
+): { text: string; isChecked?: boolean; isTable?: boolean; isMultiline?: boolean; isEmpty?: boolean } {
+  if (rawVal === undefined || rawVal === null || (typeof rawVal === 'string' && rawVal.trim() === '')) {
+    return { text: '', isEmpty: true };
   }
 
   if (field.type === 'table') {
@@ -118,11 +235,12 @@ function resolveDisplayValue(
       ? field.options
       : dynamicOptions?.[field.name] || dynamicOptions?.[field.id] || [];
 
+  // Checkbox field
   if (field.type === 'checkbox') {
     if (Array.isArray(rawVal)) {
-      if (rawVal.length === 0) return { text: '' };
+      if (rawVal.length === 0) return { text: '', isEmpty: true };
       const labels = rawVal.map((v) => {
-        const opt = effectiveOptions.find((o) => o.value === v || o.label === v);
+        const opt = effectiveOptions.find((o) => String(o.value) === String(v) || o.label === String(v));
         return opt ? opt.label : String(v);
       });
       return { text: labels.join(', ') };
@@ -136,14 +254,13 @@ function resolveDisplayValue(
     return { text: isChecked ? 'Yes' : 'No', isChecked };
   }
 
+  // Select / Radio dropdown options
   if ((field.type === 'select' || field.type === 'radio') && effectiveOptions.length > 0) {
     const str = String(rawVal).trim().toLowerCase();
     const opt = effectiveOptions.find(
       (o) =>
-        o.value.trim().toLowerCase() === str ||
-        o.label.trim().toLowerCase() === str ||
-        (o.value.length === 1 && str.startsWith(o.value.toLowerCase())) ||
-        (o.label.length === 1 && str.startsWith(o.label.toLowerCase()))
+        String(o.value).trim().toLowerCase() === str ||
+        String(o.label).trim().toLowerCase() === str
     );
     if (opt) {
       return { text: opt.label };
@@ -151,28 +268,114 @@ function resolveDisplayValue(
     return { text: String(rawVal) };
   }
 
+  // Multiline Textarea
   if (field.type === 'textarea') {
     return { text: String(rawVal), isMultiline: true };
   }
 
-  if (field.type === 'date' && typeof rawVal === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawVal)) {
-    try {
-      const d = new Date(rawVal);
-      if (!isNaN(d.getTime())) {
-        return {
-          text: d.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-          }),
-        };
+  // Date field
+  if (field.type === 'date') {
+    const strVal = String(rawVal).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(strVal)) {
+      try {
+        const d = new Date(strVal);
+        if (!isNaN(d.getTime())) {
+          return {
+            text: d.toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            }),
+          };
+        }
+      } catch {
+        // Fallback to raw string
       }
-    } catch {
-      // Fallback
     }
+    return { text: strVal };
+  }
+
+  // Number field (Preserves 0 as a valid entered value!)
+  if (field.type === 'number') {
+    return { text: String(rawVal) };
   }
 
   return { text: String(rawVal) };
+}
+
+/**
+ * Validates export completeness against the entire form definition schema and data.
+ * Reports diagnostic coverage without omitting unsupported field types silently.
+ */
+export function validateExportCompleteness(
+  form: FormDefinition,
+  formData: Record<string, any> = {}
+): ExportCoverageReport {
+  const report: ExportCoverageReport = {
+    totalFields: 0,
+    representedFields: 0,
+    populatedFields: 0,
+    emptyFields: 0,
+    nestedTableFields: 0,
+    unsupportedFieldTypes: [],
+    renderingFailures: [],
+  };
+
+  if (!form || !form.layout) {
+    report.renderingFailures.push('Form definition or layout is missing');
+    return report;
+  }
+
+  const fieldsDict = form.fields || {};
+
+  for (const section of form.layout) {
+    for (const row of section.rows || []) {
+      for (const col of row.columns || []) {
+        for (const fieldId of col.fieldIds || []) {
+          report.totalFields++;
+          const field = fieldsDict[fieldId];
+          if (!field) {
+            report.renderingFailures.push(`Field ID "${fieldId}" not found in form.fields dictionary.`);
+            continue;
+          }
+
+          if (!SUPPORTED_FIELD_TYPES.includes(field.type)) {
+            if (!report.unsupportedFieldTypes.includes(field.type)) {
+              report.unsupportedFieldTypes.push(field.type);
+            }
+          }
+
+          report.representedFields++;
+
+          if (isFieldEmpty(field, formData)) {
+            report.emptyFields++;
+          } else {
+            report.populatedFields++;
+          }
+
+          // Count nested table fields
+          if (field.type === 'table' && field.tableConfig?.cellFields) {
+            for (const [cellKey, cellVal] of Object.entries(field.tableConfig.cellFields)) {
+              report.nestedTableFields++;
+              const nestedType =
+                typeof cellVal === 'object' && cellVal !== null
+                  ? cellVal.type
+                  : typeof cellVal === 'string' && fieldsDict[cellVal]
+                  ? fieldsDict[cellVal].type
+                  : 'text';
+              if (nestedType && !SUPPORTED_FIELD_TYPES.includes(nestedType)) {
+                if (!report.unsupportedFieldTypes.includes(nestedType)) {
+                  report.unsupportedFieldTypes.push(`${nestedType} (nested in ${cellKey})`);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return report;
 }
 
 /**
@@ -184,8 +387,8 @@ function createDocumentHeader(
 ): HTMLElement {
   const header = document.createElement('div');
   header.style.borderBottom = '2px solid #0f172a';
-  header.style.paddingBottom = '12px';
-  header.style.marginBottom = '14px';
+  header.style.paddingBottom = '10px';
+  header.style.marginBottom = '12px';
   header.style.boxSizing = 'border-box';
   header.style.width = '100%';
 
@@ -200,7 +403,7 @@ function createDocumentHeader(
   leftCol.style.flex = '1';
 
   const titleEl = document.createElement('div');
-  titleEl.style.fontSize = '20px';
+  titleEl.style.fontSize = '18px';
   titleEl.style.fontWeight = '800';
   titleEl.style.color = '#0f172a';
   titleEl.style.textTransform = 'uppercase';
@@ -211,9 +414,9 @@ function createDocumentHeader(
 
   if (form.description) {
     const descEl = document.createElement('div');
-    descEl.style.fontSize = '10px';
+    descEl.style.fontSize = '9.5px';
     descEl.style.color = '#475569';
-    descEl.style.marginTop = '4px';
+    descEl.style.marginTop = '3px';
     descEl.style.lineHeight = '1.35';
     descEl.innerText = form.description;
     leftCol.appendChild(descEl);
@@ -224,14 +427,14 @@ function createDocumentHeader(
   // Right: Patient & Encounter Context
   const rightCol = document.createElement('div');
   rightCol.style.textAlign = 'right';
-  rightCol.style.fontSize = '10px';
+  rightCol.style.fontSize = '9.5px';
   rightCol.style.color = '#334155';
-  rightCol.style.lineHeight = '1.5';
+  rightCol.style.lineHeight = '1.45';
   rightCol.style.flexShrink = '0';
 
   let rightHtml = '';
   if (metadata?.mrno) {
-    rightHtml += `<div style="font-family: monospace; font-size: 11.5px; font-weight: 700; color: #0f172a;">MRNO: ${escapeHtml(
+    rightHtml += `<div style="font-family: monospace; font-size: 11px; font-weight: 700; color: #0f172a;">MRNO: ${escapeHtml(
       metadata.mrno
     )}</div>`;
   }
@@ -249,15 +452,25 @@ function createDocumentHeader(
     rightHtml += `<div>Service Center: <strong>${escapeHtml(serviceCenter)}</strong></div>`;
   }
   if (metadata?.recordId) {
-    rightHtml += `<div style="font-family: monospace; font-size: 9.5px; color: #64748b;">Record ID: #${escapeHtml(
+    rightHtml += `<div style="font-family: monospace; font-size: 9px; color: #64748b;">Record ID: #${escapeHtml(
       String(metadata.recordId)
     )}</div>`;
   }
-  const dateStr = new Date().toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  if (metadata?.submittedBy) {
+    rightHtml += `<div>Clinician: <strong>${escapeHtml(metadata.submittedBy)}</strong></div>`;
+  }
+
+  const dateStr = metadata?.submittedAt
+    ? new Date(metadata.submittedAt).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+    : new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
   rightHtml += `<div>Generated: <strong>${dateStr}</strong></div>`;
 
   rightCol.innerHTML = rightHtml;
@@ -280,8 +493,8 @@ function createRunningHeader(
   header.style.alignItems = 'center';
   header.style.borderBottom = '1px solid #cbd5e1';
   header.style.paddingBottom = '6px';
-  header.style.marginBottom = '14px';
-  header.style.fontSize = '9.5px';
+  header.style.marginBottom = '12px';
+  header.style.fontSize = '9px';
   header.style.color = '#64748b';
   header.style.fontWeight = '600';
   header.style.boxSizing = 'border-box';
@@ -307,7 +520,7 @@ function createDocumentFooter(
   footer.style.justifyContent = 'space-between';
   footer.style.alignItems = 'center';
   footer.style.borderTop = '1px solid #e2e8f0';
-  footer.style.paddingTop = '8px';
+  footer.style.paddingTop = '6px';
   footer.style.marginTop = 'auto';
   footer.style.fontSize = '8.5px';
   footer.style.color = '#64748b';
@@ -322,14 +535,247 @@ function createDocumentFooter(
 }
 
 /**
- * Generates a clean, dedicated clinical PDF based strictly on the form definition and entered data.
- * Completely excludes runtime controls, buttons, navigation bars, and submission history cards.
+ * Renders a complete table, splitting rows across multiple PDF pages if the table exceeds page capacity.
  */
-export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<void> {
+function renderTableChunks(
+  field: FormField,
+  formData: Record<string, any>,
+  dynamicOptions: Record<string, { label: string; value: string }[]> | undefined,
+  measureBox: HTMLElement,
+  maxAvailableFirstPage: number,
+  maxPageHeight: number
+): HTMLElement[] {
+  const tableConfig = field.tableConfig || { columns: [], defaultRows: [] };
+  const columns: TableColumn[] = tableConfig.columns || [];
+
+  const rawRows = getFieldValue(field, formData);
+  let rowsData: any[] = [];
+  if (Array.isArray(rawRows)) {
+    rowsData = rawRows;
+  } else if (tableConfig.defaultRows && Array.isArray(tableConfig.defaultRows)) {
+    rowsData = tableConfig.defaultRows;
+  }
+
+  // Helper to build a table DOM element for a slice of rows
+  const buildTableElement = (sliceRows: any[], isContinuation: boolean): HTMLElement => {
+    const container = document.createElement('div');
+    container.style.width = '100%';
+    container.style.marginBottom = '8px';
+    container.style.boxSizing = 'border-box';
+
+    // Table Title
+    const titleEl = document.createElement('div');
+    titleEl.style.fontSize = '9.5px';
+    titleEl.style.fontWeight = '700';
+    titleEl.style.color = '#1e3a8a';
+    titleEl.style.textTransform = 'uppercase';
+    titleEl.style.letterSpacing = '0.02em';
+    titleEl.style.marginBottom = '3px';
+    titleEl.innerText = isContinuation
+      ? `${field.label || 'TABLE'} (Continued)`
+      : field.label || 'TABLE';
+    container.appendChild(titleEl);
+
+    const tableEl = document.createElement('table');
+    tableEl.style.width = '100%';
+    tableEl.style.borderCollapse = 'collapse';
+    tableEl.style.fontSize = '9px';
+    tableEl.style.border = '1px solid #cbd5e1';
+
+    // Head
+    const thead = document.createElement('thead');
+    const trHead = document.createElement('tr');
+    trHead.style.background = '#f1f5f9';
+    columns.forEach((c) => {
+      const th = document.createElement('th');
+      th.style.padding = '4px 6px';
+      th.style.fontWeight = '700';
+      th.style.color = '#334155';
+      th.style.textAlign = 'left';
+      th.style.border = '1px solid #cbd5e1';
+      th.innerText = c.label || c.key || c.id;
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+    tableEl.appendChild(thead);
+
+    // Body
+    const tbody = document.createElement('tbody');
+    if (sliceRows.length === 0) {
+      const emptyTr = document.createElement('tr');
+      const emptyTd = document.createElement('td');
+      emptyTd.colSpan = Math.max(1, columns.length);
+      emptyTd.style.padding = '8px';
+      emptyTd.style.textAlign = 'center';
+      emptyTd.style.color = '#94a3b8';
+      emptyTd.style.fontStyle = 'italic';
+      emptyTd.innerText = 'No entries recorded';
+      emptyTr.appendChild(emptyTd);
+      tbody.appendChild(emptyTr);
+    } else {
+      sliceRows.forEach((rowObj, rIdx) => {
+        if (rowObj._isHeader || rowObj._rowType === 'heading') {
+          const headerTr = document.createElement('tr');
+          headerTr.style.background = '#e2e8f0';
+          headerTr.style.fontWeight = '700';
+          const headerTd = document.createElement('td');
+          headerTd.colSpan = Math.max(1, columns.length);
+          headerTd.style.padding = '4px 6px';
+          headerTd.style.border = '1px solid #cbd5e1';
+          headerTd.style.color = '#1e293b';
+          headerTd.style.textTransform = 'uppercase';
+          const headerText =
+            rowObj._headerText ||
+            rowObj[columns[0]?.key || columns[0]?.id || ''] ||
+            'Section Header';
+          headerTd.innerText = headerText;
+          headerTr.appendChild(headerTd);
+          tbody.appendChild(headerTr);
+          return;
+        }
+
+        const tr = document.createElement('tr');
+        if (rIdx % 2 === 1) {
+          tr.style.background = '#f8fafc';
+        }
+
+        columns.forEach((c, cIdx) => {
+          const td = document.createElement('td');
+          td.style.padding = '4px 6px';
+          td.style.border = '1px solid #e2e8f0';
+          td.style.color = '#0f172a';
+          td.style.verticalAlign = 'top';
+
+          const colKey = c.key || c.id || `col_${cIdx}`;
+          const cellKey = `${rIdx}_${colKey}`;
+          const rawVal = getTableCellValue(rowObj, c, cIdx);
+
+          // Resolve nested cell field configuration if present
+          const cellFieldRef =
+            tableConfig.cellFields?.[cellKey] ||
+            tableConfig.cellFields?.[`${rIdx}_${c.id}`] ||
+            tableConfig.cellFields?.[`${rIdx}_${c.key}`];
+
+          const cellField: FormField | null =
+            cellFieldRef && typeof cellFieldRef === 'object' && 'type' in cellFieldRef
+              ? (cellFieldRef as FormField)
+              : null;
+
+          const effType = cellField?.type || c.type || 'text';
+          const effOptions =
+            cellField?.options ||
+            c.options ||
+            dynamicOptions?.[colKey] ||
+            dynamicOptions?.[c.id] ||
+            [];
+
+          const isCellHeader =
+            (Array.isArray(rowObj._headerCols) && rowObj._headerCols.includes(colKey)) ||
+            effType === 'heading';
+
+          if (isCellHeader) {
+            td.style.fontWeight = '700';
+            td.style.background = '#f1f5f9';
+            td.innerText = rawVal ? String(rawVal) : c.label;
+            tr.appendChild(td);
+            return;
+          }
+
+          if (rawVal === undefined || rawVal === null || (typeof rawVal === 'string' && rawVal.trim() === '')) {
+            td.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Not entered</span>';
+            tr.appendChild(td);
+            return;
+          }
+
+          if (effType === 'checkbox') {
+            const isChecked =
+              rawVal === true || rawVal === 'true' || rawVal === 'yes' || rawVal === 1 || rawVal === '1';
+            td.innerText = isChecked ? '☑ Yes' : '☐ No';
+          } else if ((effType === 'select' || effType === 'radio') && effOptions.length > 0) {
+            const str = String(rawVal).trim().toLowerCase();
+            const matchedOpt = effOptions.find(
+              (o) => String(o.value).trim().toLowerCase() === str || String(o.label).trim().toLowerCase() === str
+            );
+            td.innerText = matchedOpt ? matchedOpt.label : String(rawVal);
+          } else if (effType === 'date' && typeof rawVal === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawVal)) {
+            try {
+              const d = new Date(rawVal);
+              td.innerText = !isNaN(d.getTime())
+                ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                : rawVal;
+            } catch {
+              td.innerText = String(rawVal);
+            }
+          } else {
+            td.innerText = String(rawVal);
+          }
+
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    tableEl.appendChild(tbody);
+    container.appendChild(tableEl);
+    return container;
+  };
+
+  // If table has 0 or 1 row, simple render
+  if (rowsData.length <= 1) {
+    return [buildTableElement(rowsData, false)];
+  }
+
+  // Pre-measure to split large tables across pages
+  const chunks: HTMLElement[] = [];
+  let currentRowSlice: any[] = [];
+  let isContinued = false;
+
+  for (let r = 0; r < rowsData.length; r++) {
+    currentRowSlice.push(rowsData[r]);
+    const testEl = buildTableElement(currentRowSlice, isContinued);
+    measureBox.appendChild(testEl);
+    const measuredHeight = Math.ceil(testEl.getBoundingClientRect().height);
+    measureBox.removeChild(testEl);
+
+    const limit = chunks.length === 0 ? maxAvailableFirstPage : maxPageHeight;
+    if (measuredHeight > limit && currentRowSlice.length > 1) {
+      // Pop last row and finalize chunk
+      currentRowSlice.pop();
+      chunks.push(buildTableElement(currentRowSlice, isContinued));
+
+      // Start new chunk with the row that didn't fit
+      currentRowSlice = [rowsData[r]];
+      isContinued = true;
+    }
+  }
+
+  if (currentRowSlice.length > 0) {
+    chunks.push(buildTableElement(currentRowSlice, isContinued));
+  }
+
+  return chunks;
+}
+
+/**
+ * Generates a clean, complete clinical PDF including every form field and entered value.
+ */
+export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<ExportCoverageReport> {
   const { form, formData = {}, dynamicOptions, metadata } = options;
 
   if (!form || !form.layout || form.layout.length === 0) {
     throw new Error('Form definition with layout is required for clean PDF generation.');
+  }
+
+  // Run completeness check
+  const completenessReport = validateExportCompleteness(form, formData);
+  console.log('[exportPdf] Completeness Report:', completenessReport);
+
+  if (completenessReport.unsupportedFieldTypes.length > 0) {
+    console.error(
+      '[exportPdf] Unsupported field types encountered:',
+      completenessReport.unsupportedFieldTypes
+    );
   }
 
   // Create isolated off-screen staging host
@@ -353,27 +799,13 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
   host.appendChild(measureBox);
 
   try {
-    // 1. Build all content blocks (Section headings, Rows, Fields, Tables)
     const blocks: HTMLElement[] = [];
+    const PAGE_USABLE_FIRST = 930;
+    const PAGE_USABLE_SUBSEQUENT = 980;
 
+    // Traverse all sections and fields defined in the form schema
     for (const section of form.layout) {
-      // Determine which rows in this section should be rendered:
-      // Omit rows where all fields are optional and empty.
-      const rowsToRender = (section.rows || []).filter((row) => {
-        const rowFieldIds = (row.columns || []).flatMap((c) => c.fieldIds || []);
-        const rowFields = rowFieldIds.map((id) => form.fields[id]).filter(Boolean);
-        if (rowFields.length === 0) return false;
-
-        return rowFields.some(
-          (f) =>
-            f.type === 'heading' ||
-            f.type === 'divider' ||
-            Boolean(f.validation?.required) ||
-            !isFieldEmpty(f, formData)
-        );
-      });
-
-      // Section Header Block
+      // Section Header Block (Always preserved)
       if (section.title) {
         const secHeader = document.createElement('div');
         secHeader.setAttribute('data-is-section-header', 'true');
@@ -390,7 +822,7 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
 
         if (section.description) {
           const secDesc = document.createElement('div');
-          secDesc.style.fontSize = '9.5px';
+          secDesc.style.fontSize = '9px';
           secDesc.style.color = '#64748b';
           secDesc.style.textTransform = 'none';
           secDesc.style.fontWeight = '400';
@@ -399,25 +831,31 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
           secHeader.appendChild(secDesc);
         }
 
-        // If all rows in this section were empty optional rows, preserve section title with clean note
-        if (rowsToRender.length === 0) {
-          const emptySecNote = document.createElement('div');
-          emptySecNote.style.fontSize = '9px';
-          emptySecNote.style.color = '#94a3b8';
-          emptySecNote.style.fontStyle = 'italic';
-          emptySecNote.style.textTransform = 'none';
-          emptySecNote.style.fontWeight = '400';
-          emptySecNote.style.marginTop = '3px';
-          emptySecNote.style.marginBottom = '6px';
-          emptySecNote.innerText = 'No entries recorded';
-          secHeader.appendChild(emptySecNote);
-        }
-
         blocks.push(secHeader);
       }
 
-      // Render Rows
-      for (const row of rowsToRender) {
+      // Render EVERY row defined in this section without dropping empty optional fields
+      for (const row of section.rows || []) {
+        // Check if row has any table field that needs independent multi-page splitting
+        const rowFieldIds = (row.columns || []).flatMap((c) => c.fieldIds || []);
+        const hasTable = rowFieldIds.some((fId) => form.fields?.[fId]?.type === 'table');
+
+        if (hasTable && row.columns.length === 1 && rowFieldIds.length === 1) {
+          // Table gets dedicated multi-page chunking to guarantee zero cutoffs
+          const tableField = form.fields[rowFieldIds[0]];
+          const tableChunks = renderTableChunks(
+            tableField,
+            formData,
+            dynamicOptions,
+            measureBox,
+            PAGE_USABLE_FIRST,
+            PAGE_USABLE_SUBSEQUENT
+          );
+          blocks.push(...tableChunks);
+          continue;
+        }
+
+        // Standard Row
         const rowEl = document.createElement('div');
         rowEl.style.display = 'flex';
         rowEl.style.width = '100%';
@@ -436,7 +874,7 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
           colEl.style.gap = '6px';
 
           for (const fieldId of col.fieldIds || []) {
-            const field = form.fields[fieldId];
+            const field = form.fields?.[fieldId];
             if (!field) continue;
 
             const fieldEl = document.createElement('div');
@@ -460,94 +898,24 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
               hr.style.margin = '6px 0';
               fieldEl.appendChild(hr);
             } else if (field.type === 'table') {
-              // Table field rendering
-              const tableTitle = document.createElement('div');
-              tableTitle.style.fontSize = '9.5px';
-              tableTitle.style.fontWeight = '700';
-              tableTitle.style.color = '#334155';
-              tableTitle.style.textTransform = 'uppercase';
-              tableTitle.style.marginBottom = '3px';
-              tableTitle.innerText = field.label;
-              fieldEl.appendChild(tableTitle);
-
-              const rawRows = getFieldValue(field, formData);
-              const rowsData = Array.isArray(rawRows) ? rawRows : [];
-              const columns = field.tableConfig?.columns || [];
-
-              // Filter out completely blank table rows (e.g. initial [{}] with no values)
-              const populatedRows = rowsData.filter((r) =>
-                columns.some((c) => {
-                  const cellVal = r[c.id] ?? r[c.key ?? ''] ?? '';
-                  return cellVal !== undefined && cellVal !== null && String(cellVal).trim() !== '';
-                })
+              const tableChunks = renderTableChunks(
+                field,
+                formData,
+                dynamicOptions,
+                measureBox,
+                PAGE_USABLE_FIRST,
+                PAGE_USABLE_SUBSEQUENT
               );
-
-              const tableEl = document.createElement('table');
-              tableEl.style.width = '100%';
-              tableEl.style.borderCollapse = 'collapse';
-              tableEl.style.fontSize = '9px';
-              tableEl.style.border = '1px solid #cbd5e1';
-              tableEl.style.marginBottom = '6px';
-
-              // Header
-              const thead = document.createElement('thead');
-              const headRow = document.createElement('tr');
-              headRow.style.background = '#f1f5f9';
-              columns.forEach((c) => {
-                const th = document.createElement('th');
-                th.style.padding = '4px 6px';
-                th.style.fontWeight = '700';
-                th.style.color = '#334155';
-                th.style.textAlign = 'left';
-                th.style.border = '1px solid #cbd5e1';
-                th.innerText = c.label || c.id;
-                headRow.appendChild(th);
-              });
-              thead.appendChild(headRow);
-              tableEl.appendChild(thead);
-
-              // Body
-              const tbody = document.createElement('tbody');
-              if (populatedRows.length === 0) {
-                const emptyRow = document.createElement('tr');
-                const emptyTd = document.createElement('td');
-                emptyTd.colSpan = Math.max(1, columns.length);
-                emptyTd.style.padding = '6px';
-                emptyTd.style.textAlign = 'center';
-                emptyTd.style.color = '#94a3b8';
-                emptyTd.style.fontStyle = 'italic';
-                emptyTd.innerText = field.validation?.required
-                  ? '(Not recorded)'
-                  : 'No table entries recorded';
-                emptyRow.appendChild(emptyTd);
-                tbody.appendChild(emptyRow);
-              } else {
-                populatedRows.forEach((rowObj, rIdx) => {
-                  const tr = document.createElement('tr');
-                  if (rIdx % 2 === 1) {
-                    tr.style.background = '#f8fafc';
-                  }
-                  columns.forEach((c) => {
-                    const td = document.createElement('td');
-                    td.style.padding = '4px 6px';
-                    td.style.border = '1px solid #e2e8f0';
-                    td.style.color = '#0f172a';
-                    const key = c.id || c.key || '';
-                    const cellVal = rowObj[key] !== undefined ? String(rowObj[key]) : '';
-                    td.innerText = cellVal || '—';
-                    tr.appendChild(td);
-                  });
-                  tbody.appendChild(tr);
-                });
+              for (const chk of tableChunks) {
+                fieldEl.appendChild(chk);
               }
-              tableEl.appendChild(tbody);
-              fieldEl.appendChild(tableEl);
             } else if (field.type === 'pain_assessment') {
-              // Dedicated Pain Assessment Card in PDF
+              // Dedicated Pain Assessment Representation
               const val = getFieldValue(field, formData);
               const pVal = typeof val === 'object' && val !== null ? val : {};
               const score = typeof pVal.score === 'number' ? pVal.score : null;
-              const painPresent = pVal.painPresent === 'yes' ? 'Yes' : pVal.painPresent === 'no' ? 'No' : '—';
+              const painPresent =
+                pVal.painPresent === 'yes' ? 'Yes' : pVal.painPresent === 'no' ? 'No' : 'Not recorded';
               const location = pVal.location ? String(pVal.location).trim() : '—';
 
               const card = document.createElement('div');
@@ -559,7 +927,6 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
               card.style.boxSizing = 'border-box';
               card.style.marginBottom = '6px';
 
-              // Header
               const cardTitle = document.createElement('div');
               cardTitle.style.fontSize = '9.5px';
               cardTitle.style.fontWeight = '700';
@@ -572,13 +939,12 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
               }`;
               card.appendChild(cardTitle);
 
-              // 3-column metric row
-              const row = document.createElement('div');
-              row.style.display = 'flex';
-              row.style.gap = '8px';
-              row.style.marginBottom = '6px';
+              const metricRow = document.createElement('div');
+              metricRow.style.display = 'flex';
+              metricRow.style.gap = '8px';
+              metricRow.style.marginBottom = '6px';
 
-              // 1. Pain Present
+              // Pain Present
               const b1 = document.createElement('div');
               b1.style.flex = '1';
               b1.style.background = '#ffffff';
@@ -586,10 +952,12 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
               b1.style.borderRadius = '4px';
               b1.style.padding = '5px 8px';
               b1.innerHTML = `<div style="font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase;">PAIN PRESENT?</div>
-                <div style="font-size: 10px; font-weight: 700; color: ${painPresent === 'Yes' ? '#e11d48' : painPresent === 'No' ? '#059669' : '#64748b'}; margin-top: 2px;">${painPresent}</div>`;
-              row.appendChild(b1);
+                <div style="font-size: 10px; font-weight: 700; color: ${
+                  painPresent === 'Yes' ? '#e11d48' : painPresent === 'No' ? '#059669' : '#64748b'
+                }; margin-top: 2px;">${painPresent}</div>`;
+              metricRow.appendChild(b1);
 
-              // 2. Location
+              // Location
               const b2 = document.createElement('div');
               b2.style.flex = '2';
               b2.style.background = '#ffffff';
@@ -597,10 +965,12 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
               b2.style.borderRadius = '4px';
               b2.style.padding = '5px 8px';
               b2.innerHTML = `<div style="font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase;">LOCATION</div>
-                <div style="font-size: 10px; font-weight: 600; color: #0f172a; margin-top: 2px;">${escapeHtml(location)}</div>`;
-              row.appendChild(b2);
+                <div style="font-size: 10px; font-weight: 600; color: #0f172a; margin-top: 2px;">${escapeHtml(
+                  location
+                )}</div>`;
+              metricRow.appendChild(b2);
 
-              // 3. Score
+              // Score
               const b3 = document.createElement('div');
               b3.style.flex = '2';
               b3.style.background = '#ffffff';
@@ -608,24 +978,29 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
               b3.style.borderRadius = '4px';
               b3.style.padding = '5px 8px';
               const scaleItem = score !== null ? getPainScaleItem(score) : null;
-              const scoreText = score !== null ? `${score} / 10 — ${escapeHtml(scaleItem?.label || '')}` : 'Not recorded';
+              const scoreText =
+                score !== null
+                  ? `${score} / 10 &bull; ${escapeHtml(scaleItem?.label || '')}`
+                  : '<span style="color: #94a3b8; font-style: italic;">Not recorded</span>';
               b3.innerHTML = `<div style="font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase;">SCORE (0–10 SCALE)</div>
-                <div style="font-size: 10px; font-weight: 700; color: ${score !== null ? '#1e3a8a' : '#94a3b8'}; margin-top: 2px;">${scoreText}</div>`;
-              row.appendChild(b3);
+                <div style="font-size: 10px; font-weight: 700; color: ${
+                  score !== null ? '#1e3a8a' : '#94a3b8'
+                }; margin-top: 2px;">${scoreText}</div>`;
+              metricRow.appendChild(b3);
 
-              card.appendChild(row);
+              card.appendChild(metricRow);
 
-              // Scale reference legend
-              const scaleSummary = document.createElement('div');
-              scaleSummary.style.fontSize = '8px';
-              scaleSummary.style.color = '#64748b';
-              scaleSummary.style.padding = '3px 6px';
-              scaleSummary.style.background = '#f1f5f9';
-              scaleSummary.style.borderRadius = '3px';
-              scaleSummary.style.display = 'flex';
-              scaleSummary.style.justifyContent = 'space-between';
-              scaleSummary.innerHTML = `<span>0: No Pain</span><span>1–3: Slight</span><span>4–5: Mild</span><span>6: Moderate</span><span>7–9: Severe</span><span>10: Worst Pain</span>`;
-              card.appendChild(scaleSummary);
+              // Visual legend
+              const scaleLegend = document.createElement('div');
+              scaleLegend.style.fontSize = '7.5px';
+              scaleLegend.style.color = '#64748b';
+              scaleLegend.style.padding = '3px 6px';
+              scaleLegend.style.background = '#f1f5f9';
+              scaleLegend.style.borderRadius = '3px';
+              scaleLegend.style.display = 'flex';
+              scaleLegend.style.justifyContent = 'space-between';
+              scaleLegend.innerHTML = `<span>0: No Pain</span><span>1–3: Slight</span><span>4–5: Mild</span><span>6: Moderate</span><span>7–9: Severe</span><span>10: Worst Pain</span>`;
+              card.appendChild(scaleLegend);
 
               fieldEl.appendChild(card);
             } else {
@@ -647,7 +1022,7 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
 
               if (displayInfo.isMultiline) {
                 const valBox = document.createElement('div');
-                valBox.style.fontSize = '10.5px';
+                valBox.style.fontSize = '10px';
                 valBox.style.color = '#0f172a';
                 valBox.style.minHeight = '24px';
                 valBox.style.padding = '4px 6px';
@@ -659,19 +1034,25 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
                 valBox.style.lineHeight = '1.35';
                 valBox.innerHTML = displayInfo.text
                   ? escapeHtml(displayInfo.text)
-                  : '<span style="color: #cbd5e1;">—</span>';
+                  : '<span style="color: #94a3b8; font-style: italic;">Not entered</span>';
                 fieldEl.appendChild(valBox);
               } else if (field.type === 'checkbox') {
                 const valBox = document.createElement('div');
-                valBox.style.fontSize = '10.5px';
+                valBox.style.fontSize = '10px';
                 valBox.style.color = '#0f172a';
                 valBox.style.fontWeight = '600';
                 valBox.style.padding = '1px 0';
-                valBox.innerHTML = displayInfo.isChecked ? '☑ Yes' : '☐ No';
+                if (displayInfo.isEmpty) {
+                  valBox.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Not entered</span>';
+                } else if (field.options && field.options.length > 0) {
+                  valBox.innerText = displayInfo.text;
+                } else {
+                  valBox.innerHTML = displayInfo.isChecked ? '☑ Yes' : '☐ No';
+                }
                 fieldEl.appendChild(valBox);
               } else {
                 const valBox = document.createElement('div');
-                valBox.style.fontSize = '10.5px';
+                valBox.style.fontSize = '10px';
                 valBox.style.color = '#0f172a';
                 valBox.style.fontWeight = '500';
                 valBox.style.minHeight = '16px';
@@ -679,13 +1060,11 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
                 valBox.style.paddingBottom = '1px';
                 valBox.style.wordBreak = 'break-word';
 
-                if (displayInfo.text) {
+                if (displayInfo.text !== '' && !displayInfo.isEmpty) {
                   valBox.innerText = displayInfo.text;
-                } else if (field.validation?.required) {
-                  valBox.innerHTML =
-                    '<span style="color: #94a3b8; font-style: italic; font-size: 9.5px;">(Not recorded)</span>';
                 } else {
-                  valBox.innerHTML = '<span style="color: #cbd5e1;">—</span>';
+                  valBox.innerHTML =
+                    '<span style="color: #94a3b8; font-style: italic;">Not entered</span>';
                 }
                 fieldEl.appendChild(valBox);
               }
@@ -699,17 +1078,13 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
       }
     }
 
-    // 2. Measure block heights to perform intelligent page break distribution
+    // Measure block heights to distribute cleanly into pages
     const heights: number[] = [];
     for (const b of blocks) {
       measureBox.appendChild(b);
       heights.push(Math.ceil(b.getBoundingClientRect().height));
       measureBox.removeChild(b);
     }
-
-    // Usable heights per page (A4 total 1123px - padding - header/footer)
-    const PAGE_MAX_HEIGHT_FIRST = 875;
-    const PAGE_MAX_HEIGHT_SUBSEQUENT = 945;
 
     const pageBlocks: HTMLElement[][] = [[]];
     let currentPg = 0;
@@ -718,7 +1093,7 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
     for (let i = 0; i < blocks.length; i++) {
       const b = blocks[i];
       const h = heights[i];
-      const maxH = currentPg === 0 ? PAGE_MAX_HEIGHT_FIRST : PAGE_MAX_HEIGHT_SUBSEQUENT;
+      const maxH = currentPg === 0 ? PAGE_USABLE_FIRST : PAGE_USABLE_SUBSEQUENT;
 
       const isSecHeader = b.getAttribute('data-is-section-header') === 'true';
       const nextH = i + 1 < blocks.length ? heights[i + 1] : 0;
@@ -737,15 +1112,13 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
     const totalPages = pageBlocks.length;
     const pageDivs: HTMLElement[] = [];
 
-    // 3. Assemble complete A4 Page DOM elements
+    // Assemble complete A4 Page DOM elements
     for (let pIdx = 0; pIdx < totalPages; pIdx++) {
       const pageEl = document.createElement('div');
       pageEl.style.width = '794px';
-      pageEl.style.height = '1123px';
-      pageEl.style.maxHeight = '1123px';
-      pageEl.style.overflow = 'hidden';
+      pageEl.style.minHeight = '1123px';
       pageEl.style.boxSizing = 'border-box';
-      pageEl.style.padding = '42px 48px 36px 48px';
+      pageEl.style.padding = '36px 44px 30px 44px';
       pageEl.style.background = '#ffffff';
       pageEl.style.color = '#0f172a';
       pageEl.style.display = 'flex';
@@ -767,7 +1140,6 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
       bodyEl.style.display = 'flex';
       bodyEl.style.flexDirection = 'column';
       bodyEl.style.gap = '6px';
-      bodyEl.style.overflow = 'hidden';
 
       for (const blk of pageBlocks[pIdx]) {
         bodyEl.appendChild(blk);
@@ -781,7 +1153,7 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
       pageDivs.push(pageEl);
     }
 
-    // 4. Capture high-resolution page-by-page PDF
+    // Capture high-resolution page-by-page PDF
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -805,11 +1177,11 @@ export async function downloadCleanFormPdf(options: ExportPdfOptions): Promise<v
       pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
     }
 
-    // Clean dynamic filename (e.g. Medical_Trust.pdf)
     const cleanFileName = generatePdfFileName(options.formTitle || form.title);
     pdf.save(cleanFileName);
+
+    return completenessReport;
   } finally {
-    // Always clean up the off-screen staging host
     if (document.body.contains(host)) {
       document.body.removeChild(host);
     }
@@ -825,7 +1197,7 @@ export async function downloadFormAsPdf(
   elementOrId: HTMLElement | string,
   options: ExportPdfOptions = {}
 ): Promise<void> {
-  // If form definition is available, use the dedicated clean export layout
+  // Primary: Dedicated schema-driven clinical PDF generation
   if (options.form) {
     try {
       await downloadCleanFormPdf(options);
@@ -842,8 +1214,7 @@ export async function downloadFormAsPdf(
       : elementOrId;
 
   if (!element) {
-    console.warn('[exportPdf] Target element not found, falling back to window.print()');
-    window.print();
+    console.error('[exportPdf] Target element not found for PDF export:', elementOrId);
     return;
   }
 
@@ -920,7 +1291,7 @@ export async function downloadFormAsPdf(
     pdf.save(fullFileName);
   } catch (err) {
     console.error('[exportPdf] Failed to generate PDF:', err);
-    window.print();
+    throw err;
   } finally {
     hiddenElements.forEach((el, i) => {
       el.style.display = originalDisplays[i] || '';

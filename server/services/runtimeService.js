@@ -35,7 +35,10 @@ export async function getPublishedFormBySlug(slug) {
     return runtimeCache.get(normalizedSlug);
   }
 
-  const record = await formRepository.getFormBySlug(normalizedSlug);
+  let record = await formRepository.getFormBySlug(normalizedSlug);
+  if (!record) {
+    record = await formRepository.getFormById(normalizedSlug);
+  }
   if (!record) {
     const err = new Error('Form Not Found: The requested form does not exist or has been removed.');
     err.status = 404;

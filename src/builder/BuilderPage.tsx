@@ -12,25 +12,104 @@ import {
   rectIntersection,
 } from '@dnd-kit/core';
 import type { DragStartEvent, DragEndEvent, CollisionDetection } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Plus, Sparkles, FolderPlus, FileSpreadsheet } from 'lucide-react';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { Plus, Sparkles, FolderPlus, FileSpreadsheet, FolderTree, LayoutGrid } from 'lucide-react';
 import { Header } from '../components/header/Header';
 import { SidebarPalette } from '../components/palette/SidebarPalette';
 import { CanvasSection } from '../components/canvas/CanvasSection';
+import { SectionDropZone } from '../components/canvas/DropZones';
 import { PropertyPanel } from '../components/properties/PropertyPanel';
 import { LivePreview } from '../components/preview/LivePreview';
 import { DocumentUploadModal } from '../components/upload/DocumentUploadModal';
 import { PublishDialog } from '../publish/PublishDialog';
 import { useFormStore } from '../store/useFormStore';
-import type { FieldType, FormField } from '../types/schema';
+import type { FieldType, FormField, LayoutRow, LayoutSection } from '../types/schema';
 
-// Custom collision detection strategy that falls back gracefully
+// Hierarchical collision detection prioritizing specific targets for active drag type
 const customCollisionDetection: CollisionDetection = (args) => {
-  const pointerCollisions = pointerWithin(args);
-  if (pointerCollisions.length > 0) {
-    return pointerCollisions;
+  const activeType =
+    args.active.data.current?.type ||
+    (args.active.data.current?.isPaletteItem ? 'palette' : null);
+
+  let collisions = pointerWithin(args);
+  if (collisions.length === 0) {
+    collisions = rectIntersection(args);
   }
-  return rectIntersection(args);
+  if (collisions.length === 0) return [];
+
+  // When dragging a SECTION: only match section drop zones or sections
+  if (activeType === 'section') {
+    const dropZone = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'section-drop-zone'
+    );
+    if (dropZone) return [dropZone];
+
+    const secCollisions = collisions.filter((c) => {
+      const type = c.data?.droppableContainer?.data?.current?.type;
+      return type === 'section' || type === 'section-drop-zone';
+    });
+    return secCollisions.length > 0 ? secCollisions : collisions;
+  }
+
+  // When dragging a ROW: match row drop zones, rows, or empty sections
+  if (activeType === 'row') {
+    const dropZone = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'row-drop-zone'
+    );
+    if (dropZone) return [dropZone];
+
+    const secEmpty = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'section-empty'
+    );
+    if (secEmpty) return [secEmpty];
+
+    const rowCollisions = collisions.filter((c) => {
+      const type = c.data?.droppableContainer?.data?.current?.type;
+      return type === 'row' || type === 'row-drop-zone' || type === 'section-empty';
+    });
+    return rowCollisions.length > 0 ? rowCollisions : collisions;
+  }
+
+  // When dragging a FIELD, PALETTE ITEM, or TABLE CELL FIELD:
+  // Priority: 1. table-cell, 2. table-column-header, 3. field-drop-zone, 4. field, 5. column, 6. row-drop-zone (new row), 7. section-empty
+  if (activeType === 'field' || activeType === 'palette' || activeType === 'table-cell-field') {
+    const tableCell = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'table-cell'
+    );
+    if (tableCell) return [tableCell];
+
+    const tableColHeader = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'table-column-header'
+    );
+    if (tableColHeader) return [tableColHeader];
+
+    const fieldDropZone = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'field-drop-zone'
+    );
+    if (fieldDropZone) return [fieldDropZone];
+
+    const fieldCol = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'field'
+    );
+    if (fieldCol) return [fieldCol];
+
+    const colCol = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'column'
+    );
+    if (colCol) return [colCol];
+
+    const rowDropZone = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'row-drop-zone'
+    );
+    if (rowDropZone) return [rowDropZone];
+
+    const secEmpty = collisions.find(
+      (c) => c.data?.droppableContainer?.data?.current?.type === 'section-empty'
+    );
+    if (secEmpty) return [secEmpty];
+  }
+
+  return collisions;
 };
 
 export function BuilderPage() {
@@ -40,7 +119,17 @@ export function BuilderPage() {
     isPreviewMode,
     addField,
     moveField,
+    moveFieldToNewRow,
+    addFieldToNewRow,
+    addTableCellField,
+    moveTableCellField,
+    moveFieldToTableCell,
+    moveTableCellToCanvas,
+    moveTableCellToNewRow,
+    setTableColumnType,
     addSection,
+    moveSection,
+    moveRow,
     setSelected,
     selectedId,
     setUploadModalOpen,
@@ -66,9 +155,12 @@ export function BuilderPage() {
   }, [formId, loadForm]);
 
   const [activeDragItem, setActiveDragItem] = useState<{
+    type?: 'palette' | 'field' | 'row' | 'section' | 'table-cell-field';
     isPaletteItem?: boolean;
     fieldType?: FieldType;
     field?: FormField;
+    row?: LayoutRow;
+    section?: LayoutSection;
   } | null>(null);
 
   const sensors = useSensors(
@@ -86,13 +178,31 @@ export function BuilderPage() {
     const data = event.active.data.current;
     if (data?.isPaletteItem) {
       setActiveDragItem({
+        type: 'palette',
         isPaletteItem: true,
         fieldType: data.fieldType,
       });
     } else if (data?.type === 'field') {
       setActiveDragItem({
+        type: 'field',
         isPaletteItem: false,
         field: data.field,
+      });
+    } else if (data?.type === 'table-cell-field') {
+      setActiveDragItem({
+        type: 'table-cell-field',
+        isPaletteItem: false,
+        field: data.field,
+      });
+    } else if (data?.type === 'row') {
+      setActiveDragItem({
+        type: 'row',
+        row: data.row,
+      });
+    } else if (data?.type === 'section') {
+      setActiveDragItem({
+        type: 'section',
+        section: data.section,
       });
     }
   };
@@ -106,11 +216,136 @@ export function BuilderPage() {
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    // Determine target column and position
+    // 0. DROP ONTO TABLE CELL
+    if (overData?.type === 'table-cell') {
+      const targetTableId = overData.tableFieldId;
+      const targetRow = overData.rowIndex;
+      const targetColKey = overData.colKey;
+
+      if (activeData?.isPaletteItem && activeData.fieldType) {
+        addTableCellField(targetTableId, targetRow, targetColKey, activeData.fieldType);
+      } else if (activeData?.type === 'table-cell-field') {
+        moveTableCellField(
+          activeData.tableFieldId,
+          activeData.rowIndex,
+          activeData.colKey,
+          targetTableId,
+          targetRow,
+          targetColKey
+        );
+      } else if (activeData?.type === 'field') {
+        moveFieldToTableCell(active.id as string, targetTableId, targetRow, targetColKey);
+      }
+      return;
+    }
+
+    // 0b. DROP ONTO TABLE COLUMN HEADER (to configure column field type)
+    if (overData?.type === 'table-column-header') {
+      const targetTableId = overData.tableFieldId;
+      const targetColKey = overData.colKey;
+
+      if (activeData?.isPaletteItem && activeData.fieldType) {
+        setTableColumnType(targetTableId, targetColKey, activeData.fieldType);
+      } else if (activeData?.type === 'table-cell-field' && activeData.field?.type) {
+        setTableColumnType(targetTableId, targetColKey, activeData.field.type);
+      } else if (activeData?.type === 'field' && activeData.field?.type) {
+        setTableColumnType(targetTableId, targetColKey, activeData.field.type);
+      }
+      return;
+    }
+
+    // 1. REARRANGE SECTION
+    if (activeData?.type === 'section') {
+      const activeSecId = active.id as string;
+      let targetIndex: number | null = null;
+
+      if (overData?.type === 'section-drop-zone') {
+        targetIndex = overData.targetIndex;
+      } else if (overData?.type === 'section') {
+        const overSecId = over.id as string;
+        const overIdx = form.layout.findIndex((s) => s.id === overSecId);
+        if (overIdx !== -1) {
+          targetIndex = overIdx;
+        }
+      }
+
+      if (targetIndex !== null) {
+        moveSection(activeSecId, targetIndex);
+      }
+      return;
+    }
+
+    // 2. REARRANGE ROW (within section or between sections)
+    if (activeData?.type === 'row') {
+      const activeRowId = active.id as string;
+      const sourceSecId = activeData.sectionId;
+
+      if (overData?.type === 'row-drop-zone') {
+        moveRow(sourceSecId, activeRowId, overData.sectionId, overData.targetIndex);
+      } else if (overData?.type === 'row') {
+        const overRowId = over.id as string;
+        for (const sec of form.layout) {
+          const idx = sec.rows.findIndex((r) => r.id === overRowId);
+          if (idx !== -1) {
+            moveRow(sourceSecId, activeRowId, sec.id, idx);
+            break;
+          }
+        }
+      } else if (overData?.type === 'section-empty') {
+        moveRow(sourceSecId, activeRowId, overData.sectionId, 0);
+      }
+      return;
+    }
+
+    // 3. DROP FIELD OR PALETTE ITEM ONTO ROW-DROP-ZONE (Creates a new row with this field)
+    if (overData?.type === 'row-drop-zone') {
+      const targetSecId = overData.sectionId;
+      const targetRowIndex = overData.targetIndex;
+
+      if (activeData?.isPaletteItem && activeData.fieldType) {
+        addFieldToNewRow(activeData.fieldType, targetSecId, targetRowIndex);
+      } else if (activeData?.type === 'field') {
+        moveFieldToNewRow(active.id as string, targetSecId, targetRowIndex);
+      } else if (activeData?.type === 'table-cell-field') {
+        moveTableCellToNewRow(
+          activeData.tableFieldId,
+          activeData.rowIndex,
+          activeData.colKey,
+          targetSecId,
+          targetRowIndex
+        );
+      }
+      return;
+    }
+
+    // 4. DROP FIELD OR PALETTE ITEM ONTO EMPTY SECTION (Creates first row in section)
+    if (overData?.type === 'section-empty') {
+      const targetSecId = overData.sectionId;
+
+      if (activeData?.isPaletteItem && activeData.fieldType) {
+        addFieldToNewRow(activeData.fieldType, targetSecId, 0);
+      } else if (activeData?.type === 'field') {
+        moveFieldToNewRow(active.id as string, targetSecId, 0);
+      } else if (activeData?.type === 'table-cell-field') {
+        moveTableCellToNewRow(
+          activeData.tableFieldId,
+          activeData.rowIndex,
+          activeData.colKey,
+          targetSecId,
+          0
+        );
+      }
+      return;
+    }
+
+    // 5. REARRANGE FIELD OR DROP PALETTE ITEM INTO A COLUMN / FIELD / FIELD-DROP-ZONE
     let targetColId: string | null = null;
     let targetIndex: number | undefined = undefined;
 
-    if (overData?.type === 'column') {
+    if (overData?.type === 'field-drop-zone') {
+      targetColId = overData.columnId;
+      targetIndex = overData.targetIndex;
+    } else if (overData?.type === 'column') {
       targetColId = overData.columnId;
     } else if (overData?.type === 'field') {
       const overFieldId = over.id as string;
@@ -151,6 +386,18 @@ export function BuilderPage() {
       return;
     }
 
+    // Moving an existing field from a table cell to canvas
+    if (activeData?.type === 'table-cell-field') {
+      moveTableCellToCanvas(
+        activeData.tableFieldId,
+        activeData.rowIndex,
+        activeData.colKey,
+        targetColId,
+        targetIndex
+      );
+      return;
+    }
+
     // Moving an existing field
     if (activeData?.type === 'field') {
       const fieldId = active.id as string;
@@ -182,7 +429,7 @@ export function BuilderPage() {
               onClick={() => setSelected(null)}
               className="flex-1 bg-slate-100/70 dark:bg-slate-950/60 overflow-y-auto p-6 md:p-8 flex flex-col items-center select-none transition-colors"
             >
-              <div className="w-full max-w-4xl space-y-6">
+              <div className="w-full max-w-4xl space-y-4">
                 {/* Form Canvas Header Card */}
                 <div
                   onClick={(e) => {
@@ -224,12 +471,22 @@ export function BuilderPage() {
                   </div>
                 </div>
 
-                {/* Sections List */}
-                <div className="space-y-6">
-                  {form.layout.map((section, idx) => (
-                    <CanvasSection key={section.id} section={section} index={idx} />
-                  ))}
-                </div>
+                {/* Sections List with Sortable Context & Drop Zones */}
+                <SortableContext
+                  items={form.layout.map((s) => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {form.layout.length > 0 && <SectionDropZone index={0} />}
+
+                  <div className="space-y-4">
+                    {form.layout.map((section, idx) => (
+                      <div key={section.id} className="space-y-2">
+                        <CanvasSection section={section} index={idx} />
+                        <SectionDropZone index={idx + 1} />
+                      </div>
+                    ))}
+                  </div>
+                </SortableContext>
 
                 {/* Empty Canvas Placeholder */}
                 {form.layout.length === 0 && (
@@ -284,7 +541,7 @@ export function BuilderPage() {
             {/* Right Panel: Properties Inspector */}
             <PropertyPanel />
 
-            {/* Drag Overlay */}
+            {/* Drag Overlay: Visual Ghost Preview */}
             <DragOverlay
               dropAnimation={{
                 sideEffects: defaultDropAnimationSideEffects({
@@ -296,13 +553,45 @@ export function BuilderPage() {
                 }),
               }}
             >
-              {activeDragItem?.isPaletteItem ? (
-                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-xs shadow-2xl ring-2 ring-white/20">
+              {activeDragItem?.type === 'section' && activeDragItem.section ? (
+                <div className="p-4 rounded-2xl bg-white border-2 border-indigo-500 dark:bg-slate-900 shadow-2xl max-w-md ring-4 ring-indigo-500/20 select-none">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+                      <FolderTree className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-white">
+                        {activeDragItem.section.title || 'Untitled Section'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Moving Section ({activeDragItem.section.rows.length} rows)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : activeDragItem?.type === 'row' && activeDragItem.row ? (
+                <div className="p-3.5 rounded-xl bg-white border-2 border-indigo-500 dark:bg-slate-900 shadow-2xl max-w-sm ring-4 ring-indigo-500/20 select-none">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+                      <LayoutGrid className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-slate-900 dark:text-white">
+                        Moving Row ({activeDragItem.row.columns.length} columns)
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {activeDragItem.row.columns.flatMap((c) => c.fieldIds).length} fields inside
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : activeDragItem?.isPaletteItem ? (
+                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-xs shadow-2xl ring-4 ring-blue-500/20 select-none">
                   <Sparkles className="w-4 h-4" />
                   <span>Adding {activeDragItem.fieldType}...</span>
                 </div>
               ) : activeDragItem?.field ? (
-                <div className="p-3.5 rounded-xl bg-white border border-blue-500 dark:bg-slate-900 shadow-2xl text-xs text-slate-800 dark:text-white max-w-xs ring-2 ring-blue-500/40">
+                <div className="p-3.5 rounded-xl bg-white border-2 border-blue-500 dark:bg-slate-900 shadow-2xl text-xs text-slate-800 dark:text-white max-w-xs ring-4 ring-blue-500/20 select-none">
                   <p className="font-semibold text-slate-900 dark:text-slate-200">
                     {activeDragItem.field.label}
                   </p>

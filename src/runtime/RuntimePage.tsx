@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useSearchParams, useLocation, Link } from 'react-router-dom';
-import { Sparkles, AlertTriangle, FileQuestion, Sun, Moon, ArrowLeft, ShieldAlert, Users } from 'lucide-react';
+import { Sparkles, AlertTriangle, FileQuestion, Sun, Moon, ArrowLeft, ShieldAlert, Users, User } from 'lucide-react';
 import { fetchPublishedForm, type PublishedFormResponse } from './runtimeApi';
 import { FormRuntime } from './FormRuntime';
 import type { FormDefinition } from '../types/schema';
+import { fetchStaffDetails, type StaffDetailsResponse } from '../services/userApi';
 
 export const RuntimePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -26,7 +27,26 @@ export const RuntimePage: React.FC = () => {
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  // Safely construct return URL to Patient List preserving department and serviceCenter filters
+  const userIdParam = searchParams.get('user_id') || searchParams.get('userId') || '';
+  const [staffInfo, setStaffInfo] = useState<StaffDetailsResponse | null>(null);
+
+  useEffect(() => {
+    if (!userIdParam) {
+      setStaffInfo(null);
+      return;
+    }
+    let isCancelled = false;
+    fetchStaffDetails(userIdParam)
+      .then((staff) => {
+        if (!isCancelled) setStaffInfo(staff);
+      })
+      .catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, [userIdParam]);
+
+  // Safely construct return URL to Patient List preserving department, serviceCenter, and user_id filters
   const patientListUrl = useMemo(() => {
     // 1. Router state returnUrl from Patient List if available
     const stateReturnUrl = (location.state as { returnUrl?: string })?.returnUrl;
@@ -34,15 +54,19 @@ export const RuntimePage: React.FC = () => {
       return stateReturnUrl;
     }
 
-    // 2. Safe query reconstruction preserving department and serviceCenter filters
+    // 2. Safe query reconstruction preserving department, serviceCenter, and user_id filters
     const params = new URLSearchParams();
     const dept = searchParams.get('department') || searchParams.get('departmentId');
     const sc = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId');
+    const uid = searchParams.get('user_id') || searchParams.get('userId');
     if (dept && dept.trim()) {
       params.set('department', dept.trim());
     }
     if (sc && sc.trim()) {
       params.set('serviceCenter', sc.trim());
+    }
+    if (uid && uid.trim()) {
+      params.set('user_id', uid.trim());
     }
 
     const qs = params.toString();
@@ -153,6 +177,20 @@ export const RuntimePage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {staffInfo && staffInfo.staff_name && (
+            <div
+              id="runtime-staff-context-badge"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200/70 dark:border-blue-800/60 text-xs text-blue-700 dark:text-blue-300 shadow-xs"
+              title={`Logged in staff: ${staffInfo.staff_name} (ID: ${staffInfo.user_id})`}
+            >
+              <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[120px] sm:max-w-[180px]">
+                {staffInfo.staff_name}
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
+          )}
+
           <button
             type="button"
             onClick={toggleTheme}

@@ -15,6 +15,9 @@ import {
   Stethoscope,
   Bed,
   Loader2,
+  Minus,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import {
   fetchPatientSubmittedForms,
@@ -82,6 +85,9 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
   // Navigation mode: 'list' = submission records list, 'detail' = viewing selected form
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
 
+  // Window display mode for historical viewer: 'normal' | 'minimized' | 'maximized'
+  const [windowMode, setWindowMode] = useState<'normal' | 'minimized' | 'maximized'>('normal');
+
   // List state
   const [submissions, setSubmissions] = useState<PatientSubmissionSummary[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
@@ -125,6 +131,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
   useEffect(() => {
     if (isOpen && patient?.mrno) {
       setViewMode('list');
+      setWindowMode('normal');
       setDetailData(null);
       setDetailError(null);
       loadSubmissions();
@@ -135,6 +142,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
   const handleOpenForm = async (sub: PatientSubmissionSummary) => {
     if (!patient?.mrno) return;
     setViewMode('detail');
+    setWindowMode('normal');
     setIsLoadingDetail(true);
     setDetailError(null);
 
@@ -160,9 +168,27 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
   // Back to list view
   const handleBackToList = () => {
     setViewMode('list');
+    setWindowMode('normal');
     setDetailData(null);
     setDetailError(null);
   };
+
+  // Close modal completely and reset window state
+  const handleCloseModal = () => {
+    setWindowMode('normal');
+    onClose();
+  };
+
+  // Prevent background page scrolling while modal is open (except when minimized)
+  useEffect(() => {
+    if (isOpen && windowMode !== 'minimized') {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen, windowMode]);
 
   if (!isOpen || !patient) return null;
 
@@ -336,9 +362,87 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
     );
   };
 
+  // When in detail view and minimized: Render compact floating bar at bottom-right
+  if (viewMode === 'detail' && windowMode === 'minimized') {
+    const recordNumber = detailData?.submission
+      ? String(detailData.submission.recordId || detailData.submission.id)
+      : null;
+    const formTitle = detailData?.submission?.formName || 'Submitted Form';
+
+    return (
+      <aside
+        role="region"
+        aria-label="Minimized Historical Submission Viewer"
+        className="fixed bottom-5 right-5 z-[100] max-w-[92vw] sm:max-w-md w-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl p-2.5 sm:p-3 flex items-center justify-between gap-3 animate-in slide-in-from-bottom-4 duration-200 ring-1 ring-black/5 dark:ring-white/10"
+      >
+        <div
+          onClick={() => setWindowMode('normal')}
+          className="flex items-center gap-2.5 min-w-0 cursor-pointer group flex-1 select-none"
+          title="Click to restore form viewer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20 group-hover:scale-105 transition-transform">
+            <FileText className="w-4 h-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                Historical
+              </span>
+              {recordNumber && (
+                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold">
+                  #{recordNumber}
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {formTitle}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0 pl-1 border-l border-slate-200 dark:border-slate-800">
+          {/* Restore Button */}
+          <button
+            type="button"
+            onClick={() => setWindowMode('normal')}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold transition active:scale-95 cursor-pointer border border-blue-200 dark:border-blue-800/60 shadow-xs"
+            title="Restore form viewer"
+            aria-label="Restore form viewer"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Restore</span>
+          </button>
+
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={handleCloseModal}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+            title="Close viewer"
+            aria-label="Close viewer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
+  const isMaximized = viewMode === 'detail' && windowMode === 'maximized';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center ${
+        isMaximized ? 'p-2 sm:p-3 md:p-4' : 'p-3 sm:p-5'
+      } bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150`}
+    >
+      <div
+        className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden transition-all duration-200 ${
+          isMaximized
+            ? 'w-[98vw] max-w-[98vw] h-[96vh] max-h-[96vh]'
+            : 'max-w-4xl w-full max-h-[92vh]'
+        }`}
+      >
         {/* ========================================================= */}
         {/* VIEW 1: SUBMISSIONS LIST                                   */}
         {/* ========================================================= */}
@@ -400,7 +504,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
                 </button>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleCloseModal}
                   className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                   title="Close modal"
                 >
@@ -528,7 +632,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
               </span>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleCloseModal}
                 className="px-4 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold shadow-xs hover:bg-slate-100 dark:hover:bg-slate-750 transition cursor-pointer"
               >
                 Close
@@ -543,7 +647,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
         {viewMode === 'detail' && (
           <>
             {/* Detail Header */}
-            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 flex flex-col sm:flex-row sm:items-start justify-between gap-4 shrink-0">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
@@ -593,7 +697,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 self-end sm:self-center">
+              <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-center shrink-0">
                 {detailData?.form && (
                   <DownloadPdfButton
                     form={detailData.form}
@@ -608,19 +712,59 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
                     variant="header"
                   />
                 )}
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                  title="Close modal"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+
+                {/* Window Controls: Minimize, Maximize/Restore, Close */}
+                <div className="flex items-center gap-0.5 sm:gap-1 pl-1 sm:pl-2 border-l border-slate-200 dark:border-slate-700">
+                  {/* Minimize Button */}
+                  <button
+                    type="button"
+                    onClick={() => setWindowMode('minimized')}
+                    className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition cursor-pointer"
+                    title="Minimize"
+                    aria-label="Minimize form viewer"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+
+                  {/* Maximize / Restore Button */}
+                  {windowMode === 'maximized' ? (
+                    <button
+                      type="button"
+                      onClick={() => setWindowMode('normal')}
+                      className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition cursor-pointer"
+                      title="Restore down"
+                      aria-label="Restore down"
+                    >
+                      <Minimize2 className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setWindowMode('maximized')}
+                      className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition cursor-pointer"
+                      title="Maximize"
+                      aria-label="Maximize form viewer"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Close Button */}
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="p-2 rounded-xl text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                    title="Close"
+                    aria-label="Close modal"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Read-Only Safety Banner */}
-            <div className="px-6 py-2.5 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/80 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between gap-3">
+            <div className="px-6 py-2.5 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200/80 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
                 <span>
@@ -637,7 +781,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
             </div>
 
             {/* Detail Body: Form Fields and Sections */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 min-h-0 text-xs">
               {isLoadingDetail ? (
                 <div className="py-16 flex flex-col items-center justify-center gap-3 text-slate-500">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -743,7 +887,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
             </div>
 
             {/* Detail Footer */}
-            <div className="p-4 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 flex items-center justify-between">
+            <div className="p-4 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 flex items-center justify-between shrink-0">
               <button
                 type="button"
                 onClick={handleBackToList}
@@ -764,7 +908,7 @@ export const PatientSubmittedFormsModal: React.FC<PatientSubmittedFormsModalProp
                 </button>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleCloseModal}
                   className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs transition cursor-pointer"
                 >
                   Close

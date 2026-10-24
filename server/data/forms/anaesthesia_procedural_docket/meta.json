@@ -3,11 +3,11 @@
   "name": "Anaesthesia Procedural Docket for Surgical / Invasive Procedures",
   "slug": "anaesthesia-procedural-docket-for-surgical-invasive-procedures",
   "status": "published",
-  "currentDraftVersion": 2,
-  "publishedVersion": 1,
+  "currentDraftVersion": 5,
+  "publishedVersion": 4,
   "createdAt": "2026-10-19T11:46:08.568Z",
-  "updatedAt": "2026-10-21T03:55:37.548Z",
-  "publishedAt": "2026-10-19T11:46:08.575Z",
+  "updatedAt": "2026-10-23T12:22:05.924Z",
+  "publishedAt": "2026-10-23T12:22:05.924Z",
   "primaryEntity": "PATIENT",
   "departmentIds": [
     "ALL"

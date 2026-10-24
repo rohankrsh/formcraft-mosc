@@ -23,14 +23,27 @@ export interface FieldOption {
   value: string;
 }
 
+export interface AutoPopulateConfig {
+  autoPopulate?: boolean;
+  dataSource?: 'loggedInUser' | 'patient' | 'system';
+  sourceField?: 'staff_name' | 'user_id' | 'employee_id' | 'login' | 'email' | string;
+  populateWhen?: 'always' | 'empty';
+}
+
 export interface TableColumn {
   id: string;
   key?: string;
   label: string;
-  type?: 'text' | 'number' | 'date' | 'select' | 'heading';
+  type?: FieldType;
   required?: boolean;
   placeholder?: string;
   options?: FieldOption[];
+  fieldId?: string;
+  field?: FormField;
+  autoPopulate?: AutoPopulateConfig | boolean;
+  dataSource?: 'loggedInUser' | 'patient' | 'system';
+  sourceField?: string;
+  populateWhen?: 'always' | 'empty';
 }
 
 export interface TableConfig {
@@ -39,6 +52,7 @@ export interface TableConfig {
   maxRows?: number;
   allowAddRows?: boolean;
   defaultRows?: Record<string, any>[];
+  cellFields?: Record<string, FormField | string>;
 }
 
 export interface ValidationRules {
@@ -83,6 +97,10 @@ export interface FormField {
   validation?: ValidationRules;
   dataBinding?: DataBindingConfig | null;
   optionsBinding?: OptionsBindingConfig | null;
+  autoPopulate?: AutoPopulateConfig | boolean;
+  dataSource?: 'loggedInUser' | 'patient' | 'system';
+  sourceField?: string;
+  populateWhen?: 'always' | 'empty';
   visibleIf?: { fieldId: string; equals: string | number | boolean };
   _needsReview?: boolean;
   _reviewReason?: string;

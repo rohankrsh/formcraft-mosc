@@ -1,0 +1,40 @@
+{
+  "id": "form_1792666150348",
+  "name": "Untitled Form",
+  "slug": "untitled-form",
+  "status": "draft",
+  "currentDraftVersion": 1,
+  "publishedVersion": null,
+  "createdAt": "2026-10-22T11:20:50.425Z",
+  "updatedAt": "2026-10-22T11:20:50.432Z",
+  "publishedAt": null,
+  "primaryEntity": null,
+  "departmentIds": [
+    "ALL"
+  ],
+  "departmentNames": [
+    "All Departments (Organization-wide)"
+  ],
+  "departmentId": "ALL",
+  "departmentName": "All Departments (Organization-wide)",
+  "serviceCenterId": null,
+  "serviceCenterName": null,
+  "permissions": {
+    "canView": [
+      "all"
+    ],
+    "canCreate": [
+      "all"
+    ],
+    "canEdit": [
+      "all"
+    ],
+    "canDesign": [
+      "admin"
+    ],
+    "canPublish": [
+      "admin"
+    ],
+    "anonymousAccess": true
+  }
+}

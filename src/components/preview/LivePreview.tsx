@@ -8,8 +8,6 @@ import {
   Eye,
   FileJson,
   X,
-  Plus,
-  Trash2,
   Database,
   RefreshCw,
   Loader2,
@@ -18,6 +16,7 @@ import { useFormStore } from '../../store/useFormStore';
 import type { FormField } from '../../types/schema';
 import { DownloadPdfButton } from '../common/DownloadPdfButton';
 import { PainAssessmentInput } from '../painAssessment/PainAssessmentInput';
+import { RuntimeTable } from '../../runtime/RuntimeTable';
 
 export const LivePreview: React.FC = () => {
   const { form, setPreviewMode } = useFormStore();
@@ -367,6 +366,30 @@ export const LivePreview: React.FC = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      requestAnimationFrame(() => {
+        for (const section of form.layout || []) {
+          for (const row of section.rows || []) {
+            for (const col of row.columns || []) {
+              for (const fId of col.fieldIds || []) {
+                const f = form.fields[fId];
+                if (f && (newErrors[f.name] || newErrors[f.id])) {
+                  const targetEl =
+                    document.getElementById(`input-${f.id}`) ||
+                    document.getElementById(`field-container-${f.id}`);
+                  if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const inputEl = targetEl.querySelector<HTMLElement>(
+                      'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])'
+                    );
+                    inputEl?.focus?.({ preventScroll: true });
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
       return;
     }
 
@@ -761,7 +784,13 @@ export const LivePreview: React.FC = () => {
                             // Pain Assessment
                             if (field.type === 'pain_assessment') {
                               return (
-                                <div key={field.id} className="w-full">
+                                <div
+                                  key={field.id}
+                                  id={`field-container-${field.id}`}
+                                  data-field-id={field.id}
+                                  data-field-name={field.name}
+                                  className="w-full scroll-mt-24 md:scroll-mt-28"
+                                >
                                   <PainAssessmentInput
                                     value={value}
                                     onChange={(nextVal) => handleInputChange(field, nextVal)}
@@ -792,7 +821,13 @@ export const LivePreview: React.FC = () => {
                             );
 
                             return (
-                              <div key={field.id} className="space-y-1.5">
+                              <div
+                                key={field.id}
+                                id={`field-container-${field.id}`}
+                                data-field-id={field.id}
+                                data-field-name={field.name}
+                                className="space-y-1.5 scroll-mt-24 md:scroll-mt-28"
+                              >
                                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                                   <span>{field.label}</span>
                                   {field.validation?.required && (
@@ -1124,121 +1159,12 @@ export const LivePreview: React.FC = () => {
                                 )}
 
                                 {field.type === 'table' && (
-                                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-                                    <table className="w-full text-left text-xs border-collapse">
-                                      <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-                                          {(field.tableConfig?.columns || []).map((col, cIdx) => (
-                                            <th key={col.id || col.key || cIdx} className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                                              {col.label}
-                                              {col.required && <span className="text-rose-500 ml-0.5">*</span>}
-                                            </th>
-                                          ))}
-                                          {field.tableConfig?.allowAddRows !== false && (
-                                            <th className="px-3 py-2 text-right w-12 font-normal text-slate-400">Action</th>
-                                          )}
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
-                                        {(Array.isArray(value) ? value : []).map((rowObj: any, rowIndex: number) => {
-                                          if (rowObj._isHeader || rowObj._rowType === 'heading') {
-                                            const headerText =
-                                              rowObj._headerText ||
-                                              rowObj[field.tableConfig?.columns?.[0]?.key || field.tableConfig?.columns?.[0]?.id || 'col_1'] ||
-                                              'Section Header';
-                                            return (
-                                              <tr key={rowIndex} className="bg-slate-100/90 dark:bg-slate-900/90 font-bold border-y border-slate-200 dark:border-slate-800">
-                                                <td
-                                                  colSpan={(field.tableConfig?.columns?.length || 0) + (field.tableConfig?.allowAddRows !== false ? 1 : 0)}
-                                                  className="px-3 py-2 text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider font-bold"
-                                                >
-                                                  {headerText}
-                                                </td>
-                                              </tr>
-                                            );
-                                          }
-
-                                          return (
-                                            <tr key={rowIndex} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
-                                              {(field.tableConfig?.columns || []).map((col, cIdx) => {
-                                                const colKey = col.key || col.id || `col_${cIdx}`;
-                                                const isCellHeader =
-                                                  (Array.isArray(rowObj._headerCols) && rowObj._headerCols.includes(colKey)) ||
-                                                  col.type === 'heading';
-                                                const cellVal = rowObj[colKey] ?? '';
-
-                                                if (isCellHeader) {
-                                                  return (
-                                                    <td key={colKey} className="px-2 py-1.5">
-                                                      <div className="px-2 py-1 font-semibold text-xs text-slate-800 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-850/80 rounded border border-slate-200/80 dark:border-slate-700/60">
-                                                        {cellVal || <span className="text-slate-400 italic font-normal">{col.label}</span>}
-                                                      </div>
-                                                    </td>
-                                                  );
-                                                }
-
-                                                return (
-                                                  <td key={colKey} className="px-2 py-1.5">
-                                                    <input
-                                                      type={col.type === 'number' ? 'number' : col.type === 'date' ? 'date' : 'text'}
-                                                      value={cellVal}
-                                                      placeholder={col.label}
-                                                      onChange={(e) => {
-                                                        const rows = Array.isArray(value) ? [...value] : [];
-                                                        rows[rowIndex] = {
-                                                          ...rows[rowIndex],
-                                                          [colKey]: col.type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value,
-                                                        };
-                                                        handleInputChange(field, rows);
-                                                      }}
-                                                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                                                    />
-                                                  </td>
-                                                );
-                                              })}
-                                              {field.tableConfig?.allowAddRows !== false && (
-                                                <td className="px-2 py-1.5 text-right">
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                      const rows = Array.isArray(value) ? [...value] : [];
-                                                      rows.splice(rowIndex, 1);
-                                                      handleInputChange(field, rows);
-                                                    }}
-                                                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                                                    title="Delete Row"
-                                                  >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                  </button>
-                                                </td>
-                                              )}
-                                            </tr>
-                                          );
-                                        })}
-                                      </tbody>
-                                    </table>
-                                    {field.tableConfig?.allowAddRows !== false && (
-                                      <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex justify-start">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const rows = Array.isArray(value) ? [...value] : [];
-                                            const emptyRow: Record<string, any> = {};
-                                            (field.tableConfig?.columns || []).forEach((c, cIdx) => {
-                                              const colKey = c.key || c.id || `col_${cIdx}`;
-                                              emptyRow[colKey] = '';
-                                            });
-                                            rows.push(emptyRow);
-                                            handleInputChange(field, rows);
-                                          }}
-                                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium py-1 px-2"
-                                        >
-                                          <Plus className="w-3 h-3" />
-                                          <span>Add Row</span>
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
+                                  <RuntimeTable
+                                    field={field}
+                                    value={Array.isArray(value) ? value : []}
+                                    onChange={(rows) => handleInputChange(field, rows)}
+                                    errors={errors}
+                                  />
                                 )}
 
                                 {field.helpText && (

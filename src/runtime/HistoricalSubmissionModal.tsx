@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Calendar, User, Hash, Printer, ShieldAlert } from 'lucide-react';
 import type { FormDefinition, FormField, FormSubmissionRecord } from '../types/schema';
 import { PainFaceIcon, getPainScaleItem } from '../components/painAssessment/PainScaleData';
+import { DownloadPdfButton } from '../components/common/DownloadPdfButton';
 
 interface HistoricalSubmissionModalProps {
   isOpen: boolean;
@@ -273,6 +274,18 @@ export const HistoricalSubmissionModal: React.FC<HistoricalSubmissionModalProps>
           </span>
 
           <div className="flex items-center gap-2">
+            <DownloadPdfButton
+              form={form}
+              formData={data}
+              metadata={{
+                recordId: submission.recordId || submission.id,
+                mrno: submission.mrno || submission.patientId,
+                submittedAt: submission.submittedAt,
+                submittedBy: submission.submittedBy,
+              }}
+              formTitle={form.title}
+              variant="header"
+            />
             <button
               type="button"
               onClick={() => window.print()}

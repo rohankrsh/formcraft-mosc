@@ -28,6 +28,69 @@ import {
   fetchHistoricalSubmission,
   submitFormPersistence,
 } from './runtimeApi';
+import { fetchStaffDetails, type StaffDetailsResponse } from '../services/userApi';
+import { isStaffNameColumn } from './RuntimeTable';
+
+/**
+ * Determines whether a FormField should be auto-populated with the logged-in staff display name.
+ * Respects explicit autoPopulate schema configuration and provides intelligent semantic matching
+ * for hospital nursing/staff assessment fields. Signature fields are strictly protected.
+ */
+export function isStaffNameField(field: FormField): boolean {
+  // 1. Explicit autoPopulate object configuration
+  if (field.autoPopulate && typeof field.autoPopulate === 'object') {
+    if (field.autoPopulate.autoPopulate !== false) {
+      if (
+        (field.autoPopulate.dataSource === 'loggedInUser' || !field.autoPopulate.dataSource) &&
+        (field.autoPopulate.sourceField === 'staff_name' || !field.autoPopulate.sourceField)
+      ) {
+        return true;
+      }
+    }
+  }
+
+  // 2. Direct property configuration
+  if (
+    field.autoPopulate === true ||
+    (field.dataSource === 'loggedInUser' && (field.sourceField === 'staff_name' || !field.sourceField))
+  ) {
+    return true;
+  }
+
+  // 3. Intelligent fallback heuristic for standard clinical nurse/staff name fields
+  // Target field A: Nursing Assessment -> "Assessment Completed by Staff Nurse (Name)"
+  const labelLower = (field.label || '').toLowerCase().trim();
+  const nameLower = (field.name || '').toLowerCase().trim();
+  const idLower = (field.id || '').toLowerCase().trim();
+
+  // Explicitly protect signatures from being treated as text staff names
+  if (
+    labelLower === 'sign' ||
+    labelLower === 'signature' ||
+    nameLower === 'nurse_sign' ||
+    nameLower === 'sign' ||
+    idLower === 'fld_nurse_sign' ||
+    idLower.includes('sign')
+  ) {
+    return false;
+  }
+
+  // Check matching labels/names
+  if (
+    labelLower === 'assessment completed by staff nurse (name)' ||
+    labelLower.includes('staff nurse (name)') ||
+    labelLower.includes('staff nurse name') ||
+    labelLower === 'nurse name' ||
+    labelLower === 'staff name' ||
+    nameLower === 'nurse_name' ||
+    nameLower === 'staff_name' ||
+    idLower === 'fld_nurse_name'
+  ) {
+    return true;
+  }
+
+  return false;
+}
 
 interface FormRuntimeProps {
   slug: string;
@@ -151,10 +214,52 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
   const [primaryKeyInput, setPrimaryKeyInput] = useState('');
   const [isFetchingRecord, setIsFetchingRecord] = useState(false);
 
-  // Parse current MRNO from URL
+  // Parse current MRNO and user_id from URL
   const params = new URLSearchParams(window.location.search);
   const mrnoParam = params.get('mrno');
   const normalizedMrno = mrnoParam?.trim() || '';
+  const userIdParam = params.get('user_id') || params.get('userId') || '';
+
+  // Logged-in Staff details context
+  const [staffContext, setStaffContext] = useState<StaffDetailsResponse | null>(null);
+  const [isStaffLoading, setIsStaffLoading] = useState(false);
+
+  // Fetch staff details from Oracle via /api/users/:userId/staff-details
+  useEffect(() => {
+    if (!userIdParam) {
+      setStaffContext(null);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsStaffLoading(true);
+
+    fetchStaffDetails(userIdParam)
+      .then((details) => {
+        if (!isCancelled) {
+          if (details && details.staff_name) {
+            setStaffContext(details);
+          } else {
+            setStaffContext(null);
+          }
+        }
+      })
+      .catch((err) => {
+        if (!isCancelled) {
+          console.warn('[FormRuntime] Could not load staff details:', err.message);
+          setStaffContext(null);
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsStaffLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [userIdParam]);
 
   // Initialize form default values
   const initDefaults = useCallback(() => {
@@ -163,9 +268,28 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
       const key = field.name || field.id;
       let val: any = '';
       if (field.type === 'table') {
-        val = field.tableConfig?.defaultRows
+        let initialRows = field.tableConfig?.defaultRows
           ? JSON.parse(JSON.stringify(field.tableConfig.defaultRows))
           : [];
+        // Default rows in table: populate empty staff name columns if staffContext is available
+        if (staffContext?.staff_name && Array.isArray(initialRows)) {
+          const columns = field.tableConfig?.columns || [];
+          initialRows = initialRows.map((row: any) => {
+            const updatedRow = { ...row };
+            for (const col of columns) {
+              if (isStaffNameColumn(col)) {
+                const colKey = col.key || col.id;
+                if (!updatedRow[colKey] || String(updatedRow[colKey]).trim() === '') {
+                  updatedRow[colKey] = staffContext.staff_name;
+                }
+              }
+            }
+            return updatedRow;
+          });
+        }
+        val = initialRows;
+      } else if (staffContext?.staff_name && isStaffNameField(field)) {
+        val = staffContext.staff_name;
       } else if (field.defaultValue !== undefined) {
         val = field.defaultValue;
       } else if (field.type === 'checkbox' && (field.options?.length || 0) > 0) {
@@ -184,11 +308,77 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
     setCurrentSubmissionId(null);
     setSubmitSuccess(null);
     setServerError(null);
-  }, [form]);
+  }, [form, staffContext]);
 
   useEffect(() => {
     initDefaults();
   }, [initDefaults]);
+
+  // Auto-populate logged-in staff fields when staff details finish loading
+  // Strictly protects user-entered values from being overwritten (populateWhen: "empty")
+  useEffect(() => {
+    if (!staffContext?.staff_name) return;
+
+    setFormData((prev) => {
+      let hasChanges = false;
+      const next = { ...prev };
+      const fieldsList: FormField[] = Array.isArray(form.fields)
+        ? form.fields
+        : Object.values(form.fields || {});
+
+      for (const field of fieldsList) {
+        // Target Field A: Nursing assessment nurse name or configured loggedInUser field
+        if (isStaffNameField(field)) {
+          const key = field.name || field.id;
+          const currentVal = next[key] ?? next[field.id];
+          const isEmpty = currentVal === undefined || currentVal === null || String(currentVal).trim() === '';
+          if (isEmpty) {
+            next[key] = staffContext.staff_name;
+            next[field.id] = staffContext.staff_name;
+            if (field.name) {
+              next[field.name] = staffContext.staff_name;
+            }
+            hasChanges = true;
+          }
+        }
+
+        // Target Field B: Table fields default empty rows
+        if (field.type === 'table') {
+          const key = field.name || field.id;
+          const currentRows = next[key] ?? next[field.id];
+          if (Array.isArray(currentRows) && currentRows.length > 0) {
+            const columns = field.tableConfig?.columns || [];
+            let tableChanged = false;
+            const updatedRows = currentRows.map((row) => {
+              const updatedRow = { ...row };
+              for (const col of columns) {
+                if (isStaffNameColumn(col)) {
+                  const colKey = col.key || col.id;
+                  const currentCell = updatedRow[colKey];
+                  const isCellEmpty = currentCell === undefined || currentCell === null || String(currentCell).trim() === '';
+                  if (isCellEmpty) {
+                    updatedRow[colKey] = staffContext.staff_name;
+                    tableChanged = true;
+                  }
+                }
+              }
+              return updatedRow;
+            });
+            if (tableChanged) {
+              next[key] = updatedRows;
+              next[field.id] = updatedRows;
+              if (field.name) {
+                next[field.name] = updatedRows;
+              }
+              hasChanges = true;
+            }
+          }
+        }
+      }
+
+      return hasChanges ? next : prev;
+    });
+  }, [staffContext, form.fields]);
 
   const [runningQueryId, setRunningQueryId] = useState<string | null>(null);
 
@@ -535,6 +725,18 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
     });
   }, [form.sqlQueries, runSqlQuery]);
 
+  // Automatically scroll to submission success banner upon successful backend submission
+  useEffect(() => {
+    if (submitSuccess) {
+      requestAnimationFrame(() => {
+        const successBanner = document.getElementById('submit-success-banner');
+        if (successBanner) {
+          scrollToElementAndFocus(successBanner, 'start');
+        }
+      });
+    }
+  }, [submitSuccess]);
+
   // Handle value change for any field
   const handleFieldChange = (field: FormField, val: any) => {
     const key = field.name || field.id;
@@ -615,8 +817,176 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
     }
   };
 
+  // Helper to locate the first invalid field or table cell element strictly in the visual order of the form
+  const findFirstInvalidElement = (
+    validationErrors: Record<string, string>,
+    currentFormData: Record<string, any>
+  ): HTMLElement | null => {
+    if (!validationErrors || Object.keys(validationErrors).length === 0) return null;
+
+    // 1. Traverse sections, rows, columns, and fields in visual rendered order
+    for (const section of form.layout || []) {
+      for (const row of section.rows || []) {
+        for (const col of row.columns || []) {
+          for (const fieldId of col.fieldIds || []) {
+            const field = form.fields?.[fieldId];
+            if (!field) continue;
+
+            // Check visibleIf condition
+            if (field.visibleIf && field.visibleIf.fieldId) {
+              const depVal = currentFormData[field.visibleIf.fieldId];
+              if (String(depVal) !== String(field.visibleIf.equals)) {
+                continue;
+              }
+            }
+
+            const fieldKey = field.name || field.id;
+
+            // If table field, check row by row and cell by cell in visual order
+            if (field.type === 'table') {
+              const tableConfig = field.tableConfig;
+              const columns = tableConfig?.columns || [];
+              const rows = Array.isArray(currentFormData[fieldKey] ?? currentFormData[field.id])
+                ? currentFormData[fieldKey] ?? currentFormData[field.id]
+                : [];
+
+              for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+                for (let cIdx = 0; cIdx < columns.length; cIdx++) {
+                  const colKey = columns[cIdx].key || columns[cIdx].id || `col_${cIdx}`;
+                  const cellRef1 = `${fieldKey}.${rIdx}.${colKey}`;
+                  const cellRef2 = `${field.id}.${rIdx}.${colKey}`;
+                  const cellRef3 = `${rIdx}_${colKey}`;
+
+                  if (validationErrors[cellRef1] || validationErrors[cellRef2] || validationErrors[cellRef3]) {
+                    const cellInput =
+                      document.getElementById(`input-${field.id}-${rIdx}-${colKey}`) ||
+                      document.getElementById(`table-cell-${field.id}-${rIdx}-${colKey}`);
+                    if (cellInput) return cellInput;
+                  }
+                }
+              }
+
+              // Table as a whole has an error (e.g. required table with 0 rows)
+              if (
+                validationErrors[fieldKey] ||
+                validationErrors[field.id] ||
+                (field.name && validationErrors[field.name])
+              ) {
+                const tableContainer =
+                  document.getElementById(`field-container-${field.id}`) ||
+                  document.querySelector(`[data-field-id="${field.id}"]`);
+                if (tableContainer) return tableContainer as HTMLElement;
+              }
+            } else {
+              // Standard field or pain assessment
+              if (
+                validationErrors[fieldKey] ||
+                validationErrors[field.id] ||
+                (field.name && validationErrors[field.name])
+              ) {
+                const inputEl =
+                  document.getElementById(`input-${field.id}`) ||
+                  document.getElementById(`field-container-${field.id}`) ||
+                  document.querySelector(
+                    `[data-field-id="${field.id}"] input:not([disabled]), [data-field-id="${field.id}"] textarea:not([disabled]), [data-field-id="${field.id}"] select:not([disabled]), [data-field-id="${field.id}"] button:not([disabled])`
+                  ) ||
+                  document.querySelector(`[data-field-id="${field.id}"]`);
+                if (inputEl) return inputEl as HTMLElement;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Fallback: Search by keys in validationErrors in order
+    for (const errKey of Object.keys(validationErrors)) {
+      const cellMatch = errKey.match(/^(.+)\.(\d+)\.(.+)$/);
+      if (cellMatch) {
+        const [, fKey, rIdx, cKey] = cellMatch;
+        const targetField = Object.values(form.fields || {}).find(
+          (f) => f.name === fKey || f.id === fKey
+        );
+        const fId = targetField?.id || fKey;
+        const cellEl =
+          document.getElementById(`input-${fId}-${rIdx}-${cKey}`) ||
+          document.getElementById(`table-cell-${fId}-${rIdx}-${cKey}`);
+        if (cellEl) return cellEl;
+      }
+
+      const targetField = Object.values(form.fields || {}).find(
+        (f) => f.name === errKey || f.id === errKey
+      );
+      const fId = targetField?.id || errKey;
+      const directEl =
+        document.getElementById(`input-${fId}`) ||
+        document.getElementById(`field-container-${fId}`) ||
+        document.querySelector(`[data-field-id="${fId}"]`) ||
+        document.querySelector(`[data-field-name="${errKey}"]`);
+      if (directEl) return directEl as HTMLElement;
+    }
+
+    return null;
+  };
+
+  // Helper to scroll smoothly with sticky header offset and focus element
+  const scrollToElementAndFocus = (
+    element: HTMLElement,
+    blockPosition: ScrollLogicalPosition = 'start'
+  ) => {
+    // Scroll container with scroll-mt if available so element is positioned cleanly below sticky header
+    const containerToScroll =
+      element.closest<HTMLElement>('.scroll-mt-24') ||
+      element.closest<HTMLElement>('[data-field-id]') ||
+      element;
+
+    containerToScroll.scrollIntoView({
+      behavior: 'smooth',
+      block: blockPosition,
+    });
+
+    // Find and focus the interactive element without disrupting smooth scroll position
+    const focusable =
+      element.matches(
+        'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+        ? element
+        : element.querySelector<HTMLElement>(
+            'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          ) ||
+          (containerToScroll.matches(
+            'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+            ? containerToScroll
+            : containerToScroll.querySelector<HTMLElement>(
+                'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+              ));
+
+    if (focusable) {
+      try {
+        focusable.focus({ preventScroll: true });
+      } catch {
+        // Safe focus fallback
+      }
+    }
+  };
+
+  const scrollToFirstError = (validationErrors: Record<string, string>) => {
+    requestAnimationFrame(() => {
+      const el = findFirstInvalidElement(validationErrors, formData);
+      if (el) {
+        scrollToElementAndFocus(el, 'start');
+      } else {
+        const errBanner = document.getElementById('server-error-banner');
+        if (errBanner) {
+          scrollToElementAndFocus(errBanner, 'start');
+        }
+      }
+    });
+  };
+
   // Client-side validation
-  const validate = (): boolean => {
+  const validate = (): { valid: boolean; errors: Record<string, string> } => {
     const newErrors: Record<string, string> = {};
     for (const field of Object.values(form.fields || {})) {
       if (field.type === 'heading' || field.type === 'divider') continue;
@@ -629,7 +999,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
       }
 
       const key = field.name || field.id;
-      const val = formData[key];
+      const val = formData[key] !== undefined ? formData[key] : formData[field.id];
       const rules = field.validation || {};
 
       if (rules.required) {
@@ -652,7 +1022,73 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
         }
       }
 
+      // Check table required columns in each row
+      if (field.type === 'table') {
+        const tableConfig = field.tableConfig;
+        const columns = tableConfig?.columns || [];
+        const rows = Array.isArray(val) ? val : [];
+
+        for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+          const rowObj = rows[rIdx] || {};
+          if (rowObj._isHeader || rowObj._rowType === 'heading') continue;
+
+          for (let cIdx = 0; cIdx < columns.length; cIdx++) {
+            const col = columns[cIdx];
+            const colKey = col.key || col.id || `col_${cIdx}`;
+            const cellKey = `${rIdx}_${colKey}`;
+            const cellFieldRef = tableConfig?.cellFields?.[cellKey];
+            const cellField: FormField | null =
+              cellFieldRef && typeof cellFieldRef === 'object' && 'type' in cellFieldRef
+                ? (cellFieldRef as FormField)
+                : null;
+
+            const isColRequired = Boolean(col.required || cellField?.validation?.required);
+            if (isColRequired) {
+              const cellVal = rowObj[colKey];
+              let isCellEmpty =
+                cellVal === undefined ||
+                cellVal === null ||
+                cellVal === '' ||
+                (Array.isArray(cellVal) && cellVal.length === 0);
+
+              const effType = cellField?.type || col.type || 'text';
+              if (!isCellEmpty && effType === 'time') {
+                const str = String(cellVal || '').trim();
+                const parts = str.split(' ');
+                const [hh, mm] = (parts[0] || '').split(':');
+                const period = parts[1];
+                if (!hh || !mm || !period) {
+                  isCellEmpty = true;
+                }
+              }
+
+              if (isCellEmpty) {
+                const cellErrKey = `${key}.${rIdx}.${colKey}`;
+                newErrors[cellErrKey] = `${col.label || 'This cell'} is required.`;
+              }
+            }
+          }
+        }
+      }
+
       if (val === undefined || val === null || val === '') continue;
+
+      if (field.type === 'time') {
+        const str = String(val || '').trim();
+        const parts = str.split(' ');
+        const [hh, mm] = (parts[0] || '').split(':');
+        const period = parts[1];
+        if (rules.required && (!hh || !mm || !period)) {
+          newErrors[key] = rules.customErrorMessage || `${field.label} is required.`;
+        }
+      }
+
+      if (field.type === 'date') {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) {
+          newErrors[key] = 'Must be a valid date.';
+        }
+      }
 
       if (field.type === 'number') {
         const num = Number(val);
@@ -692,7 +1128,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return { valid: Object.keys(newErrors).length === 0, errors: newErrors };
   };
 
   // Submit Handler with Transactional Persistence (Feature E)
@@ -701,8 +1137,10 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
     setServerError(null);
     setNoticeMessage(null);
 
-    if (!validate()) {
+    const valResult = validate();
+    if (!valResult.valid) {
       setServerError('Please correct the highlighted errors before submitting.');
+      scrollToFirstError(valResult.errors);
       return;
     }
 
@@ -714,7 +1152,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
         isUpdate: isEditMode && !!currentRecordId,
         recordId: currentRecordId,
         submissionId: currentSubmissionId,
-        submittedBy: 'Clinician',
+        submittedBy: staffContext?.staff_name || 'Clinician',
       });
 
       if (patientFormMode === 'CONTINUE_EXISTING') {
@@ -744,11 +1182,19 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
         refreshHistory();
       }
     } catch (err: any) {
-      if (err.validationErrors) {
+      if (err.validationErrors && Object.keys(err.validationErrors).length > 0) {
         setErrors(err.validationErrors);
         setServerError('Server validation failed. Please check the highlighted form values.');
+        scrollToFirstError(err.validationErrors);
       } else {
-        setServerError(err.message || 'Unable to save record to Oracle Database.');
+        const errorMsg = err.message || 'Unable to save record to Oracle Database.';
+        setServerError(errorMsg);
+        requestAnimationFrame(() => {
+          const errBanner = document.getElementById('server-error-banner');
+          if (errBanner) {
+            scrollToElementAndFocus(errBanner, 'start');
+          }
+        });
       }
     } finally {
       setIsSubmitting(false);
@@ -842,6 +1288,25 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     <User className="w-3 h-3 text-slate-400" />
                     MRNO: {normalizedMrno}
+                  </span>
+                )}
+
+                {isStaffLoading && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50/70 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50 animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+                    <span>Loading staff...</span>
+                  </span>
+                )}
+
+                {staffContext && staffContext.staff_name && (
+                  <span
+                    id="form-runtime-staff-chip"
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800 shadow-2xs"
+                    title={`Logged in Staff: ${staffContext.staff_name} (HIS ID: ${staffContext.user_id})`}
+                  >
+                    <User className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                    <span>Staff: {staffContext.staff_name}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
                   </span>
                 )}
               </div>
@@ -1059,7 +1524,11 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Notice Message */}
         {noticeMessage && (
-          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs animate-in fade-in no-print">
+          <div
+            id="notice-message-banner"
+            tabIndex={-1}
+            className="flex items-center gap-2.5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs animate-in fade-in no-print scroll-mt-24 md:scroll-mt-28 outline-none focus:ring-2 focus:ring-emerald-500/40"
+          >
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span>{noticeMessage}</span>
           </div>
@@ -1067,7 +1536,12 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Server Error Banner */}
         {serverError && (
-          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs animate-in fade-in no-print">
+          <div
+            id="server-error-banner"
+            tabIndex={-1}
+            aria-live="assertive"
+            className="flex items-center gap-2.5 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs animate-in fade-in no-print scroll-mt-24 md:scroll-mt-28 outline-none focus:ring-2 focus:ring-rose-500/40"
+          >
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
             <span>{serverError}</span>
           </div>
@@ -1075,7 +1549,12 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
         {/* Form Submission Success Banner / Notice */}
         {submitSuccess && (
-          <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs space-y-3 animate-in fade-in no-print">
+          <div
+            id="submit-success-banner"
+            tabIndex={-1}
+            aria-live="polite"
+            className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs space-y-3 animate-in fade-in no-print scroll-mt-24 md:scroll-mt-28 outline-none focus:ring-2 focus:ring-emerald-500/40"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -1144,6 +1623,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
               onChange={handleFieldChange}
               onFetchRecord={handleFetchRecord}
               disabled={isSubmitting}
+              staffContext={staffContext}
             />
           ))}
         </div>

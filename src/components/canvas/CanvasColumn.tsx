@@ -4,6 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Sliders } from 'lucide-react';
 import type { LayoutColumn, FormField } from '../../types/schema';
 import { CanvasFieldItem } from './CanvasFieldItem';
+import { FieldDropZone } from './DropZones';
 import { useFormStore } from '../../store/useFormStore';
 
 interface CanvasColumnProps {
@@ -89,18 +90,34 @@ export const CanvasColumn: React.FC<CanvasColumnProps> = ({
 
       {/* Sortable Field Items Container */}
       <SortableContext items={column.fieldIds} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 space-y-2.5">
-          {column.fieldIds.map((fieldId) => {
+        <div className="flex-1 space-y-1.5">
+          {column.fieldIds.length > 0 && (
+            <FieldDropZone
+              columnId={column.id}
+              sectionId={sectionId}
+              rowId={rowId}
+              targetIndex={0}
+            />
+          )}
+
+          {column.fieldIds.map((fieldId, fIdx) => {
             const field: FormField | undefined = form.fields[fieldId];
             if (!field) return null;
             return (
-              <CanvasFieldItem
-                key={field.id}
-                field={field}
-                sectionId={sectionId}
-                rowId={rowId}
-                columnId={column.id}
-              />
+              <React.Fragment key={field.id}>
+                <CanvasFieldItem
+                  field={field}
+                  sectionId={sectionId}
+                  rowId={rowId}
+                  columnId={column.id}
+                />
+                <FieldDropZone
+                  columnId={column.id}
+                  sectionId={sectionId}
+                  rowId={rowId}
+                  targetIndex={fIdx + 1}
+                />
+              </React.Fragment>
             );
           })}
 
@@ -108,7 +125,7 @@ export const CanvasColumn: React.FC<CanvasColumnProps> = ({
             <div
               className={`h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all ${
                 isOver
-                  ? 'border-blue-400 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
+                  ? 'border-blue-400 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300 ring-2 ring-blue-500/30'
                   : 'border-slate-300 text-slate-400 dark:border-slate-800 dark:text-slate-500 hover:border-slate-400'
               }`}
             >
