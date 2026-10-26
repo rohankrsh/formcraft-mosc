@@ -20,9 +20,12 @@ import {
   Check,
   Search,
   Globe,
+  Lock,
+  User,
 } from 'lucide-react';
 import { useFormStore } from '../../store/useFormStore';
 import type { FormField, FieldOption, FormTheme, TableColumn, OracleBindType, DataBindingMode, SqlQueryDefinition } from '../../types/schema';
+import { resolveStaffColumnMapping, resolveStaffFieldMapping } from '../../utils/staffFieldHelper';
 import { SqlQueryEditorModal } from '../database/SqlQueryEditorModal';
 import {
   fetchAllowlistedTables,
@@ -1512,54 +1515,157 @@ export const PropertyPanel: React.FC = () => {
             </div>
 
             <div className="space-y-2.5">
-              {(field.tableConfig?.columns || []).map((col, idx) => (
-                <div key={col.key || idx} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-850/60 dark:border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between gap-1.5">
-                    <input
-                      type="text"
-                      value={col.label}
-                      placeholder="Column Header"
-                      onChange={(e) => handleUpdateTableColumn(idx, { label: e.target.value })}
-                      className="flex-1 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-blue-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteTableColumn(idx)}
-                      disabled={(field.tableConfig?.columns?.length || 0) <= 1}
-                      className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-30 disabled:hover:text-slate-400"
-                      title="Delete Column"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={col.type}
-                      onChange={(e) => handleUpdateTableColumn(idx, { type: e.target.value as any })}
-                      className="flex-1 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-700 rounded px-2 py-1 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none"
-                    >
-                      <option value="text">Text Cell</option>
-                      <option value="number">Number Cell</option>
-                      <option value="date">Date Cell</option>
-                      <option value="time">Time Cell</option>
-                      <option value="textarea">Textarea Cell</option>
-                      <option value="select">Dropdown / Select</option>
-                      <option value="checkbox">Checkbox</option>
-                      <option value="radio">Radio Group</option>
-                      <option value="heading">Heading / Fixed Label</option>
-                    </select>
-                    <label className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer">
+              {(field.tableConfig?.columns || []).map((col, idx) => {
+                const staffRes = resolveStaffColumnMapping(col);
+                const colAutoPop = typeof col.autoPopulate === 'object' && col.autoPopulate !== null ? col.autoPopulate : null;
+                const isColExplicitlyDisabled = col.autoPopulate === false || (colAutoPop && colAutoPop.autoPopulate === false) || col.dataSource === 'none';
+                const isColStaff = !isColExplicitlyDisabled && (col.dataSource === 'loggedInUser' || colAutoPop?.dataSource === 'loggedInUser' || col.autoPopulate === true || staffRes.isStaffField);
+                const isColLocked = col.readOnly !== false && (colAutoPop ? colAutoPop.readOnly !== false : (col.readOnly !== undefined ? col.readOnly : staffRes.isLocked));
+                const currentSourceField = col.sourceField || colAutoPop?.sourceField || (staffRes.isStaffField ? staffRes.sourceField : 'staff_name');
+
+                return (
+                  <div key={col.key || idx} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-850/60 dark:border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between gap-1.5">
                       <input
-                        type="checkbox"
-                        checked={Boolean(col.required)}
-                        onChange={(e) => handleUpdateTableColumn(idx, { required: e.target.checked })}
-                        className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
+                        type="text"
+                        value={col.label}
+                        placeholder="Column Header"
+                        onChange={(e) => handleUpdateTableColumn(idx, { label: e.target.value })}
+                        className="flex-1 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-blue-500"
                       />
-                      <span>Req</span>
-                    </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTableColumn(idx)}
+                        disabled={(field.tableConfig?.columns?.length || 0) <= 1}
+                        className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-30 disabled:hover:text-slate-400"
+                        title="Delete Column"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={col.type}
+                        onChange={(e) => handleUpdateTableColumn(idx, { type: e.target.value as any })}
+                        className="flex-1 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-700 rounded px-2 py-1 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none"
+                      >
+                        <option value="text">Text Cell</option>
+                        <option value="number">Number Cell</option>
+                        <option value="date">Date Cell</option>
+                        <option value="time">Time Cell</option>
+                        <option value="textarea">Textarea Cell</option>
+                        <option value="select">Dropdown / Select</option>
+                        <option value="checkbox">Checkbox</option>
+                        <option value="radio">Radio Group</option>
+                        <option value="heading">Heading / Fixed Label</option>
+                      </select>
+                      <label className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(col.required)}
+                          onChange={(e) => handleUpdateTableColumn(idx, { required: e.target.checked })}
+                          className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
+                        />
+                        <span>Req</span>
+                      </label>
+                    </div>
+                    <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5 text-[10px]">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-1 text-slate-600 dark:text-slate-400 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isColStaff}
+                            onChange={(e) => {
+                              const isStaff = e.target.checked;
+                              if (isStaff) {
+                                handleUpdateTableColumn(idx, {
+                                  dataSource: 'loggedInUser',
+                                  sourceField: currentSourceField,
+                                  readOnly: true,
+                                  autoPopulate: {
+                                    dataSource: 'loggedInUser',
+                                    sourceField: currentSourceField,
+                                    autoPopulate: true,
+                                    readOnly: true,
+                                    populateWhen: 'empty',
+                                  },
+                                });
+                              } else {
+                                handleUpdateTableColumn(idx, {
+                                  dataSource: undefined,
+                                  sourceField: undefined,
+                                  autoPopulate: false,
+                                  readOnly: false,
+                                });
+                              }
+                            }}
+                            className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
+                          />
+                          <span className="font-medium">Staff Auto-Fill</span>
+                        </label>
+                        {isColStaff && (
+                          <label className="flex items-center gap-1 text-slate-600 dark:text-slate-400 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isColLocked}
+                              onChange={(e) => {
+                                const isRo = e.target.checked;
+                                handleUpdateTableColumn(idx, {
+                                  readOnly: isRo,
+                                  autoPopulate: {
+                                    ...(colAutoPop || {}),
+                                    dataSource: 'loggedInUser',
+                                    sourceField: currentSourceField,
+                                    autoPopulate: true,
+                                    readOnly: isRo,
+                                    populateWhen: colAutoPop?.populateWhen || 'empty',
+                                  },
+                                });
+                              }}
+                              className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
+                            />
+                            <span className="flex items-center gap-0.5">
+                              <Lock className="w-2.5 h-2.5" />
+                              Locked
+                            </span>
+                          </label>
+                        )}
+                      </div>
+                      {isColStaff && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-slate-400">Field:</span>
+                          <select
+                            value={currentSourceField}
+                            onChange={(e) => {
+                              const sf = e.target.value;
+                              handleUpdateTableColumn(idx, {
+                                sourceField: sf,
+                                autoPopulate: {
+                                  ...(colAutoPop || {}),
+                                  dataSource: 'loggedInUser',
+                                  sourceField: sf,
+                                  autoPopulate: true,
+                                  readOnly: isColLocked,
+                                  populateWhen: colAutoPop?.populateWhen || 'empty',
+                                },
+                              });
+                            }}
+                            className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5 text-[10px] text-slate-700 dark:text-slate-300 font-mono"
+                          >
+                            <option value="staff_name">staff_name (Full Name)</option>
+                            <option value="user_id">user_id (User ID)</option>
+                            <option value="employee_id">employee_id (Emp ID)</option>
+                            <option value="emp_no">emp_no (Emp No)</option>
+                            <option value="designation">designation (Designation)</option>
+                            <option value="email">email (Staff Email)</option>
+                            <option value="login">login (Username)</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Table Predefined Rows & Cell Content Editor */}
@@ -1851,6 +1957,129 @@ export const PropertyPanel: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Staff Auto-Population (HIS User Context) */}
+        {(() => {
+          const staffRes = resolveStaffFieldMapping(field);
+          const fieldAutoPop = typeof field.autoPopulate === 'object' && field.autoPopulate !== null ? field.autoPopulate : null;
+          const isFieldExplicitlyDisabled = field.autoPopulate === false || (fieldAutoPop && fieldAutoPop.autoPopulate === false) || field.dataSource === 'none';
+          const isFieldStaff = !isFieldExplicitlyDisabled && (field.dataSource === 'loggedInUser' || fieldAutoPop?.dataSource === 'loggedInUser' || field.autoPopulate === true || staffRes.isStaffField);
+          const isFieldLocked = field.readOnly !== false && (fieldAutoPop ? fieldAutoPop.readOnly !== false : (field.readOnly !== undefined ? field.readOnly : staffRes.isLocked));
+          const currentFieldSource = field.sourceField || fieldAutoPop?.sourceField || (staffRes.isStaffField ? staffRes.sourceField : 'staff_name');
+
+          return (
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                  <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider">
+                    Staff Auto-Population
+                  </h4>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400">user_id URL</span>
+              </div>
+
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                Automatically populate this field with details of the logged-in HIS staff member.
+              </p>
+
+              <label className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isFieldStaff}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    if (enabled) {
+                      updateField(field.id, {
+                        dataSource: 'loggedInUser',
+                        sourceField: currentFieldSource,
+                        readOnly: true,
+                        autoPopulate: {
+                          dataSource: 'loggedInUser',
+                          sourceField: currentFieldSource,
+                          autoPopulate: true,
+                          readOnly: true,
+                          populateWhen: 'empty',
+                        },
+                      });
+                    } else {
+                      updateField(field.id, {
+                        dataSource: undefined,
+                        sourceField: undefined,
+                        autoPopulate: false,
+                        readOnly: false,
+                      });
+                    }
+                  }}
+                  className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
+                />
+                <span className="font-medium">Auto-populate from Logged-in Staff</span>
+              </label>
+
+              {isFieldStaff && (
+                <div className="p-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-800/50 space-y-2.5">
+                  <div>
+                    <label className="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      Staff Attribute to Populate
+                    </label>
+                    <select
+                      value={currentFieldSource}
+                      onChange={(e) => {
+                        const sf = e.target.value as any;
+                        updateField(field.id, {
+                          sourceField: sf,
+                          autoPopulate: {
+                            ...(fieldAutoPop || {}),
+                            dataSource: 'loggedInUser',
+                            sourceField: sf,
+                            autoPopulate: true,
+                            readOnly: isFieldLocked,
+                            populateWhen: fieldAutoPop?.populateWhen || 'empty',
+                          },
+                        });
+                      }}
+                      className="w-full bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 font-mono"
+                    >
+                      <option value="staff_name">staff_name (Verified Full Name)</option>
+                      <option value="user_id">user_id (HIS User ID)</option>
+                      <option value="employee_id">employee_id (Employee ID)</option>
+                      <option value="emp_no">emp_no (Employee Number)</option>
+                      <option value="designation">designation (Staff Designation)</option>
+                      <option value="email">email (Staff Email Address)</option>
+                      <option value="login">login (HIS Login Username)</option>
+                    </select>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer pt-1">
+                    <input
+                      type="checkbox"
+                      checked={isFieldLocked}
+                      onChange={(e) => {
+                        const isRo = e.target.checked;
+                        updateField(field.id, {
+                          readOnly: isRo,
+                          autoPopulate: {
+                            ...(fieldAutoPop || {}),
+                            dataSource: 'loggedInUser',
+                            sourceField: currentFieldSource,
+                            autoPopulate: true,
+                            readOnly: isRo,
+                            populateWhen: fieldAutoPop?.populateWhen || 'empty',
+                          },
+                        });
+                      }}
+                      className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-0 cursor-pointer"
+                    />
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-slate-500" />
+                      Lock Field (Read-only in Form Runtime)
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Oracle Data Binding Section (Step 5) */}
         <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">

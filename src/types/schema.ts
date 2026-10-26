@@ -23,11 +23,14 @@ export interface FieldOption {
   value: string;
 }
 
+export type DataSourceType = 'loggedInUser' | 'patient' | 'system' | 'none';
+
 export interface AutoPopulateConfig {
   autoPopulate?: boolean;
-  dataSource?: 'loggedInUser' | 'patient' | 'system';
-  sourceField?: 'staff_name' | 'user_id' | 'employee_id' | 'login' | 'email' | string;
+  dataSource?: DataSourceType;
+  sourceField?: 'staff_name' | 'user_id' | 'employee_id' | 'emp_no' | 'designation' | 'login' | 'email' | string;
   populateWhen?: 'always' | 'empty';
+  readOnly?: boolean;
 }
 
 export interface TableColumn {
@@ -36,12 +39,13 @@ export interface TableColumn {
   label: string;
   type?: FieldType;
   required?: boolean;
+  readOnly?: boolean;
   placeholder?: string;
   options?: FieldOption[];
   fieldId?: string;
   field?: FormField;
   autoPopulate?: AutoPopulateConfig | boolean;
-  dataSource?: 'loggedInUser' | 'patient' | 'system';
+  dataSource?: DataSourceType;
   sourceField?: string;
   populateWhen?: 'always' | 'empty';
 }
@@ -98,9 +102,10 @@ export interface FormField {
   dataBinding?: DataBindingConfig | null;
   optionsBinding?: OptionsBindingConfig | null;
   autoPopulate?: AutoPopulateConfig | boolean;
-  dataSource?: 'loggedInUser' | 'patient' | 'system';
+  dataSource?: DataSourceType;
   sourceField?: string;
   populateWhen?: 'always' | 'empty';
+  readOnly?: boolean;
   visibleIf?: { fieldId: string; equals: string | number | boolean };
   _needsReview?: boolean;
   _reviewReason?: string;
@@ -220,6 +225,7 @@ export interface FormMetadata {
   departmentName?: string | null;
   serviceCenterId?: string | null;
   serviceCenterName?: string | null;
+  settings?: FormSettings;
 }
 
 export interface FormVersionRecord {

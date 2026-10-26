@@ -3,6 +3,7 @@ import { FormsDashboard } from './dashboard/FormsDashboard';
 import { BuilderPage } from './builder/BuilderPage';
 import { RuntimePage } from './runtime/RuntimePage';
 import { PatientList } from './pages/PatientList';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 
 export function App() {
   return (
@@ -20,6 +21,10 @@ export function App() {
 
         {/* Lightweight End-User Runtime */}
         <Route path="/forms/:slug" element={<RuntimePage />} />
+
+        {/* Admin Portal & Protected Dashboard */}
+        <Route path="/admin_dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin_dashboard/login" element={<AdminDashboardPage defaultView="login" />} />
 
         {/* Fallback to Dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />

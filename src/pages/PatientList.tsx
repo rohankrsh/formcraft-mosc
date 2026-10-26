@@ -25,7 +25,7 @@ import {
   type ServiceCenter,
   type DeployedForm,
 } from '../services/patientApi';
-import { fetchStaffDetails, type StaffDetailsResponse } from '../services/userApi';
+import { fetchStaffDetails, parseAndValidateUserId, type StaffDetailsResponse } from '../services/userApi';
 import { PatientSubmittedFormsModal } from '../components/patient/PatientSubmittedFormsModal';
 
 export const PatientList: React.FC = () => {
@@ -272,8 +272,8 @@ export const PatientList: React.FC = () => {
       (prev) => {
         const next = new URLSearchParams();
         if (prev.get('limit')) next.set('limit', prev.get('limit')!);
-        if (prev.get('user_id')) next.set('user_id', prev.get('user_id')!);
-        if (prev.get('userId')) next.set('userId', prev.get('userId')!);
+        const cleanUid = parseAndValidateUserId(prev.get('user_id') || prev.get('userId'));
+        if (cleanUid) next.set('user_id', String(cleanUid));
         return next;
       },
       { replace: true }

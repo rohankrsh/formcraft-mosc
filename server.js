@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import * as XLSX_NS from 'xlsx';
 const XLSX = (XLSX_NS && XLSX_NS.default) ? XLSX_NS.default : XLSX_NS;
@@ -16,6 +17,7 @@ import formDataRoutes from './server/routes/formData.routes.js';
 import runtimeRoutes from './server/routes/runtime.routes.js';
 import patientRoutes from './server/routes/patient.routes.js';
 import userRoutes from './server/routes/user.routes.js';
+import adminRoutes from './server/routes/admin.routes.js';
 import { getDeployedForms } from './server/controllers/form.controller.js';
 import { getPatientFormData } from './server/controllers/patient.controller.js';
 import { formRepository } from './server/repositories/formRepository.js';
@@ -23,8 +25,12 @@ import { formRepository } from './server/repositories/formRepository.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Enable CORS
-app.use(cors());
+// Enable CORS with credentials support
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 
 
@@ -247,6 +253,7 @@ app.use('/api/forms', formDataRoutes);
 app.use('/api/runtime/forms', runtimeRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 app.get('/api/deployed-forms', getDeployedForms);
 app.get('/api/forms/:slug/patient-data', getPatientFormData);
 app.get('/api/runtime/forms/:slug/patient-data', getPatientFormData);

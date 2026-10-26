@@ -23,6 +23,7 @@ import {
   Trash2,
   Users,
   Building,
+  Shield,
 } from 'lucide-react';
 import type { FormMetadata } from '../types/schema';
 
@@ -197,6 +198,16 @@ export const FormsDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            to="/admin_dashboard"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-all active:scale-95"
+            title="Open Admin Portal & Dashboard"
+            id="nav-admin-dashboard"
+          >
+            <Shield className="w-4 h-4 text-indigo-500" />
+            <span>Admin Portal</span>
+          </Link>
+
           <Link
             to="/patients"
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-all active:scale-95"

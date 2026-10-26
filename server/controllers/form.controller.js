@@ -2,6 +2,7 @@ import * as formService from '../services/formService.js';
 import { validateFormForPublishing } from '../services/publishService.js';
 import { invalidateRuntimeCache } from '../services/runtimeService.js';
 import { resolveDepartment, matchesDepartmentScope, getRequestDepartmentContext } from '../services/departmentFilterService.js';
+import { logActivity } from '../services/activityLogService.js';
 
 export async function saveForm(req, res) {
   try {
@@ -17,6 +18,17 @@ export async function saveForm(req, res) {
 
     const saved = await formService.saveForm(formDef, metadata);
     const fullRecord = await formService.getFormRecord(formDef.id);
+
+    await logActivity({
+      eventType: 'FORM_DRAFT_SAVED',
+      entityType: 'FORM',
+      entityId: formDef.id,
+      actorType: 'admin',
+      actorName: 'Admin',
+      description: `Draft updated for form "${fullRecord?.meta?.name || formDef.title || formDef.id}"`,
+      details: { formId: formDef.id, slug: fullRecord?.meta?.slug },
+      status: 'SUCCESS',
+    });
 
     return res.json({
       success: true,
@@ -132,6 +144,17 @@ export async function publishForm(req, res) {
     const baseUrl = process.env.PUBLIC_FORM_BASE_URL || `${req.protocol}://${req.get('host')}`;
     const runtimeUrl = `${baseUrl}/forms/${result.slug}`;
 
+    await logActivity({
+      eventType: 'FORM_PUBLISHED',
+      entityType: 'FORM',
+      entityId: formId,
+      actorType: 'admin',
+      actorName: 'Admin',
+      description: `Form "${result.meta?.name || result.slug}" published as version v${result.version}`,
+      details: { formId, slug: result.slug, version: result.version },
+      status: 'SUCCESS',
+    });
+
     return res.json({
       success: true,
       message: `Form successfully published as version v${result.version}!`,
@@ -159,6 +182,16 @@ export async function unpublishForm(req, res) {
     invalidateRuntimeCache(record.meta?.slug);
     invalidateRuntimeCache(formId);
 
+    await logActivity({
+      eventType: 'FORM_UNPUBLISHED',
+      entityType: 'FORM',
+      entityId: formId,
+      actorType: 'admin',
+      actorName: 'Admin',
+      description: `Form "${record.meta?.name || formId}" was unpublished`,
+      status: 'SUCCESS',
+    });
+
     return res.json({
       success: true,
       message: 'Form has been unpublished and is no longer accessible to runtime users.',
@@ -179,6 +212,16 @@ export async function archiveForm(req, res) {
     const record = await formService.archiveForm(formId);
     invalidateRuntimeCache(record.meta?.slug);
     invalidateRuntimeCache(formId);
+
+    await logActivity({
+      eventType: 'FORM_ARCHIVED',
+      entityType: 'FORM',
+      entityId: formId,
+      actorType: 'admin',
+      actorName: 'Admin',
+      description: `Form "${record.meta?.name || formId}" was archived`,
+      status: 'SUCCESS',
+    });
 
     return res.json({
       success: true,

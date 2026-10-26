@@ -4,7 +4,7 @@ import { Sparkles, AlertTriangle, FileQuestion, Sun, Moon, ArrowLeft, ShieldAler
 import { fetchPublishedForm, type PublishedFormResponse } from './runtimeApi';
 import { FormRuntime } from './FormRuntime';
 import type { FormDefinition } from '../types/schema';
-import { fetchStaffDetails, type StaffDetailsResponse } from '../services/userApi';
+import { fetchStaffDetails, parseAndValidateUserId, type StaffDetailsResponse } from '../services/userApi';
 
 export const RuntimePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -27,7 +27,8 @@ export const RuntimePage: React.FC = () => {
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  const userIdParam = searchParams.get('user_id') || searchParams.get('userId') || '';
+  const rawUserId = searchParams.get('user_id') || searchParams.get('userId') || '';
+  const userIdParam = parseAndValidateUserId(rawUserId);
   const [staffInfo, setStaffInfo] = useState<StaffDetailsResponse | null>(null);
 
   useEffect(() => {
@@ -59,14 +60,15 @@ export const RuntimePage: React.FC = () => {
     const dept = searchParams.get('department') || searchParams.get('departmentId');
     const sc = searchParams.get('serviceCenter') || searchParams.get('serviceCenterId');
     const uid = searchParams.get('user_id') || searchParams.get('userId');
+    const cleanUid = parseAndValidateUserId(uid);
     if (dept && dept.trim()) {
       params.set('department', dept.trim());
     }
     if (sc && sc.trim()) {
       params.set('serviceCenter', sc.trim());
     }
-    if (uid && uid.trim()) {
-      params.set('user_id', uid.trim());
+    if (cleanUid) {
+      params.set('user_id', String(cleanUid));
     }
 
     const qs = params.toString();

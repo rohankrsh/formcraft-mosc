@@ -13,6 +13,7 @@ import {
   resolveDepartment,
   matchesDepartmentScope,
 } from './departmentFilterService.js';
+import { logActivity } from './activityLogService.js';
 
 const SUBMISSIONS_DIR = path.resolve('server/data/submissions');
 if (!fs.existsSync(SUBMISSIONS_DIR)) {
@@ -572,6 +573,26 @@ export async function saveFormSubmission(slug, {
     formData: data,
   };
   await saveFileSubmission(slug, finalMrno || 'general', auditRecord);
+
+  // Record submission event in system activity log
+  await logActivity({
+    eventType: isUpdate ? 'FORM_SUBMISSION_UPDATED' : 'FORM_SUBMISSION_CREATED',
+    entityType: 'SUBMISSION',
+    entityId: String(targetSubmissionId),
+    actorType: 'user',
+    actorId: String(submittedBy),
+    actorName: String(submittedBy),
+    description: `Form "${form.title || slug}" (v${published.version || 1}) ${isUpdate ? 'updated' : 'submitted'} for patient ${finalMrno || 'N/A'}`,
+    details: {
+      submissionId: targetSubmissionId,
+      formSlug: slug,
+      formVersion: published.version || 1,
+      mrno: finalMrno,
+      admissionNumber: finalAdmissionNumber,
+      mode,
+    },
+    status: 'SUCCESS',
+  });
 
   return {
     success: true,

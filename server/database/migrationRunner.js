@@ -157,6 +157,130 @@ async function applyMigration001(conn) {
 }
 
 /**
+ * Migration 002: System Activity Logs and Submission Audit Edits Schema
+ */
+const MIGRATION_002_ID = '002_create_activity_and_submission_audit_schema';
+const MIGRATION_002_DESC = 'Initializes FORMCRAFT_ACTIVITY_LOGS and FORMCRAFT_SUBMISSION_EDITS tables with performance indexes';
+
+async function applyMigration002(conn) {
+  console.log(`[Migration] Applying ${MIGRATION_002_ID}...`);
+
+  // 1. FORMCRAFT_ACTIVITY_LOGS
+  if (!(await tableExists(conn, 'FORMCRAFT_ACTIVITY_LOGS'))) {
+    console.log('[Migration] Creating FORMCRAFT_ACTIVITY_LOGS...');
+    await conn.execute(`
+      CREATE TABLE FORMCRAFT_ACTIVITY_LOGS (
+        LOG_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        EVENT_TYPE VARCHAR2(100) NOT NULL,
+        ENTITY_TYPE VARCHAR2(100),
+        ENTITY_ID VARCHAR2(255),
+        ACTOR_TYPE VARCHAR2(50),
+        ACTOR_ID VARCHAR2(255),
+        ACTOR_NAME VARCHAR2(255),
+        DESCRIPTION VARCHAR2(1000),
+        DETAILS_JSON CLOB,
+        IP_ADDRESS VARCHAR2(100),
+        STATUS VARCHAR2(50) DEFAULT 'SUCCESS' NOT NULL,
+        CREATED_AT TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL
+      )
+    `);
+  }
+
+  // 2. FORMCRAFT_SUBMISSION_EDITS
+  if (!(await tableExists(conn, 'FORMCRAFT_SUBMISSION_EDITS'))) {
+    console.log('[Migration] Creating FORMCRAFT_SUBMISSION_EDITS...');
+    await conn.execute(`
+      CREATE TABLE FORMCRAFT_SUBMISSION_EDITS (
+        ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        SUBMISSION_ID NUMBER NOT NULL,
+        ADMIN_ID NUMBER,
+        ADMIN_NAME VARCHAR2(255),
+        ADMIN_EMAIL VARCHAR2(255),
+        REASON VARCHAR2(1000) NOT NULL,
+        CHANGED_FIELDS VARCHAR2(4000),
+        PREVIOUS_DATA CLOB NOT NULL,
+        UPDATED_DATA CLOB NOT NULL,
+        DIFF_JSON CLOB,
+        IP_ADDRESS VARCHAR2(100),
+        CREATED_AT TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+        CONSTRAINT FK_FC_SEDIT_SUB FOREIGN KEY (SUBMISSION_ID)
+          REFERENCES FORMCRAFT_SUBMISSIONS(ID) ON DELETE CASCADE
+      )
+    `);
+  }
+
+  // 3. Indexes for FORMCRAFT_ACTIVITY_LOGS
+  if (!(await indexExists(conn, 'IDX_FC_LOGS_CREATED'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_LOGS_CREATED ON FORMCRAFT_ACTIVITY_LOGS (CREATED_AT)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+  if (!(await indexExists(conn, 'IDX_FC_LOGS_EVENT'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_LOGS_EVENT ON FORMCRAFT_ACTIVITY_LOGS (EVENT_TYPE)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+  if (!(await indexExists(conn, 'IDX_FC_LOGS_ENTITY'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_LOGS_ENTITY ON FORMCRAFT_ACTIVITY_LOGS (ENTITY_TYPE, ENTITY_ID)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+  if (!(await indexExists(conn, 'IDX_FC_LOGS_ACTOR'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_LOGS_ACTOR ON FORMCRAFT_ACTIVITY_LOGS (ACTOR_TYPE, ACTOR_ID)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+
+  // 4. Indexes for FORMCRAFT_SUBMISSION_EDITS
+  if (!(await indexExists(conn, 'IDX_FC_SUB_EDITS_SUB_ID'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_SUB_EDITS_SUB_ID ON FORMCRAFT_SUBMISSION_EDITS (SUBMISSION_ID)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+  if (!(await indexExists(conn, 'IDX_FC_SUB_EDITS_CREATED'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_SUB_EDITS_CREATED ON FORMCRAFT_SUBMISSION_EDITS (CREATED_AT)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+
+  // 5. Helpful Indexes for FORMCRAFT_SUBMISSIONS
+  if (!(await indexExists(conn, 'IDX_FC_SUB_SUBMITTED_AT'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_SUB_SUBMITTED_AT ON FORMCRAFT_SUBMISSIONS (SUBMITTED_AT)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+  if (!(await indexExists(conn, 'IDX_FC_SUB_MRNO'))) {
+    try {
+      await conn.execute(`CREATE INDEX IDX_FC_SUB_MRNO ON FORMCRAFT_SUBMISSIONS (MRNO)`);
+    } catch (e) {
+      if (e.errorNum !== 1408 && e.errorNum !== 955) throw e;
+    }
+  }
+
+  // Record migration as applied
+  await conn.execute(`
+    INSERT INTO FORMCRAFT_SCHEMA_MIGRATIONS (MIGRATION_ID, DESCRIPTION)
+    VALUES (:b_id, :b_desc)
+  `, { b_id: MIGRATION_002_ID, b_desc: MIGRATION_002_DESC });
+
+  console.log(`[Migration] ${MIGRATION_002_ID} applied successfully.`);
+}
+
+/**
  * Runs all pending migrations in deterministic order.
  */
 export async function runMigrations() {
@@ -186,6 +310,14 @@ export async function runMigrations() {
       result.applied.push(MIGRATION_001_ID);
     } else {
       console.log(`[Migration] ${MIGRATION_001_ID} is already applied.`);
+    }
+
+    // Migration 002
+    if (!appliedSet.has(MIGRATION_002_ID)) {
+      await applyMigration002(conn);
+      result.applied.push(MIGRATION_002_ID);
+    } else {
+      console.log(`[Migration] ${MIGRATION_002_ID} is already applied.`);
     }
   });
 

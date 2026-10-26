@@ -11,6 +11,7 @@ import {
   History,
 } from 'lucide-react';
 import type { Patient, DeployedForm } from '../../services/patientApi';
+import { parseAndValidateUserId } from '../../utils/staffFieldHelper';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -56,8 +57,9 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     if (urlServiceCenter) {
       url += `&serviceCenter=${encodeURIComponent(urlServiceCenter)}`;
     }
-    if (urlUserId) {
-      url += `&user_id=${encodeURIComponent(urlUserId)}`;
+    const cleanUserId = parseAndValidateUserId(urlUserId);
+    if (cleanUserId) {
+      url += `&user_id=${cleanUserId}`;
     }
     return url;
   };

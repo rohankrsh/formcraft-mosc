@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   CheckCircle2,
   AlertCircle,
@@ -29,67 +29,21 @@ import {
   submitFormPersistence,
 } from './runtimeApi';
 import { fetchStaffDetails, type StaffDetailsResponse } from '../services/userApi';
-import { isStaffNameColumn } from './RuntimeTable';
+import {
+  resolveStaffFieldMapping,
+  isStaffFieldLocked,
+  isStaffField,
+  getStaffValueForField,
+  resolveStaffColumnMapping,
+  parseAndValidateUserId,
+} from '../utils/staffFieldHelper';
 
 /**
- * Determines whether a FormField should be auto-populated with the logged-in staff display name.
- * Respects explicit autoPopulate schema configuration and provides intelligent semantic matching
- * for hospital nursing/staff assessment fields. Signature fields are strictly protected.
+ * Backward-compatible helper checking if a FormField is mapped to staff_name.
  */
 export function isStaffNameField(field: FormField): boolean {
-  // 1. Explicit autoPopulate object configuration
-  if (field.autoPopulate && typeof field.autoPopulate === 'object') {
-    if (field.autoPopulate.autoPopulate !== false) {
-      if (
-        (field.autoPopulate.dataSource === 'loggedInUser' || !field.autoPopulate.dataSource) &&
-        (field.autoPopulate.sourceField === 'staff_name' || !field.autoPopulate.sourceField)
-      ) {
-        return true;
-      }
-    }
-  }
-
-  // 2. Direct property configuration
-  if (
-    field.autoPopulate === true ||
-    (field.dataSource === 'loggedInUser' && (field.sourceField === 'staff_name' || !field.sourceField))
-  ) {
-    return true;
-  }
-
-  // 3. Intelligent fallback heuristic for standard clinical nurse/staff name fields
-  // Target field A: Nursing Assessment -> "Assessment Completed by Staff Nurse (Name)"
-  const labelLower = (field.label || '').toLowerCase().trim();
-  const nameLower = (field.name || '').toLowerCase().trim();
-  const idLower = (field.id || '').toLowerCase().trim();
-
-  // Explicitly protect signatures from being treated as text staff names
-  if (
-    labelLower === 'sign' ||
-    labelLower === 'signature' ||
-    nameLower === 'nurse_sign' ||
-    nameLower === 'sign' ||
-    idLower === 'fld_nurse_sign' ||
-    idLower.includes('sign')
-  ) {
-    return false;
-  }
-
-  // Check matching labels/names
-  if (
-    labelLower === 'assessment completed by staff nurse (name)' ||
-    labelLower.includes('staff nurse (name)') ||
-    labelLower.includes('staff nurse name') ||
-    labelLower === 'nurse name' ||
-    labelLower === 'staff name' ||
-    nameLower === 'nurse_name' ||
-    nameLower === 'staff_name' ||
-    idLower === 'fld_nurse_name'
-  ) {
-    return true;
-  }
-
-  return false;
+  const mapping = resolveStaffFieldMapping(field);
+  return mapping.isStaffField && mapping.sourceField === 'staff_name';
 }
 
 interface FormRuntimeProps {
@@ -218,11 +172,14 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
   const params = new URLSearchParams(window.location.search);
   const mrnoParam = params.get('mrno');
   const normalizedMrno = mrnoParam?.trim() || '';
-  const userIdParam = params.get('user_id') || params.get('userId') || '';
+  const rawUserId = params.get('user_id') || params.get('userId') || '';
+  const userIdParam = parseAndValidateUserId(rawUserId);
 
   // Logged-in Staff details context
   const [staffContext, setStaffContext] = useState<StaffDetailsResponse | null>(null);
   const [isStaffLoading, setIsStaffLoading] = useState(false);
+  const staffContextRef = useRef<StaffDetailsResponse | null>(null);
+  staffContextRef.current = staffContext;
 
   // Fetch staff details from Oracle via /api/users/:userId/staff-details
   useEffect(() => {
@@ -263,6 +220,7 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
   // Initialize form default values
   const initDefaults = useCallback(() => {
+    const activeStaff = staffContextRef.current;
     const initial: Record<string, any> = {};
     for (const field of Object.values(form.fields || {})) {
       const key = field.name || field.id;
@@ -271,16 +229,17 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
         let initialRows = field.tableConfig?.defaultRows
           ? JSON.parse(JSON.stringify(field.tableConfig.defaultRows))
           : [];
-        // Default rows in table: populate empty staff name columns if staffContext is available
-        if (staffContext?.staff_name && Array.isArray(initialRows)) {
+        // Default rows in table: populate empty staff columns if staffContext is available
+        if (activeStaff && Array.isArray(initialRows)) {
           const columns = field.tableConfig?.columns || [];
           initialRows = initialRows.map((row: any) => {
             const updatedRow = { ...row };
             for (const col of columns) {
-              if (isStaffNameColumn(col)) {
+              const colMapping = resolveStaffColumnMapping(col);
+              if (colMapping.isStaffField) {
                 const colKey = col.key || col.id;
                 if (!updatedRow[colKey] || String(updatedRow[colKey]).trim() === '') {
-                  updatedRow[colKey] = staffContext.staff_name;
+                  updatedRow[colKey] = getStaffValueForField(colMapping.sourceField, activeStaff);
                 }
               }
             }
@@ -288,12 +247,15 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
           });
         }
         val = initialRows;
-      } else if (staffContext?.staff_name && isStaffNameField(field)) {
-        val = staffContext.staff_name;
-      } else if (field.defaultValue !== undefined) {
-        val = field.defaultValue;
-      } else if (field.type === 'checkbox' && (field.options?.length || 0) > 0) {
-        val = [];
+      } else {
+        const fieldMapping = resolveStaffFieldMapping(field);
+        if (fieldMapping.isStaffField && activeStaff) {
+          val = getStaffValueForField(fieldMapping.sourceField, activeStaff);
+        } else if (field.defaultValue !== undefined) {
+          val = field.defaultValue;
+        } else if (field.type === 'checkbox' && (field.options?.length || 0) > 0) {
+          val = [];
+        }
       }
       initial[key] = val;
       initial[field.id] = val;
@@ -308,16 +270,17 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
     setCurrentSubmissionId(null);
     setSubmitSuccess(null);
     setServerError(null);
-  }, [form, staffContext]);
+  }, [form]);
 
   useEffect(() => {
     initDefaults();
   }, [initDefaults]);
 
   // Auto-populate logged-in staff fields when staff details finish loading
-  // Strictly protects user-entered values from being overwritten (populateWhen: "empty")
+  // Handles staff name, user ID, employee ID, designation, email, etc.
+  // Strictly protects user-entered values from being overwritten unless configured with populateWhen: "always"
   useEffect(() => {
-    if (!staffContext?.staff_name) return;
+    if (!staffContext) return;
 
     setFormData((prev) => {
       let hasChanges = false;
@@ -327,22 +290,26 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
         : Object.values(form.fields || {});
 
       for (const field of fieldsList) {
-        // Target Field A: Nursing assessment nurse name or configured loggedInUser field
-        if (isStaffNameField(field)) {
-          const key = field.name || field.id;
-          const currentVal = next[key] ?? next[field.id];
-          const isEmpty = currentVal === undefined || currentVal === null || String(currentVal).trim() === '';
-          if (isEmpty) {
-            next[key] = staffContext.staff_name;
-            next[field.id] = staffContext.staff_name;
-            if (field.name) {
-              next[field.name] = staffContext.staff_name;
+        // Standard staff fields (nurse name, user_id, employee_id, designation, email, etc.)
+        const mapping = resolveStaffFieldMapping(field);
+        if (mapping.isStaffField) {
+          const staffVal = getStaffValueForField(mapping.sourceField, staffContext);
+          if (staffVal) {
+            const key = field.name || field.id;
+            const currentVal = next[key] ?? next[field.id];
+            const isEmpty = currentVal === undefined || currentVal === null || String(currentVal).trim() === '';
+            if (isEmpty || mapping.populateWhen === 'always') {
+              next[key] = staffVal;
+              next[field.id] = staffVal;
+              if (field.name) {
+                next[field.name] = staffVal;
+              }
+              hasChanges = true;
             }
-            hasChanges = true;
           }
         }
 
-        // Target Field B: Table fields default empty rows
+        // Table fields default empty rows
         if (field.type === 'table') {
           const key = field.name || field.id;
           const currentRows = next[key] ?? next[field.id];
@@ -352,13 +319,17 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
             const updatedRows = currentRows.map((row) => {
               const updatedRow = { ...row };
               for (const col of columns) {
-                if (isStaffNameColumn(col)) {
-                  const colKey = col.key || col.id;
-                  const currentCell = updatedRow[colKey];
-                  const isCellEmpty = currentCell === undefined || currentCell === null || String(currentCell).trim() === '';
-                  if (isCellEmpty) {
-                    updatedRow[colKey] = staffContext.staff_name;
-                    tableChanged = true;
+                const colMapping = resolveStaffColumnMapping(col);
+                if (colMapping.isStaffField) {
+                  const staffVal = getStaffValueForField(colMapping.sourceField, staffContext);
+                  if (staffVal) {
+                    const colKey = col.key || col.id;
+                    const currentCell = updatedRow[colKey];
+                    const isCellEmpty = currentCell === undefined || currentCell === null || String(currentCell).trim() === '';
+                    if (isCellEmpty || colMapping.populateWhen === 'always') {
+                      updatedRow[colKey] = staffVal;
+                      tableChanged = true;
+                    }
                   }
                 }
               }
@@ -447,6 +418,11 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
         }
 
         fieldsList.forEach((field) => {
+          // Never overwrite or populate staff identification fields with patient demographic data
+          if (isStaffField(field)) {
+            return;
+          }
+
           let rawValue: unknown = undefined;
 
           // 1. Check explicit dataBinding column if configured
@@ -739,6 +715,11 @@ export const FormRuntime: React.FC<FormRuntimeProps> = ({ slug, form, version })
 
   // Handle value change for any field
   const handleFieldChange = (field: FormField, val: any) => {
+    // Strictly prevent modifying locked staff fields
+    if (isStaffFieldLocked(field)) {
+      return;
+    }
+
     const key = field.name || field.id;
     const nextFormData = {
       ...formData,

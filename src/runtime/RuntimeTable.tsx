@@ -1,46 +1,17 @@
 import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Lock } from 'lucide-react';
 import type { FormField, TableColumn } from '../types/schema';
 import type { StaffDetailsResponse } from '../services/userApi';
+import {
+  resolveStaffColumnMapping,
+  isStaffColumnLocked,
+  getStaffValueForField,
+  isStaffFieldLocked,
+} from '../utils/staffFieldHelper';
 
 export function isStaffNameColumn(col: TableColumn): boolean {
-  // 1. Explicit autoPopulate object configuration
-  if (col.autoPopulate && typeof col.autoPopulate === 'object') {
-    if (col.autoPopulate.autoPopulate !== false) {
-      if (col.autoPopulate.dataSource === 'loggedInUser' && col.autoPopulate.sourceField === 'staff_name') {
-        return true;
-      }
-    }
-  }
-
-  // 2. Direct property configuration
-  if (col.autoPopulate === true || (col.dataSource === 'loggedInUser' && col.sourceField === 'staff_name')) {
-    return true;
-  }
-
-  // 3. Intelligent fallback heuristic for table column
-  // Target field B: Morse Fall Risk Reassessment Record -> "Staff Name & Sign"
-  const labelLower = (col.label || '').toLowerCase().trim();
-  const keyLower = ((col.key || col.id) || '').toLowerCase().trim();
-
-  // Exclude explicit pure signature fields
-  if (labelLower === 'sign' || labelLower === 'signature' || keyLower === 'sign' || keyLower === 'signature') {
-    return false;
-  }
-
-  if (
-    labelLower === 'staff name & sign' ||
-    labelLower === 'staff name and sign' ||
-    labelLower.includes('staff name') ||
-    labelLower.includes('nurse name') ||
-    keyLower === 'staff_name_sign' ||
-    keyLower === 'staff_name' ||
-    keyLower === 'nurse_name'
-  ) {
-    return true;
-  }
-
-  return false;
+  const mapping = resolveStaffColumnMapping(col);
+  return mapping.isStaffField && mapping.sourceField === 'staff_name';
 }
 
 interface RuntimeTableProps {
@@ -66,6 +37,11 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
   const allowAdd = tableConfig.allowAddRows !== false && !disabled;
 
   const handleCellChange = (rowIndex: number, colKey: string, cellVal: any) => {
+    const targetCol = columns.find((c, idx) => (c.key || c.id || `col_${idx}`) === colKey);
+    if (targetCol && isStaffColumnLocked(targetCol)) {
+      // Strictly prevent manual edits to locked staff cells
+      return;
+    }
     const updated = [...rows];
     updated[rowIndex] = {
       ...(updated[rowIndex] || {}),
@@ -78,8 +54,9 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
     const emptyRow: Record<string, any> = {};
     columns.forEach((col, idx) => {
       const key = col.key || col.id || `col_${idx}`;
-      if (staffContext?.staff_name && isStaffNameColumn(col)) {
-        emptyRow[key] = staffContext.staff_name;
+      const mapping = resolveStaffColumnMapping(col);
+      if (mapping.isStaffField && staffContext) {
+        emptyRow[key] = getStaffValueForField(mapping.sourceField, staffContext);
       } else {
         emptyRow[key] = '';
       }
@@ -101,12 +78,20 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
             <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
               {columns.map((col, idx) => {
                 const key = col.key || col.id || `th_${idx}`;
+                const isColLocked = isStaffColumnLocked(col);
                 return (
                   <th
                     key={key}
                     className="px-3.5 py-2.5 font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap"
                   >
-                    {col.label}
+                    <span className="inline-flex items-center gap-1">
+                      <span>{col.label}</span>
+                      {isColLocked && (
+                        <span title="Locked staff field (read-only)">
+                          <Lock className="w-3 h-3 text-slate-400" />
+                        </span>
+                      )}
+                    </span>
                     {col.required && <span className="text-rose-500 ml-0.5">*</span>}
                     {col.type && col.type !== 'text' && (
                       <span className="ml-1 text-[9px] uppercase px-1 py-0.2 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-500 dark:text-slate-300 font-mono">
@@ -180,6 +165,11 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                           ? (cellFieldRef as FormField)
                           : null;
 
+                      const isColLocked =
+                        disabled ||
+                        isStaffColumnLocked(col) ||
+                        (cellField ? isStaffFieldLocked(cellField) : false);
+
                       const effectiveType = cellField?.type || col.type || 'text';
                       const placeholder = cellField?.placeholder || col.placeholder || col.label;
                       const options = cellField?.options || col.options || [];
@@ -223,14 +213,25 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                               id={`input-${field.id}-${rIdx}-${colKey}`}
                               name={`cell_${field.id}_${rIdx}_${colKey}`}
                               type="date"
+                              readOnly={isColLocked}
                               disabled={disabled}
+                              tabIndex={isColLocked ? -1 : 0}
                               value={val}
-                              onChange={(e) => handleCellChange(rIdx, colKey, e.target.value)}
-                              className={`w-full bg-slate-50 dark:bg-slate-850 border rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 ${
-                                cellError
-                                  ? 'border-rose-500 focus:ring-rose-500/30'
-                                  : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                              }`}
+                              onKeyDown={(e) => {
+                                if (isColLocked && e.key !== 'Tab') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                if (!isColLocked) {
+                                  handleCellChange(rIdx, colKey, e.target.value);
+                                }
+                              }}
+                              className={`w-full border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 ${
+                                isColLocked
+                                  ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed select-none text-slate-700 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                  : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                              } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                             />
                             {cellError && (
                               <p
@@ -282,7 +283,7 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                               <select
                                 id={`input-${field.id}-${rIdx}-${colKey}`}
                                 name={`cell_${field.id}_${rIdx}_${colKey}`}
-                                disabled={disabled}
+                                disabled={isColLocked}
                                 value={hour}
                                 onChange={(e) =>
                                   handleCellChange(
@@ -291,11 +292,11 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                                     buildTimeVal(e.target.value, minute, period || 'AM')
                                   )
                                 }
-                                className={`flex-1 bg-slate-50 dark:bg-slate-850 border rounded px-1.5 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-none ${
-                                  cellError
-                                    ? 'border-rose-500 focus:ring-rose-500/30'
-                                    : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                                }`}
+                                className={`flex-1 border rounded px-1.5 py-1 text-xs focus:outline-none ${
+                                  isColLocked
+                                    ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-600 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                    : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                                } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                               >
                                 <option value="">HH</option>
                                 {hours.map((h) => (
@@ -306,7 +307,7 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                               </select>
                               <span className="text-slate-400 font-bold text-xs">:</span>
                               <select
-                                disabled={disabled}
+                                disabled={isColLocked}
                                 value={minute}
                                 onChange={(e) =>
                                   handleCellChange(
@@ -315,11 +316,11 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                                     buildTimeVal(hour || '12', e.target.value, period || 'AM')
                                   )
                                 }
-                                className={`flex-1 bg-slate-50 dark:bg-slate-850 border rounded px-1.5 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-none ${
-                                  cellError
-                                    ? 'border-rose-500 focus:ring-rose-500/30'
-                                    : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                                }`}
+                                className={`flex-1 border rounded px-1.5 py-1 text-xs focus:outline-none ${
+                                  isColLocked
+                                    ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-600 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                    : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                                } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                               >
                                 <option value="">MM</option>
                                 {minutes.map((m) => (
@@ -329,7 +330,7 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                                 ))}
                               </select>
                               <select
-                                disabled={disabled}
+                                disabled={isColLocked}
                                 value={period}
                                 onChange={(e) =>
                                   handleCellChange(
@@ -338,11 +339,11 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                                     buildTimeVal(hour || '12', minute || '00', e.target.value)
                                   )
                                 }
-                                className={`w-14 bg-slate-50 dark:bg-slate-850 border rounded px-1.5 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-none ${
-                                  cellError
-                                    ? 'border-rose-500 focus:ring-rose-500/30'
-                                    : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                                }`}
+                                className={`w-14 border rounded px-1.5 py-1 text-xs focus:outline-none ${
+                                  isColLocked
+                                    ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-600 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                    : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                                } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                               >
                                 <option value="">AM/PM</option>
                                 <option value="AM">AM</option>
@@ -378,15 +379,31 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                               id={`input-${field.id}-${rIdx}-${colKey}`}
                               name={`cell_${field.id}_${rIdx}_${colKey}`}
                               rows={2}
+                              readOnly={isColLocked}
                               disabled={disabled}
+                              tabIndex={isColLocked ? -1 : 0}
                               value={val}
                               placeholder={placeholder}
-                              onChange={(e) => handleCellChange(rIdx, colKey, e.target.value)}
-                              className={`w-full bg-slate-50 dark:bg-slate-850 border rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 resize-y ${
-                                cellError
-                                  ? 'border-rose-500 focus:ring-rose-500/30'
-                                  : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                              }`}
+                              onKeyDown={(e) => {
+                                if (isColLocked && e.key !== 'Tab') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onPaste={(e) => {
+                                if (isColLocked) {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                if (!isColLocked) {
+                                  handleCellChange(rIdx, colKey, e.target.value);
+                                }
+                              }}
+                              className={`w-full border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 resize-y ${
+                                isColLocked
+                                  ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed select-none text-slate-700 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                  : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                              } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                             />
                             {cellError && (
                               <p
@@ -416,14 +433,14 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                             <select
                               id={`input-${field.id}-${rIdx}-${colKey}`}
                               name={`cell_${field.id}_${rIdx}_${colKey}`}
-                              disabled={disabled}
+                              disabled={isColLocked}
                               value={val}
                               onChange={(e) => handleCellChange(rIdx, colKey, e.target.value)}
-                              className={`w-full bg-slate-50 dark:bg-slate-850 border rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 ${
-                                cellError
-                                  ? 'border-rose-500 focus:ring-rose-500/30'
-                                  : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                              }`}
+                              className={`w-full border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 ${
+                                isColLocked
+                                  ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-700 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                  : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                              } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                             >
                               <option value="">{placeholder || 'Select...'}</option>
                               {options.map((opt, oIdx) => (
@@ -461,10 +478,10 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                               id={`input-${field.id}-${rIdx}-${colKey}`}
                               name={`cell_${field.id}_${rIdx}_${colKey}`}
                               type="checkbox"
-                              disabled={disabled}
+                              disabled={isColLocked}
                               checked={Boolean(val)}
                               onChange={(e) => handleCellChange(rIdx, colKey, e.target.checked)}
-                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-75"
                             />
                             {cellError && (
                               <p
@@ -495,17 +512,19 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                               {options.map((opt, oIdx) => (
                                 <label
                                   key={oIdx}
-                                  className="inline-flex items-center gap-1 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer"
+                                  className={`inline-flex items-center gap-1 text-[11px] text-slate-700 dark:text-slate-300 ${
+                                    isColLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'
+                                  }`}
                                 >
                                   <input
                                     id={oIdx === 0 ? `input-${field.id}-${rIdx}-${colKey}` : undefined}
                                     type="radio"
-                                    disabled={disabled}
+                                    disabled={isColLocked}
                                     name={`tbl_${field.id}_${rIdx}_${colKey}`}
                                     value={opt.value}
                                     checked={String(val) === String(opt.value)}
                                     onChange={() => handleCellChange(rIdx, colKey, opt.value)}
-                                    className="w-3.5 h-3.5 text-blue-600 focus:ring-0"
+                                    className="w-3.5 h-3.5 text-blue-600 focus:ring-0 disabled:cursor-not-allowed"
                                   />
                                   <span>{opt.label}</span>
                                 </label>
@@ -539,19 +558,33 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                             <input
                               id={`input-${field.id}-${rIdx}-${colKey}`}
                               name={`cell_${field.id}_${rIdx}_${colKey}`}
-                              disabled={disabled}
                               type="number"
+                              readOnly={isColLocked}
+                              disabled={disabled}
+                              tabIndex={isColLocked ? -1 : 0}
                               value={val}
                               placeholder={placeholder}
-                              onChange={(e) => {
-                                const raw = e.target.value;
-                                handleCellChange(rIdx, colKey, raw === '' ? '' : Number(raw));
+                              onKeyDown={(e) => {
+                                if (isColLocked && e.key !== 'Tab') {
+                                  e.preventDefault();
+                                }
                               }}
-                              className={`w-full bg-slate-50 dark:bg-slate-850 border rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 ${
-                                cellError
-                                  ? 'border-rose-500 focus:ring-rose-500/30'
-                                  : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                              }`}
+                              onPaste={(e) => {
+                                if (isColLocked) {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                if (!isColLocked) {
+                                  const raw = e.target.value;
+                                  handleCellChange(rIdx, colKey, raw === '' ? '' : Number(raw));
+                                }
+                              }}
+                              className={`w-full border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 ${
+                                isColLocked
+                                  ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed select-none text-slate-700 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                  : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                              } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                             />
                             {cellError && (
                               <p
@@ -580,16 +613,32 @@ export const RuntimeTable: React.FC<RuntimeTableProps> = ({
                           <input
                             id={`input-${field.id}-${rIdx}-${colKey}`}
                             name={`cell_${field.id}_${rIdx}_${colKey}`}
-                            disabled={disabled}
                             type="text"
+                            readOnly={isColLocked}
+                            disabled={disabled}
+                            tabIndex={isColLocked ? -1 : 0}
                             value={val}
                             placeholder={placeholder}
-                            onChange={(e) => handleCellChange(rIdx, colKey, e.target.value)}
-                            className={`w-full bg-slate-50 dark:bg-slate-850 border rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 ${
-                              cellError
-                                ? 'border-rose-500 focus:ring-rose-500/30'
-                                : 'border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
-                            }`}
+                            onKeyDown={(e) => {
+                              if (isColLocked && e.key !== 'Tab') {
+                                e.preventDefault();
+                              }
+                            }}
+                            onPaste={(e) => {
+                              if (isColLocked) {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              if (!isColLocked) {
+                                handleCellChange(rIdx, colKey, e.target.value);
+                              }
+                            }}
+                            className={`w-full border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 ${
+                              isColLocked
+                                ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed select-none text-slate-700 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'
+                                : 'bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 focus:ring-blue-500'
+                            } ${cellError ? 'border-rose-500 focus:ring-rose-500/30' : ''}`}
                           />
                           {cellError && (
                             <p

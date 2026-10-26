@@ -13,7 +13,24 @@ export async function getStaffDetails(userId) {
     throw err;
   }
 
-  const numId = Number(userId);
+  const strId = String(userId).trim();
+  let decoded = strId;
+  try {
+    decoded = decodeURIComponent(strId).trim();
+  } catch {
+    // If decoding fails, continue with trimmed string
+  }
+
+  // Matches one or more digits, with at most one optional trailing colon (HIS integration delimiter)
+  const match = decoded.match(/^(\d+):?$/);
+  if (!match) {
+    const err = new Error('Invalid User ID. Must be a positive integer identifier.');
+    err.status = 400;
+    err.code = 'INVALID_USER_ID';
+    throw err;
+  }
+
+  const numId = parseInt(match[1], 10);
   if (isNaN(numId) || !Number.isInteger(numId) || numId <= 0) {
     const err = new Error('Invalid User ID. Must be a positive integer identifier.');
     err.status = 400;
@@ -40,9 +57,12 @@ export async function getStaffDetails(userId) {
       e.EMPLOYEE_NAME,
       e.EMPNO,
       e.FIRSTNAME,
-      e.LASTNAME
+      e.LASTNAME,
+      e.EMAIL AS EMP_EMAIL,
+      l.LOOKUPVALUE AS DESIGNATION_NAME
     FROM HISUSER u
     LEFT JOIN EMPLOYEE e ON u.EMPLOYEE_ID = e.EMPLOYEE_ID
+    LEFT JOIN LOOKUPENTITY l ON e.DESIGNATION = l.LOOKUPID
     WHERE u.ID = :b_user_id
   `;
 
@@ -95,14 +115,19 @@ export async function getStaffDetails(userId) {
   // Clean trailing dot formatting (e.g. "ADMIN ." -> "ADMIN")
   staffName = staffName.replace(/\s+\.$/, '').trim();
 
+  const resolvedEmail = (row.EMAILID ? String(row.EMAILID).trim() : null) ||
+    (row.EMP_EMAIL ? String(row.EMP_EMAIL).trim() : null);
+
   return {
     success: true,
     user_id: row.USER_ID,
     staff_name: staffName,
     employee_id: row.EMPLOYEE_ID ?? null,
-    login: row.LOGIN ? String(row.LOGIN).trim() : null,
-    email: row.EMAILID ? String(row.EMAILID).trim() : null,
     emp_no: row.EMPNO ? String(row.EMPNO).trim() : null,
+    login: row.LOGIN ? String(row.LOGIN).trim() : null,
+    username: row.USERNAME ? String(row.USERNAME).trim() : null,
+    email: resolvedEmail || null,
+    designation: row.DESIGNATION_NAME ? String(row.DESIGNATION_NAME).trim() : null,
     global_department: row.GLOBALDEPARTMENT ?? null,
     global_service_center: row.GLOBALSERVICECENTER ?? null,
   };

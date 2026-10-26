@@ -2,14 +2,19 @@
  * Client API for fetching staff and user details from Oracle HISUSER/EMPLOYEE tables.
  */
 
+import { parseAndValidateUserId } from '../utils/staffFieldHelper';
+export { parseAndValidateUserId };
+
 export interface StaffDetailsResponse {
   success: boolean;
   user_id: number;
   staff_name: string;
   employee_id?: number | null;
-  login?: string | null;
-  email?: string | null;
   emp_no?: string | null;
+  login?: string | null;
+  username?: string | null;
+  email?: string | null;
+  designation?: string | null;
   global_department?: number | null;
   global_service_center?: number | null;
   error?: string;
@@ -22,11 +27,11 @@ const staffDetailsCache = new Map<number, Promise<StaffDetailsResponse | null>>(
 /**
  * Fetches staff details for a given HISUSER.ID from the backend.
  * Caches in-flight and completed promises to guarantee fast response without network thrashing.
+ * Safely parses and normalizes user IDs with trailing HIS delimiters (e.g. '950:', '1212:').
  */
 export async function fetchStaffDetails(userId: string | number | null | undefined): Promise<StaffDetailsResponse | null> {
-  if (!userId) return null;
-  const numId = Number(userId);
-  if (isNaN(numId) || numId <= 0) return null;
+  const numId = parseAndValidateUserId(userId);
+  if (!numId) return null;
 
   if (staffDetailsCache.has(numId)) {
     return staffDetailsCache.get(numId)!;
